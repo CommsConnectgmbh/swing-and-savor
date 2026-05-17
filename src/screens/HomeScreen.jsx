@@ -12,6 +12,19 @@ const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
 const LIVE   = '#98cd02'
 
+// Deterministische Akzent-Farbe pro Turnier, damit Cups visuell unterscheidbar bleiben.
+const CUP_HUES = ['#98cd02', '#f5b94a', '#a78bfa', '#34d399', '#f472b6', '#22d3ee', '#fb923c', '#e879f9']
+function cupColor(id) {
+  if (!id) return CUP_HUES[0]
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return CUP_HUES[h % CUP_HUES.length]
+}
+function fmtCupDate(d) {
+  if (!d) return ''
+  try { return new Date(d + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) } catch { return '' }
+}
+
 const FILTERS = [
   { key: 'all',     label: 'Alle'     },
   { key: 'friends', label: 'Freunde'  },
@@ -293,14 +306,22 @@ function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onSh
     }
   }
 
+  // Subline: Course nur wenn er sich vom Turniernamen unterscheidet (sonst doppelt).
+  const courseLine = m.course?.name && m.course.name !== m.tournament?.name ? m.course.name : ''
   const subline = isActive
-    ? `Loch ${holes.length} · ${m.course?.name || m.tournament?.name || ''}`.trim()
+    ? `Loch ${holes.length}${courseLine ? ' · ' + courseLine : ''}`
     : isFinished
-      ? `Beendet · ${m.course?.name || m.tournament?.name || ''}`.trim()
-      : (m.course?.name || m.tournament?.name || '')
+      ? `Beendet${courseLine ? ' · ' + courseLine : ''}`
+      : courseLine
+
+  const cupName  = m.tournament?.name || ''
+  const cupDate  = fmtCupDate(m.tournament?.date)
+  const cupAccent = cupColor(m.tournament?.id)
 
   return (
-    <div className="w-full" style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
+    <div className="w-full relative" style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
+      {/* Turnier-Farbstreifen links, damit Karten verschiedener Cups visuell distinct sind */}
+      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.85 }} />
       <button onClick={onOpen}
         className="w-full text-left active:scale-[0.99] transition-transform block">
 
@@ -315,8 +336,23 @@ function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onSh
         </div>
       )}
 
-      {/* Top meta */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+      {/* Turnier-Zeile: Name + Datum prominent, damit Cups klar identifizierbar */}
+      {cupName && (
+        <div className="flex items-center justify-between px-4 pt-3 pb-1.5 gap-2">
+          <span className="flex items-center gap-2 min-w-0 flex-1">
+            <span aria-hidden className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cupAccent }} />
+            <span className="font-bold text-[13px] truncate text-ink">{cupName}</span>
+          </span>
+          {cupDate && (
+            <span className="text-[10px] font-semibold tracking-wider uppercase text-inkDim tabular-nums flex-shrink-0">
+              {cupDate}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Type meta */}
+      <div className="flex items-center justify-between px-4 pb-1">
         <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-inkMuted flex items-center gap-1.5">
           {typeLbl}
           {m._owner && (
