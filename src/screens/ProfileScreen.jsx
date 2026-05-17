@@ -249,6 +249,14 @@ export default function ProfileScreen() {
           {target.hcp !== null && target.hcp !== undefined && (
             <span className="tabular-nums">HC {Number(target.hcp).toFixed(1)}</span>
           )}
+          {target.elo_rating !== null && target.elo_rating !== undefined && target.games_played > 0 && (
+            <>
+              <span>·</span>
+              <Link to="/leaderboard" className="tabular-nums text-accent font-bold">
+                ELO {target.elo_rating}
+              </Link>
+            </>
+          )}
           {(target.hcp === null || target.hcp === undefined) && !target.home_club && isSelf && (
             <button onClick={openEdit} className="text-accent">+ HCP & Heimatclub setzen</button>
           )}
@@ -274,6 +282,13 @@ export default function ProfileScreen() {
                 <button onClick={() => navigate(`/challenges?opponent=${target.id}`)}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-accent text-brandDark active:scale-95 transition-transform">
                   Herausfordern
+                </button>
+                <button onClick={async () => {
+                  const { data: cid, error } = await supabase.rpc('get_or_create_conversation', { other_user: target.id })
+                  if (!error && cid) navigate(`/messages/${cid}`)
+                }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-surface text-ink border border-line active:scale-95 transition-transform">
+                  Nachricht
                 </button>
                 <button onClick={() => challengeFriendOnDealBuddy(target)}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-surface text-inkMuted border border-line active:scale-95 transition-transform">

@@ -15,6 +15,9 @@ import OnboardingScreen from './screens/OnboardingScreen'
 const HomeScreen         = lazy(() => import('./screens/HomeScreen'))
 const BoardScreen        = lazy(() => import('./screens/BoardScreen'))
 const DiscoverScreen     = lazy(() => import('./screens/DiscoverScreen'))
+const MessagesScreen     = lazy(() => import('./screens/MessagesScreen'))
+const ConversationScreen = lazy(() => import('./screens/ConversationScreen'))
+const LeaderboardScreen  = lazy(() => import('./screens/LeaderboardScreen'))
 const ChallengesScreen   = lazy(() => import('./screens/ChallengesScreen'))
 const MatchesScreen      = lazy(() => import('./screens/MatchesScreen'))
 const MatchDetailScreen  = lazy(() => import('./screens/MatchDetailScreen'))
@@ -30,16 +33,18 @@ function HeaderForRoute() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const titles = {
-    '/home':       t('nav.home', 'Home'),
-    '/board':      t('nav.board'),
-    '/discover':   t('nav.discover'),
-    '/challenges': t('nav.challenges'),
-    '/matches':    t('nav.matches'),
-    '/friends':    t('nav.friends'),
-    '/teams':      t('nav.teams'),
-    '/cup':        t('nav.cups'),
-    '/me':         t('nav.profile'),
-    '/u/':         t('nav.profile'),
+    '/home':        t('nav.home', 'Home'),
+    '/board':       t('nav.board'),
+    '/discover':    t('nav.discover'),
+    '/challenges':  t('nav.challenges'),
+    '/matches':     t('nav.matches'),
+    '/friends':     t('nav.friends'),
+    '/teams':       t('nav.teams'),
+    '/cup':         t('nav.cups'),
+    '/messages':    t('nav.messages',    'Nachrichten'),
+    '/leaderboard': t('nav.leaderboard', 'Rangliste'),
+    '/me':          t('nav.profile'),
+    '/u/':          t('nav.profile'),
   }
   const match = Object.keys(titles).find((p) => pathname.startsWith(p))
   return <BrandHeader title={match ? titles[match] : null} />
@@ -89,6 +94,9 @@ export default function App() {
             <Route path="/friends"           element={<FriendsScreen />} />
             <Route path="/teams"             element={<TeamsScreen />} />
             <Route path="/cup"               element={<CupScreen />} />
+            <Route path="/messages"          element={<MessagesScreen />} />
+            <Route path="/messages/:conversationId" element={<ConversationScreen />} />
+            <Route path="/leaderboard"       element={<LeaderboardScreen />} />
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />

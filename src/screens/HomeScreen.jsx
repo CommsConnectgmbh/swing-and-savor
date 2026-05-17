@@ -50,7 +50,7 @@ export default function HomeScreen() {
     const { data: mList } = await supabase
       .from('matches')
       .select(`
-        id, type, status, winner, created_at,
+        id, type, status, winner, created_at, photo_url, visibility,
         team_a_player_ids, team_b_player_ids,
         team_a_player1_id, team_a_player2_id, team_b_player1_id, team_b_player2_id,
         team_a_factor, team_b_factor,
@@ -231,6 +231,17 @@ function FeedCard({ match: m, holes, onOpen, divider }) {
     <button onClick={onOpen}
       className="w-full text-left active:scale-[0.99] transition-transform block"
       style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
+
+      {m.photo_url && (
+        <div className="relative w-full bg-bg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+          <img src={m.photo_url} alt="" loading="lazy" className="w-full h-full object-cover" />
+          {isActive && (
+            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-accent text-brandDark text-[10px] font-bold tracking-wider uppercase">
+              ● Live
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Top meta */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">

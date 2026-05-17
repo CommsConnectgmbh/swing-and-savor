@@ -62,6 +62,7 @@ const emptyForm = {
   team_a_factor: 1, team_b_factor: 1,
   factorTouched: false,
   course: null,
+  visibility: null,             // null = vom Turnier erben
 }
 
 function expandedSize(type, size) {
@@ -107,6 +108,10 @@ export default function MatchesScreen() {
   const [showGate, setShowGate] = useState(false)
   const [showViewGate, setShowViewGate] = useState(false)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
+  const [templates, setTemplates] = useState([])
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templateSide, setTemplateSide] = useState(null) // 'A' | 'B' | null
   const pendingRef = useRef(null)
 
   useEffect(() => {
@@ -116,6 +121,9 @@ export default function MatchesScreen() {
         if (data?.length > 0) setSelected(data[0])
         setLoading(false)
       })
+    supabase.from('team_templates').select('id,name,members,created_at')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setTemplates(data || []))
   }, [])
 
   // Auto-Open des Create-Forms wenn ?new=1 (via Plus-FAB-Sheet)
@@ -190,9 +198,66 @@ export default function MatchesScreen() {
         team_b_factor: Number(m.team_b_factor ?? 1),
         factorTouched: false,
         course: null,
+        visibility: m.visibility ?? null,
       })
       setEditId(m.id); setMode('edit')
     })
+  }
+
+  // Template laden: legt nicht-existierende Spieler in der players-Tabelle an
+  // und wählt sie für die jeweilige Seite vor.
+  async function loadTemplate(side, tpl) {
+    if (!selected) return
+    const members = Array.isArray(tpl.members) ? tpl.members : []
+    if (members.length === 0) return
+    const created = []
+    for (const m of members.slice(0, 4)) {
+      const name = String(m.name || '').trim()
+      if (!name) continue
+      const hc = Number(m.handicap)
+      const handicap = Number.isFinite(hc) && hc >= 0 && hc <= 54 ? hc : 0
+      // Existierenden Spieler im selben Tournament+Team finden, sonst anlegen
+      const { data: existing } = await supabase.from('players')
+        .select('id').eq('tournament_id', selected.id)
+        .eq('team', side).eq('name', name).maybeSingle()
+      if (existing?.id) { created.push(existing.id); continue }
+      const { data: ins } = await supabase.from('players').insert({
+        tournament_id: selected.id, name, handicap, team: side,
+      }).select('id').single()
+      if (ins?.id) created.push(ins.id)
+    }
+    await loadPlayers()
+    setForm(f => {
+      const ids = [...created, '', '', '', ''].slice(0, 4)
+      const sizeKey = side === 'A' ? 'sizeA' : 'sizeB'
+      const arrKey  = side === 'A' ? 'a' : 'b'
+      const nextSize = Math.min(4, Math.max(f[sizeKey], created.length))
+      // Flight, sobald > 2 Spieler im Template
+      const nextType = created.length > 2 ? 'flight' : f.type
+      return { ...f, type: nextType, [sizeKey]: nextSize, [arrKey]: ids }
+    })
+  }
+
+  async function saveAsTemplate() {
+    if (!templateName.trim() || !templateSide) return
+    const ids = (templateSide === 'A' ? form.a : form.b).filter(Boolean)
+    if (ids.length === 0) return
+    const members = ids.map(id => {
+      const p = players.find(x => x.id === id)
+      return p ? { name: p.name, handicap: Number(p.handicap) } : null
+    }).filter(Boolean)
+    setSavingTemplate(true)
+    const { data } = await supabase.from('team_templates').insert({
+      name: templateName.trim(), members,
+    }).select('id,name,members,created_at').single()
+    if (data) setTemplates(prev => [data, ...prev])
+    setSavingTemplate(false)
+    setTemplateName(''); setTemplateSide(null)
+  }
+
+  async function deleteTemplate(id) {
+    await supabase.from('team_templates').delete().eq('id', id)
+    setTemplates(prev => prev.filter(t => t.id !== id))
   }
 
   function closeForm() { setMode(null); setEditId(null) }
@@ -270,6 +335,7 @@ export default function MatchesScreen() {
       course_id: form.course?.id || null,
       hole_pars: form.course?.hole_pars?.length ? form.course.hole_pars : [],
       hole_handicaps: form.course?.hole_handicaps?.length ? form.course.hole_handicaps : [],
+      visibility: form.visibility,
     }
 
     if (mode === 'create') await supabase.from('matches').insert([{ ...payload, tournament_id: selected.id }])
@@ -516,6 +582,96 @@ export default function MatchesScreen() {
               )}
             </button>
           </div>
+
+          {/* Sichtbarkeit (Override des Turnier-Defaults) */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">
+              Sichtbarkeit dieses Matches
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                [null,      'Turnier',     'Erbt vom Cup'],
+                ['public',  'Öffentlich',  'Im Feed sichtbar'],
+                ['friends', 'Freunde',     'Nur deine Freunde'],
+                ['private', 'Privat',      'Nur du'],
+              ].map(([val, label, hint]) => (
+                <button key={val ?? 'inherit'} type="button"
+                  onClick={() => setForm(f => ({ ...f, visibility: val }))}
+                  title={hint}
+                  className={`flex flex-col items-center gap-0.5 py-2 rounded-xl active:scale-[0.97] transition-all ${
+                    form.visibility === val
+                      ? 'bg-accent/15 text-accent border border-accent/40'
+                      : 'bg-bg text-inkMuted border border-line'
+                  }`}>
+                  <span className="text-[11px] font-bold">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Team-Templates */}
+          {templates.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">
+                Gespeicherte Flights
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {templates.map(tpl => (
+                  <div key={tpl.id} className="flex items-center bg-bg border border-line rounded-lg overflow-hidden">
+                    <span className="px-2.5 py-1.5 text-xs font-semibold text-ink">
+                      {tpl.name}
+                      <span className="ml-1.5 text-[10px] text-inkDim tabular-nums">
+                        {Array.isArray(tpl.members) ? tpl.members.length : 0}
+                      </span>
+                    </span>
+                    <button type="button" onClick={() => loadTemplate('A', tpl)}
+                      className="px-2 py-1.5 text-[10px] font-bold tracking-wider text-teamA border-l border-line active:scale-95 transition-transform"
+                      title={`Als ${selected?.team_a_name || 'Team A'} laden`}>
+                      ↑A
+                    </button>
+                    <button type="button" onClick={() => loadTemplate('B', tpl)}
+                      className="px-2 py-1.5 text-[10px] font-bold tracking-wider text-teamB border-l border-line active:scale-95 transition-transform"
+                      title={`Als ${selected?.team_b_name || 'Team B'} laden`}>
+                      ↑B
+                    </button>
+                    <button type="button" onClick={() => deleteTemplate(tpl.id)}
+                      className="px-2 py-1.5 text-[10px] text-inkDim hover:text-danger border-l border-line active:scale-95 transition-transform"
+                      title="Template löschen">×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Template aus aktueller Aufstellung speichern */}
+          {templateSide ? (
+            <div className="rounded-xl p-3 bg-bg border border-line flex gap-2 items-center">
+              <input type="text" autoFocus value={templateName} maxLength={60}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder={`Name (z.B. „Stammflight ${templateSide}")`}
+                className="flex-1 bg-surface border border-line rounded-lg px-3 py-2 text-ink text-sm focus:border-accent/60" />
+              <button type="button" onClick={saveAsTemplate}
+                disabled={savingTemplate || !templateName.trim()}
+                className="px-3 py-2 rounded-lg text-xs font-bold bg-accent text-brandDark active:scale-95 transition-transform disabled:opacity-50">
+                {savingTemplate ? '…' : 'Speichern'}
+              </button>
+              <button type="button" onClick={() => { setTemplateSide(null); setTemplateName('') }}
+                className="px-2 py-2 rounded-lg text-xs text-inkMuted hover:text-ink">×</button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5">
+              <button type="button" onClick={() => setTemplateSide('A')}
+                disabled={!form.a.filter(Boolean).length}
+                className="flex-1 py-2 rounded-lg text-[11px] font-bold text-inkMuted bg-bg border border-line active:scale-95 transition-transform disabled:opacity-40">
+                ★ {selected?.team_a_name || 'Team A'} als Template
+              </button>
+              <button type="button" onClick={() => setTemplateSide('B')}
+                disabled={!form.b.filter(Boolean).length}
+                className="flex-1 py-2 rounded-lg text-[11px] font-bold text-inkMuted bg-bg border border-line active:scale-95 transition-transform disabled:opacity-40">
+                ★ {selected?.team_b_name || 'Team B'} als Template
+              </button>
+            </div>
+          )}
 
           <button type="submit"
             className="py-3 rounded-xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform">

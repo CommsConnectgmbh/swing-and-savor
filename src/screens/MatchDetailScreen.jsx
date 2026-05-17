@@ -7,6 +7,7 @@ import PasswordGate from '../components/PasswordGate'
 import CourseEditor from '../components/CourseEditor'
 import CoursePicker from '../components/CoursePicker'
 import { applyCourseEdit } from '../lib/courses'
+import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 
 const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
@@ -68,6 +69,9 @@ export default function MatchDetailScreen() {
   const [showCourseEditor, setShowCourseEditor] = useState(false)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
   const [flightNames, setFlightNames] = useState({ A: [], B: [] })
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const photoInputRef = useRef(null)
   const matchRef = useRef(null)
 
   useEffect(() => { loadAll() }, [matchId])
@@ -270,8 +274,51 @@ export default function MatchDetailScreen() {
 
   const COLS = '86px 1fr 1fr 48px'
 
+  async function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) { setPhotoError('Foto zu groß (max 8 MB)'); return }
+    setPhotoBusy(true); setPhotoError(null)
+    try {
+      const url = await uploadMatchPhoto(matchId, file)
+      const upd = { ...matchRef.current, photo_url: url }
+      matchRef.current = upd
+      setMatch(upd)
+    } catch (err) {
+      console.error('[match] photo upload', err)
+      setPhotoError(err.message || 'Upload fehlgeschlagen')
+    } finally {
+      setPhotoBusy(false)
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
+  }
+
+  async function handlePhotoClear() {
+    setPhotoBusy(true); setPhotoError(null)
+    try {
+      await clearMatchPhoto(matchId)
+      const upd = { ...matchRef.current, photo_url: null }
+      matchRef.current = upd
+      setMatch(upd)
+    } finally { setPhotoBusy(false) }
+  }
+
   return (
     <div className="max-w-lg mx-auto pb-44 animate-fade-up">
+
+      {/* ── photo cover (optional) ── */}
+      {match.photo_url && (
+        <div className="relative mx-3 mt-3 rounded-card overflow-hidden bg-bg" style={{ aspectRatio: '16/9' }}>
+          <img src={match.photo_url} alt="" loading="lazy"
+            className="w-full h-full object-cover" />
+          {!done && !locked && (
+            <button onClick={handlePhotoClear}
+              className="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/55 text-white text-[10px] font-bold tracking-wide active:scale-95 transition-transform">
+              Foto entfernen
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── header ── */}
       <div className="flex items-center px-4 pt-5 pb-4 border-b border-lineSoft">
@@ -354,8 +401,19 @@ export default function MatchDetailScreen() {
               Scorekarte
             </button>
           )}
+          {!locked && !done && !match.photo_url && (
+            <button onClick={() => photoInputRef.current?.click()} disabled={photoBusy}
+              className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-bg text-inkMuted border border-line active:scale-95 transition-transform disabled:opacity-50">
+              {photoBusy ? '…' : '+ Foto'}
+            </button>
+          )}
+          <input ref={photoInputRef} type="file" accept="image/*" capture="environment"
+            className="hidden" onChange={handlePhotoChange} />
         </div>
       </div>
+      {photoError && (
+        <p className="mx-3 -mt-1 mb-2 text-[11px] text-danger">{photoError}</p>
+      )}
 
       {/* ── lock banner ── */}
       {locked && !done && (

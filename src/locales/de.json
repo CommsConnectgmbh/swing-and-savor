@@ -13,7 +13,9 @@
     "profile": "Profil",
     "friends": "Freunde",
     "teams": "Teams",
-    "create": "Neu"
+    "create": "Neu",
+    "messages": "Nachrichten",
+    "leaderboard": "Rangliste"
   },
   "common": {
     "loading": "Lade…",
