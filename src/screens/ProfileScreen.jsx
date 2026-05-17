@@ -24,6 +24,40 @@ export default function ProfileScreen() {
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState(null)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+
+  async function deleteAccount() {
+    if (deleteText.trim().toUpperCase() !== 'LÖSCHEN') {
+      setDeleteError('Tippe LÖSCHEN zur Bestätigung')
+      return
+    }
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) throw new Error('Keine Session — bitte neu anmelden')
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body?.detail || body?.error || `HTTP ${res.status}`)
+      await signOut()
+    } catch (e) {
+      console.error('[profile] delete account', e)
+      setDeleteError(e.message || 'Löschen fehlgeschlagen')
+      setDeleting(false)
+    }
+  }
 
   const isSelf = !handle || (me && handle === me.handle)
   const target = isSelf ? me : profile
@@ -343,13 +377,56 @@ export default function ProfileScreen() {
         </div>
       )}
 
-      {/* Sign out */}
+      {/* Sign out + Legal + Konto löschen */}
       {isSelf && (
-        <div className="px-3 mt-3">
+        <div className="px-3 mt-3 flex flex-col gap-2">
           <button onClick={signOut}
             className="w-full py-3 rounded-xl text-sm font-semibold bg-surface text-inkMuted border border-line active:scale-[0.98] transition-transform">
             Abmelden
           </button>
+
+          <div className="flex gap-2 text-[11px] text-inkDim justify-center pt-1">
+            <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">Impressum</a>
+            <span>·</span>
+            <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener" className="hover:text-inkMuted">Datenschutz</a>
+            <span>·</span>
+            <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className="hover:text-inkMuted">AGB</a>
+            <span>·</span>
+            <a href="mailto:hi@swingandsavor.at" className="hover:text-inkMuted">Support</a>
+          </div>
+
+          {!showDeleteConfirm ? (
+            <button onClick={() => setShowDeleteConfirm(true)}
+              className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold text-danger/80 hover:text-danger transition-colors">
+              Konto unwiderruflich löschen
+            </button>
+          ) : (
+            <div className="mt-2 rounded-card p-4 bg-surface border border-danger/30 flex flex-col gap-3 animate-fade-up">
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-danger">Konto löschen</p>
+              <p className="text-xs text-inkMuted leading-relaxed">
+                Profil, Freundschaften, deine Turniere und der Zugang werden endgültig entfernt.
+                Diese Aktion ist unwiderruflich.
+              </p>
+              <input type="text" autoCapitalize="characters" autoCorrect="off"
+                placeholder='Tippe LÖSCHEN'
+                className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-ink placeholder:text-inkDim text-sm focus:border-danger/60"
+                value={deleteText}
+                onChange={e => { setDeleteText(e.target.value); setDeleteError(null) }}
+              />
+              {deleteError && <p className="text-danger text-xs">{deleteError}</p>}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); setDeleteError(null) }}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-bg text-inkMuted border border-line active:scale-[0.98] transition-transform">
+                  Abbrechen
+                </button>
+                <button type="button" onClick={deleteAccount} disabled={deleting}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-danger text-white active:scale-[0.98] transition-transform disabled:opacity-60">
+                  {deleting ? 'Lösche…' : 'Endgültig löschen'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
