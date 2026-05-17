@@ -33,7 +33,6 @@ async function fetchProfileWithRetry(uid, attempts = 3) {
       if (i < attempts - 1) await new Promise(r => setTimeout(r, 350 * (i + 1)))
     }
   }
-  // Transient fetch failure — bubble up so caller can keep prior state intact.
   throw lastErr || new Error('profile fetch failed')
 }
 
@@ -43,10 +42,8 @@ export function AuthProvider({ children }) {
   const [sessionChecked, setSessionChecked] = useState(false)
   const [profileChecked, setProfileChecked] = useState(false)
 
-  // Refs so we can dedupe loads and avoid stomping state from out-of-order
-  // events (INITIAL_SESSION + manual getSession, TOKEN_REFRESHED, etc.).
-  const loadedUidRef = useRef(null)   // uid we already have a profile result for
-  const inflightUidRef = useRef(null) // uid currently being fetched
+  const loadedUidRef = useRef(null)
+  const inflightUidRef = useRef(null)
 
   async function loadProfile(uid, { force = false } = {}) {
     if (!uid) {
@@ -54,18 +51,33 @@ export function AuthProvider({ children }) {
       setProfile(null); setProfileChecked(true)
       return
     }
-    // Already loaded for this uid? Skip unless caller forces a refresh.
     if (!force && loadedUidRef.current === uid) {
       setProfileChecked(true)
       return
     }
-    // Already fetching for this uid? Don't fire a second request.
     if (inflightUidRef.current === uid) return
     inflightUidRef.current = uid
 
     try {
-      const result = await fetchProfileWithRetry(uid)
-      // Did the user change while we were in-flight? Ignore the stale result.
+      let result = await fetchProfileWithRetry(uid)
+
+      // Edge case: on a fresh reload the session JWT can be in-flight
+      // for refresh while the first profile query already hits the server,
+      // which returns nothing under RLS. If the row "doesn't exist", give
+      // the auth state a moment and try one more time with a forced token
+      // refresh. This is what made the Onboarding-recovery-effect succeed
+      // a second later, so we fold that retry into the auth boot.
+      if (result === NOT_FOUND) {
+        try { await supabase.auth.getUser() } catch {}
+        await new Promise(r => setTimeout(r, 250))
+        try {
+          const second = await fetchProfileOnce(uid)
+          if (second !== NOT_FOUND) result = second
+        } catch (e) {
+          console.error('[auth] late retry failed', e)
+        }
+      }
+
       if (inflightUidRef.current !== uid) return
       if (result === NOT_FOUND) {
         setProfile(null)
@@ -75,10 +87,6 @@ export function AuthProvider({ children }) {
       loadedUidRef.current = uid
       setProfileChecked(true)
     } catch (e) {
-      // Transient failure: do NOT clobber profile state. If we already had a
-      // profile for this uid, keep showing it; if not, mark checked so the app
-      // moves out of the loading state (Onboarding's own recovery effect will
-      // retry).
       console.error('[auth] loadProfile transient failure, keeping prior state', e)
       setProfileChecked(true)
     } finally {
@@ -89,22 +97,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false
 
-    ;(async () => {
-      try {
-        const { data } = await supabase.auth.getSession()
-        if (cancelled) return
-        const u = data.session?.user ?? null
-        setUser(u)
-        setSessionChecked(true)
-        if (u) await loadProfile(u.id)
-        else setProfileChecked(true)
-      } catch (e) {
-        console.error('[auth] init exception:', e)
-        if (!cancelled) { setSessionChecked(true); setProfileChecked(true) }
-      }
-    })()
-
-    // Emergency timeout — only kicks in if Supabase is completely dead.
+    // Single source of truth: onAuthStateChange. supabase-js v2 fires
+    // INITIAL_SESSION shortly after subscribe with the persisted session
+    // already hydrated, so we don't need a separate getSession() call (which
+    // raced with INITIAL_SESSION in earlier versions and caused the profile
+    // to flicker to null on reload).
     const safety = setTimeout(() => {
       if (cancelled) return
       setSessionChecked(true); setProfileChecked(true)
@@ -116,16 +113,13 @@ export function AuthProvider({ children }) {
       setUser(u)
       setSessionChecked(true)
 
-      // TOKEN_REFRESHED / USER_UPDATED: same identity, don't touch profile.
-      // SIGNED_OUT: clear.
-      // SIGNED_IN / INITIAL_SESSION: load if user changed.
       if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return
       if (event === 'SIGNED_OUT' || !u) {
         loadedUidRef.current = null
         setProfile(null); setProfileChecked(true)
         return
       }
-      // SIGNED_IN or INITIAL_SESSION
+      // SIGNED_IN or INITIAL_SESSION (or PASSWORD_RECOVERY)
       if (loadedUidRef.current !== u.id) {
         await loadProfile(u.id)
       } else {

@@ -9,9 +9,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'sas-auth',
-    flowType: 'pkce',
-  },
-  global: {
-    fetch: (input, init = {}) => fetch(input, { ...init, cache: 'no-store' }),
   },
 })
