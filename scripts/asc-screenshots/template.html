@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<title>Swing & Savor Screenshot</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  :root {
+    --bg: #0d271e;
+    --bg-soft: #1f3f2c;
+    --ink: #ffffff;
+    --ink-soft: #d1d5db;
+    --muted: #9ca3af;
+    --brand: #98cd02;
+    --brand-dark: #6b9300;
+    --surface: #ffffff;
+    --surface-ink: #0a1f15;
+    --border: rgba(255,255,255,0.10);
+    --border-light: #e5e7eb;
+    --success: #16a34a;
+    --warn: #f59e0b;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage {
+    width: var(--w);
+    height: var(--h);
+    display: flex;
+    flex-direction: column;
+    padding: var(--pad-top) var(--pad-x) var(--pad-bot);
+    background:
+      radial-gradient(80% 60% at 20% 0%, rgba(152,205,2,0.12) 0%, transparent 60%),
+      linear-gradient(180deg, #0d271e 0%, #1f3f2c 60%, #0d271e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .headline {
+    font-size: var(--head-size);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+  .sub {
+    font-size: var(--sub-size);
+    color: var(--ink-soft);
+    margin-top: var(--gap);
+    line-height: 1.35;
+    max-width: 92%;
+  }
+
+  .phone-frame {
+    flex: 1 1 auto;
+    margin-top: var(--frame-gap);
+    background: #000;
+    border-radius: var(--frame-radius);
+    padding: calc(var(--frame-radius) * 0.06);
+    box-shadow:
+      0 30px 80px -10px rgba(152, 205, 2, 0.20),
+      0 12px 40px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .phone-screen {
+    flex: 1;
+    background: #f7faf6;
+    color: var(--surface-ink);
+    border-radius: calc(var(--frame-radius) * 0.85);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Status bar */
+  .status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--status-pad) var(--inner-pad);
+    font-size: var(--status-size);
+    font-weight: 600;
+    color: var(--surface-ink);
+  }
+  .status-dots { display: flex; gap: 6px; align-items: center; }
+  .status-dots span { font-size: calc(var(--status-size) * 0.85); }
+
+  /* App content */
+  .app {
+    flex: 1;
+    padding: var(--inner-pad);
+    display: flex;
+    flex-direction: column;
+    gap: var(--inner-gap);
+    overflow: hidden;
+  }
+  .app-title {
+    font-size: var(--app-title);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--surface-ink);
+  }
+  .app-sub {
+    font-size: var(--app-sub);
+    color: var(--muted);
+    margin-top: -8px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--card-radius);
+    padding: var(--card-pad);
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-gap);
+    box-shadow: 0 2px 4px rgba(13, 39, 30, 0.06);
+  }
+  .card-brand {
+    background: linear-gradient(135deg, #0d271e 0%, #1f3f2c 100%);
+    color: white;
+    border: 0;
+  }
+  .card-label {
+    font-size: var(--label-size);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .card-brand .card-label { color: rgba(255,255,255,0.65); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(152, 205, 2, 0.18);
+    color: var(--brand-dark);
+    padding: var(--pill-pad-y) var(--pill-pad-x);
+    border-radius: 9999px;
+    font-size: var(--pill-text);
+    font-weight: 700;
+    width: fit-content;
+  }
+  .pill.live {
+    background: #fff1f1;
+    color: #dc2626;
+  }
+  .pill.live::before {
+    content: '';
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #dc2626;
+  }
+
+  /* Tournament row */
+  .tour-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--inner-gap);
+  }
+  .tour-meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tour-name {
+    font-weight: 800;
+    font-size: var(--btn-text);
+    color: var(--surface-ink);
+    letter-spacing: -0.01em;
+  }
+  .tour-info {
+    font-size: var(--app-sub);
+    color: var(--muted);
+  }
+  .tour-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .tour-score {
+    font-weight: 800;
+    font-size: var(--meta-v-size);
+    color: var(--brand-dark);
+  }
+
+  /* Hole scoring grid */
+  .holes {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 6px;
+  }
+  .hole {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    border-radius: 10px;
+    background: #f5f7f3;
+  }
+  .hole-n { font-size: calc(var(--label-size) * 0.95); color: var(--muted); font-weight: 700; }
+  .hole-s {
+    font-size: var(--btn-text);
+    font-weight: 800;
+    color: var(--surface-ink);
+  }
+  .hole.birdie { background: #ecfccb; color: var(--brand-dark); }
+  .hole.birdie .hole-s { color: var(--brand-dark); }
+  .hole.eagle { background: #d9f99d; }
+  .hole.bogey { background: #fef3c7; }
+  .hole.bogey .hole-s { color: #b45309; }
+  .hole.par .hole-s { color: var(--surface-ink); }
+
+  /* Match score block */
+  .match-head {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 18px;
+  }
+  .player {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .avatar {
+    width: var(--avatar);
+    height: var(--avatar);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #98cd02 0%, #6b9300 100%);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: calc(var(--avatar) * 0.40);
+  }
+  .player-name {
+    font-weight: 700;
+    font-size: var(--btn-text);
+    color: var(--surface-ink);
+  }
+  .player-hcp {
+    font-size: var(--app-sub);
+    color: var(--muted);
+  }
+  .vs {
+    font-size: var(--meta-v-size);
+    font-weight: 900;
+    color: var(--muted);
+    letter-spacing: -0.02em;
+  }
+
+  /* CTA */
+  .cta {
+    background: var(--brand);
+    color: var(--surface-ink);
+    border-radius: var(--card-radius);
+    padding: var(--cta-pad);
+    text-align: center;
+    font-weight: 800;
+    font-size: var(--cta-text);
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 20px rgba(152, 205, 2, 0.40);
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--meta-gap);
+  }
+  .meta { display: flex; flex-direction: column; gap: 4px; }
+  .meta-l { font-size: var(--label-size); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+  .meta-v { font-size: var(--meta-v-size); font-weight: 800; color: var(--surface-ink); }
+  .meta-v.brand { color: var(--brand-dark); }
+
+  /* Bottom nav */
+  .bnav {
+    display: flex;
+    justify-content: space-around;
+    padding: var(--inner-pad) var(--inner-pad) calc(var(--inner-pad) * 0.7);
+    border-top: 1px solid var(--border-light);
+    background: white;
+  }
+  .bnav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--muted);
+    font-size: calc(var(--label-size) * 1.05);
+    font-weight: 600;
+  }
+  .bnav-item.active { color: var(--brand-dark); }
+  .bnav-ico { font-size: calc(var(--btn-text) * 0.95); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage"></div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const device = params.get("device") || "iphone69";
+  const slide = params.get("slide") || "1";
+
+  const G = {
+    iphone69: {
+      w: 1290, h: 2796,
+      padTop: 100, padX: 80, padBot: 100,
+      headSize: 118, subSize: 46, gap: 28,
+      frameGap: 84, frameRadius: 84,
+      statusPad: 30, statusSize: 32, innerPad: 44, innerGap: 36,
+      appTitle: 64, appSub: 36, cardRadius: 36, cardPad: 36, cardGap: 24,
+      labelSize: 22, btnPadY: 22, btnPadX: 38, btnText: 36,
+      ctaPad: 38, ctaText: 44,
+      metaGap: 28, metaVSize: 54, pillPadY: 12, pillPadX: 22, pillText: 26,
+      avatar: 130,
+    },
+    ipadpro129: {
+      w: 2048, h: 2732,
+      padTop: 160, padX: 160, padBot: 160,
+      headSize: 156, subSize: 58, gap: 36,
+      frameGap: 100, frameRadius: 100,
+      statusPad: 36, statusSize: 38, innerPad: 56, innerGap: 50,
+      appTitle: 88, appSub: 46, cardRadius: 48, cardPad: 56, cardGap: 36,
+      labelSize: 28, btnPadY: 30, btnPadX: 50, btnText: 46,
+      ctaPad: 52, ctaText: 58,
+      metaGap: 40, metaVSize: 72, pillPadY: 16, pillPadX: 28, pillText: 34,
+      avatar: 180,
+    },
+  }[device];
+
+  Object.entries({
+    '--w': G.w, '--h': G.h,
+    '--pad-top': G.padTop, '--pad-x': G.padX, '--pad-bot': G.padBot,
+    '--head-size': G.headSize, '--sub-size': G.subSize, '--gap': G.gap,
+    '--frame-gap': G.frameGap, '--frame-radius': G.frameRadius,
+    '--status-pad': G.statusPad, '--status-size': G.statusSize,
+    '--inner-pad': G.innerPad, '--inner-gap': G.innerGap,
+    '--app-title': G.appTitle, '--app-sub': G.appSub,
+    '--card-radius': G.cardRadius, '--card-pad': G.cardPad, '--card-gap': G.cardGap,
+    '--label-size': G.labelSize,
+    '--btn-pad-y': G.btnPadY, '--btn-pad-x': G.btnPadX, '--btn-text': G.btnText,
+    '--cta-pad': G.ctaPad, '--cta-text': G.ctaText,
+    '--meta-gap': G.metaGap, '--meta-v-size': G.metaVSize,
+    '--pill-pad-y': G.pillPadY, '--pill-pad-x': G.pillPadX, '--pill-text': G.pillText,
+    '--avatar': G.avatar,
+  }).forEach(([k, v]) => document.documentElement.style.setProperty(k, v + 'px'));
+
+  const stage = document.getElementById("stage");
+
+  function statusBar() {
+    return `<div class="status">
+      <div>9:41</div>
+      <div class="status-dots"><span>● ● ●</span></div>
+    </div>`;
+  }
+
+  const slides = {
+    "1": {
+      headline: 'Match Play <em>unter Freunden</em>.',
+      sub: "Singles, Doubles, Team. Lege Turniere an, lade Freunde mit einem 8-Zeichen-Code ein und tracke jeden Schlag.",
+      screen: `${statusBar()}
+        <div class="app">
+          <div>
+            <div class="app-title">Mein Board</div>
+            <div class="app-sub">3 aktive Turniere</div>
+          </div>
+          <div class="card card-brand">
+            <div class="card-label">Heute · Live</div>
+            <div class="tour-row">
+              <div class="tour-meta">
+                <div class="tour-name" style="color:white;">Sommer Cup 2026</div>
+                <div class="tour-info" style="color:rgba(255,255,255,0.7);">Singles · Bad Wiessee · 18 Loch</div>
+              </div>
+              <div class="tour-side">
+                <span class="pill live">Live</span>
+                <div class="tour-score" style="color:#98cd02;">−2</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tour-row">
+              <div class="tour-meta">
+                <div class="tour-name">Freitags-Doubles</div>
+                <div class="tour-info">Doubles · GC Tegernsee</div>
+              </div>
+              <div class="tour-side">
+                <span class="pill">Sa 14:00</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tour-row">
+              <div class="tour-meta">
+                <div class="tour-name">Club Championship</div>
+                <div class="tour-info">Team · Public · Code GC7K3M</div>
+              </div>
+              <div class="tour-side">
+                <div class="tour-score">12</div>
+                <div class="tour-info">Spieler</div>
+              </div>
+            </div>
+          </div>
+          <div class="cta">+ Neues Turnier</div>
+        </div>
+        <div class="bnav">
+          <div class="bnav-item active"><div class="bnav-ico">●</div>Board</div>
+          <div class="bnav-item"><div class="bnav-ico">⌕</div>Entdecken</div>
+          <div class="bnav-item"><div class="bnav-ico">⚔</div>Duelle</div>
+          <div class="bnav-item"><div class="bnav-ico">▤</div>Matches</div>
+          <div class="bnav-item"><div class="bnav-ico">◍</div>Profil</div>
+        </div>`,
+    },
+    "2": {
+      headline: 'Live-Scoring <em>pro Loch</em>.',
+      sub: "Par und Handicap werden automatisch aus der Kursdatenbank gezogen. Du tippst nur die Schläge.",
+      screen: `${statusBar()}
+        <div class="app">
+          <div>
+            <div class="app-title">Sommer Cup 2026</div>
+            <div class="app-sub">Match 3 · Loch 12 von 18</div>
+          </div>
+          <div class="card">
+            <div class="match-head">
+              <div class="player">
+                <div class="avatar">RR</div>
+                <div class="player-name">Rainer</div>
+                <div class="player-hcp">HC 18</div>
+              </div>
+              <div class="vs">3 ↑</div>
+              <div class="player">
+                <div class="avatar" style="background:linear-gradient(135deg,#475569,#1e293b);">MS</div>
+                <div class="player-name">Markus</div>
+                <div class="player-hcp">HC 22</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">Front 9 · Par 36</div>
+            <div class="holes">
+              <div class="hole par"><div class="hole-n">1</div><div class="hole-s">4</div></div>
+              <div class="hole birdie"><div class="hole-n">2</div><div class="hole-s">3</div></div>
+              <div class="hole par"><div class="hole-n">3</div><div class="hole-s">5</div></div>
+              <div class="hole bogey"><div class="hole-n">4</div><div class="hole-s">5</div></div>
+              <div class="hole par"><div class="hole-n">5</div><div class="hole-s">3</div></div>
+              <div class="hole par"><div class="hole-n">6</div><div class="hole-s">4</div></div>
+              <div class="hole birdie"><div class="hole-n">7</div><div class="hole-s">4</div></div>
+              <div class="hole par"><div class="hole-n">8</div><div class="hole-s">4</div></div>
+              <div class="hole eagle"><div class="hole-n">9</div><div class="hole-s">3</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">Aktuelles Loch · 12 · Par 4 · HCP 6</div>
+            <div style="display:flex; gap:18px; justify-content:center; padding:10px 0;">
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <div style="font-size:var(--label-size); color:var(--muted); font-weight:700;">Rainer</div>
+                <div style="font-size:calc(var(--meta-v-size) * 1.2); font-weight:800; color:var(--brand-dark);">4</div>
+              </div>
+              <div style="font-size:var(--meta-v-size); align-self:center; color:var(--muted);">·</div>
+              <div style="display:flex; flex-direction:column; align-items:center;">
+                <div style="font-size:var(--label-size); color:var(--muted); font-weight:700;">Markus</div>
+                <div style="font-size:calc(var(--meta-v-size) * 1.2); font-weight:800; color:var(--surface-ink);">5</div>
+              </div>
+            </div>
+          </div>
+          <div class="cta">Loch 13 starten</div>
+        </div>`,
+    },
+    "3": {
+      headline: '1.700+ <em>Golfplätze</em> weltweit.',
+      sub: "Heimatclub setzen, Plätze in der Nähe finden — von Bad Wiessee bis Belek. Community pflegt Pars und Handicaps.",
+      screen: `${statusBar()}
+        <div class="app">
+          <div>
+            <div class="app-title">Golfplatz wählen</div>
+            <div class="app-sub">In deiner Nähe · 50 km Umkreis</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Heimatclub</div>
+            <div class="tour-row">
+              <div class="tour-meta">
+                <div class="tour-name">GC Bad Wiessee</div>
+                <div class="tour-info">Par 71 · 6.124 m · 18 Loch</div>
+              </div>
+              <span class="pill">★ Heimat</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">In der Nähe</div>
+            <div class="tour-row" style="border-bottom:1px solid var(--border-light); padding-bottom:18px;">
+              <div class="tour-meta">
+                <div class="tour-name">GC Tegernsee</div>
+                <div class="tour-info">Par 72 · 12 km</div>
+              </div>
+              <div class="tour-info">→</div>
+            </div>
+            <div class="tour-row" style="border-bottom:1px solid var(--border-light); padding-bottom:18px;">
+              <div class="tour-meta">
+                <div class="tour-name">GC Margarethenhof</div>
+                <div class="tour-info">Par 71 · 18 km</div>
+              </div>
+              <div class="tour-info">→</div>
+            </div>
+            <div class="tour-row">
+              <div class="tour-meta">
+                <div class="tour-name">München Eichenried</div>
+                <div class="tour-info">Par 72 · 38 km</div>
+              </div>
+              <div class="tour-info">→</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="meta-grid">
+              <div class="meta"><div class="meta-l">DACH</div><div class="meta-v brand">1.376</div></div>
+              <div class="meta"><div class="meta-l">Spanien · PT</div><div class="meta-v">214</div></div>
+              <div class="meta"><div class="meta-l">TR · AE</div><div class="meta-v">42</div></div>
+              <div class="meta"><div class="meta-l">Worldwide</div><div class="meta-v">1.700+</div></div>
+            </div>
+          </div>
+        </div>`,
+    },
+  };
+
+  const s = slides[slide] || slides["1"];
+
+  stage.innerHTML = `
+    <div class="headline">${s.headline}</div>
+    <div class="sub">${s.sub}</div>
+    <div class="phone-frame">
+      <div class="phone-screen">${s.screen}</div>
+    </div>
+  `;
+</script>
+</body>
+</html>

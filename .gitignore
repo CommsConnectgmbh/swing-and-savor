@@ -20,3 +20,7 @@ pwa_build/
 discord/node_modules/
 discord/.env
 
+
+# Screenshot pipeline node_modules
+scripts/asc-screenshots/node_modules/
+scripts/asc-screenshots/package-lock.json
