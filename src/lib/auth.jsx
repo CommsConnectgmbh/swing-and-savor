@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { getStoredReferralCode, clearStoredReferralCode } from './referral'
+import { logDebug } from './debug'
 
 async function claimReferralIfAny() {
   const code = getStoredReferralCode()
@@ -42,8 +43,15 @@ const AuthCtx = createContext({
 const NOT_FOUND = Symbol('profile-not-found')
 
 async function fetchProfileOnce(uid) {
-  const { data, error } = await supabase
+  const t0 = Date.now()
+  const { data, error, status, statusText } = await supabase
     .from('profiles').select('*').eq('id', uid).maybeSingle()
+  logDebug('profiles.fetch', {
+    uid, status, statusText,
+    error: error ? { code: error.code, message: error.message, details: error.details } : null,
+    data_present: !!data,
+    duration_ms: Date.now() - t0,
+  }, uid)
   if (error) throw error
   return data || NOT_FOUND
 }
@@ -72,49 +80,61 @@ export function AuthProvider({ children }) {
   const inflightUidRef = useRef(null)
   const inflightPromiseRef = useRef(null)
 
-  async function loadProfile(uid, { force = false } = {}) {
+  async function loadProfile(uid, { force = false, reason = 'unknown' } = {}) {
     if (!uid) {
       loadedUidRef.current = null
       setProfile(null); setProfileChecked(true)
+      logDebug('loadProfile.skip', { reason: 'no-uid', caller: reason })
       return
     }
     if (!force && loadedUidRef.current === uid) {
       setProfileChecked(true)
+      logDebug('loadProfile.skip', { reason: 'already-loaded', caller: reason, uid }, uid)
       return
     }
-    if (inflightUidRef.current === uid) return inflightPromiseRef.current
+    if (inflightUidRef.current === uid) {
+      logDebug('loadProfile.join-inflight', { caller: reason, uid }, uid)
+      return inflightPromiseRef.current
+    }
 
     inflightUidRef.current = uid
+    logDebug('loadProfile.start', { caller: reason, uid, force }, uid)
     const promise = (async () => {
       try {
         let result = await fetchProfileWithRetry(uid)
+        logDebug('loadProfile.first-result', { uid, found: result !== NOT_FOUND }, uid)
 
         if (result === NOT_FOUND) {
-          // On a stale-token reload the first attempt can race with the
-          // auto-refresh; force a session refresh and retry once.
-          try { await supabase.auth.refreshSession() } catch {}
+          let refreshErr = null
+          try { await supabase.auth.refreshSession() } catch (e) { refreshErr = e?.message || String(e) }
           await new Promise(r => setTimeout(r, 250))
+          let secondFound = false
           try {
             const second = await fetchProfileOnce(uid)
-            if (second !== NOT_FOUND) result = second
+            if (second !== NOT_FOUND) { result = second; secondFound = true }
           } catch (e) {
             console.error('[auth] late retry failed', e)
+            logDebug('loadProfile.late-retry-error', { uid, error: e?.message }, uid)
           }
+          logDebug('loadProfile.late-retry', { uid, secondFound, refreshErr }, uid)
         }
 
-        if (inflightUidRef.current !== uid) return
+        if (inflightUidRef.current !== uid) {
+          logDebug('loadProfile.aborted', { uid, reason: 'inflight-superseded' }, uid)
+          return
+        }
         if (result === NOT_FOUND) {
           setProfile(null)
-          // Do NOT mark loadedUidRef — leaving it open lets a later
-          // TOKEN_REFRESHED (or manual refresh) try again with a fresh JWT,
-          // instead of permanently locking the user into Onboarding.
+          logDebug('loadProfile.done', { uid, outcome: 'NOT_FOUND' }, uid)
         } else {
           setProfile(result)
           loadedUidRef.current = uid
+          logDebug('loadProfile.done', { uid, outcome: 'OK' }, uid)
         }
         setProfileChecked(true)
       } catch (e) {
         console.error('[auth] loadProfile transient failure, keeping prior state', e)
+        logDebug('loadProfile.throw', { uid, error: e?.message, code: e?.code }, uid)
         setProfileChecked(true)
       } finally {
         if (inflightUidRef.current === uid) inflightUidRef.current = null
@@ -138,9 +158,19 @@ export function AuthProvider({ children }) {
       setSessionChecked(true); setProfileChecked(true)
     }, 10000)
 
+    logDebug('auth.boot', { ua: navigator.userAgent, href: location.href })
+
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (cancelled) return
       const u = session?.user ?? null
+      const expSec = session?.expires_at ?? null
+      const ttl = expSec ? expSec * 1000 - Date.now() : null
+      logDebug('auth.event', {
+        event, has_user: !!u, uid: u?.id || null,
+        session_expires_at: expSec, ttl_ms: ttl,
+        access_token_present: !!session?.access_token,
+        refresh_token_present: !!session?.refresh_token,
+      }, u?.id)
       setUser(u)
       setSessionChecked(true)
 
@@ -151,23 +181,19 @@ export function AuthProvider({ children }) {
         return
       }
       if (event === 'TOKEN_REFRESHED') {
-        // Boot-time race: INITIAL_SESSION may fire with a stale access_token
-        // that makes the first profile fetch return nothing. Once the
-        // auto-refresh completes we get TOKEN_REFRESHED — use that as a
-        // second chance if no profile has been loaded yet for this user.
         if (loadedUidRef.current !== u.id) {
           if (inflightPromiseRef.current) {
             try { await inflightPromiseRef.current } catch {}
           }
           if (loadedUidRef.current !== u.id) {
-            await loadProfile(u.id, { force: true })
+            await loadProfile(u.id, { force: true, reason: 'TOKEN_REFRESHED' })
           }
         }
         return
       }
       // SIGNED_IN or INITIAL_SESSION (or PASSWORD_RECOVERY)
       if (loadedUidRef.current !== u.id) {
-        await loadProfile(u.id)
+        await loadProfile(u.id, { reason: event })
       } else {
         setProfileChecked(true)
       }

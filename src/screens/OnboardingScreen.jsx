@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { logDebug, getDebugSessionId } from '../lib/debug'
 import AvatarPicker from '../components/AvatarPicker'
 
 function deriveHandle(email) {
@@ -58,6 +59,7 @@ export default function OnboardingScreen() {
     if (!user?.id) return
     let cancelled = false
     let attempts = 0
+    logDebug('onboarding.mount', { uid: user.id, email: user?.email }, user.id)
     ;(async () => {
       while (!cancelled && attempts < 4) {
         attempts++
@@ -65,22 +67,32 @@ export default function OnboardingScreen() {
           if (attempts > 1) {
             try { await supabase.auth.refreshSession() } catch {}
           }
-          const { data, error } = await supabase
+          const t0 = Date.now()
+          const { data, error, status } = await supabase
             .from('profiles').select('*').eq('id', user.id).maybeSingle()
+          logDebug('onboarding.recovery-attempt', {
+            attempt: attempts, uid: user.id, status,
+            error: error ? { code: error.code, message: error.message } : null,
+            data_present: !!data,
+            duration_ms: Date.now() - t0,
+          }, user.id)
           if (cancelled) return
           if (error) {
             console.warn('[onboarding] recovery query error', error)
           } else if (data) {
             console.log('[onboarding] existing profile found, recovering')
+            logDebug('onboarding.recovered', { uid: user.id, attempt: attempts }, user.id)
             setProfileDirect(data)
             navigate('/board', { replace: true })
             return
           }
         } catch (e) {
           console.warn('[onboarding] recovery attempt failed', e)
+          logDebug('onboarding.recovery-throw', { attempt: attempts, error: e?.message }, user.id)
         }
         await new Promise(r => setTimeout(r, 600 * attempts))
       }
+      if (!cancelled) logDebug('onboarding.recovery-exhausted', { uid: user.id }, user.id)
     })()
     return () => { cancelled = true }
   }, [user?.id])
@@ -237,6 +249,9 @@ export default function OnboardingScreen() {
 
           <div className="text-[10px] text-inkDim text-center pt-2 break-all">
             user: <span className="text-accent">{user?.id || '—'}</span>
+          </div>
+          <div className="text-[10px] text-inkDim text-center break-all">
+            diag: <span className="text-accent">{getDebugSessionId()}</span>
           </div>
         </form>
       </div>
