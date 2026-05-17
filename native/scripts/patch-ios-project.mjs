@@ -70,10 +70,17 @@ const PERMS = [
   ['NSLocationWhenInUseUsageDescription',
    'Swing & Savor zeigt dir Golfplätze in deiner Nähe, damit du deinen Heimatclub schnell findest.'],
 ];
+// XML-Escape für Plist-Strings (& muss &amp;, sonst PropertyListConversionError)
+function xmlEsc(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 let infoChanged = false;
 for (const [key, desc] of PERMS) {
   if (!info.includes(`<key>${key}</key>`)) {
-    info = info.replace(/(<dict>\s*\n)/, `$1\t<key>${key}</key>\n\t<string>${desc}</string>\n`);
+    info = info.replace(/(<dict>\s*\n)/, `$1\t<key>${key}</key>\n\t<string>${xmlEsc(desc)}</string>\n`);
     infoChanged = true;
     console.log('Info.plist:', key, 'hinzugefügt.');
   }
