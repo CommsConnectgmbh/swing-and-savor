@@ -1,3 +1,15 @@
 node_modules
 dist
 .env.local
+.vercel
+.claude/
+
+# Legacy build artifacts — never re-commit
+deploy_upload/
+deploy_upload.zip
+pwa_build/
+
+# Apple Bootstrap secrets — never commit
+.local-secrets/
+.apple-bootstrap/secrets/
+.apple-bootstrap/node_modules/

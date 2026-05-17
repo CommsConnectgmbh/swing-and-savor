@@ -1,26 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      manifest: {
-        name: 'Golf Cup',
-        short_name: 'Golf Cup',
-        description: 'Ryder Cup Turnier Manager',
-        theme_color: '#0a0a0a',
-        background_color: '#0a0a0a',
-        display: 'standalone',
-        icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-        ],
+  base: '/',
+  plugins: [react()],
+  build: {
+    target: 'es2020',
+    sourcemap: false,
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('react-router')) return 'router'
+          if (id.includes('react-dom') || id.includes('/react/')) return 'react'
+          return 'vendor'
+        },
       },
-    }),
-  ],
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

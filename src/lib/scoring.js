@@ -15,15 +15,25 @@ export function calcMatchStanding(holeResults) {
   return { holesUp, leader, label, holesPlayed: holeResults.length }
 }
 
-export function calcTeamPoints(matches) {
+export function calcTeamPoints(matches, holesByMatch = {}) {
   let A = 0
   let B = 0
 
   for (const match of matches) {
-    if (match.status !== 'finished') continue
-    if (match.winner === 'A') A += 1
-    else if (match.winner === 'B') B += 1
-    else if (match.winner === 'halved') { A += 0.5; B += 0.5 }
+    if (match.status === 'finished') {
+      if (match.winner === 'A') A += 1
+      else if (match.winner === 'B') B += 1
+      else if (match.winner === 'halved') { A += 0.5; B += 0.5 }
+    } else if (match.status === 'active') {
+      // Live projection: current standing counts as projected point
+      const holes = holesByMatch[match.id] || []
+      if (holes.length > 0) {
+        const standing = calcMatchStanding(holes)
+        if (standing.leader === 'A') A += 1
+        else if (standing.leader === 'B') B += 1
+        else { A += 0.5; B += 0.5 }
+      }
+    }
   }
 
   return { A, B }

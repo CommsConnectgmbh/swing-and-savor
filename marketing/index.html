@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Swing &amp; Savor — Golf-Turniere, Duelle &amp; Live-Leaderboard</title>
+    <meta name="description" content="Match Play, Cup-Bracket, 1.700+ Plätze weltweit, Live-Scoring und direkte Duelle gegen Freunde — als PWA und Native-App für iOS &amp; Android." />
+
+    <meta name="theme-color" content="#0d271e" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+    <meta property="og:title" content="Swing &amp; Savor — Golf-Turniere &amp; Duelle" />
+    <meta property="og:description" content="Match Play, Cup-Bracket, 1.700+ Plätze, Live-Scoring. PWA + Native iOS/Android." />
+    <meta property="og:image" content="https://swingandsavor.at/logo.png" />
+    <meta property="og:url" content="https://swingandsavor.at/" />
+    <meta property="og:type" content="website" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+      :root {
+        --brand:       #1f3f2c;
+        --brand-dark:  #0d271e;
+        --brand-deep:  #06140e;
+        --green:       #98cd02;
+        --green-soft:  rgba(152, 205, 2, 0.12);
+        --green-edge:  rgba(152, 205, 2, 0.3);
+        --ink:         #ffffff;
+        --muted:       #a8b5ad;
+        --dim:         rgba(255, 255, 255, 0.5);
+        --line:        rgba(255, 255, 255, 0.08);
+      }
+      html, body { height: 100%; }
+      body {
+        background: radial-gradient(120% 80% at 50% -10%, #1f3f2c 0%, #0d271e 55%, #06140e 100%);
+        color: var(--ink);
+        font-family: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
+      }
+      a { color: inherit; text-decoration: none; }
+
+      .nav {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1.25rem 1.5rem; max-width: 1080px; margin: 0 auto;
+      }
+      .nav .brand {
+        display: flex; align-items: center; gap: 0.6rem;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 800; letter-spacing: 0.05em; font-size: 1.05rem; text-transform: uppercase;
+      }
+      .nav .brand img { width: 32px; height: 32px; border-radius: 8px; }
+      .nav .links { display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+      .nav .links a:hover { color: var(--green); }
+      .nav .cta {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 0.85rem; letter-spacing: 0.16em; text-transform: uppercase;
+        padding: 0.55rem 1.1rem; border-radius: 999px;
+        background: var(--green); color: var(--brand-dark);
+      }
+      @media (max-width: 640px) { .nav .links { display: none; } }
+
+      section { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+      /* Hero */
+      .hero {
+        text-align: center; padding: 3rem 1.5rem 4rem;
+        position: relative;
+      }
+      .hero .logo {
+        width: clamp(140px, 24vw, 220px); height: auto;
+        filter: drop-shadow(0 24px 60px rgba(0,0,0,0.55));
+        margin-bottom: 1.75rem;
+      }
+      .eyebrow {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 0.78rem;
+        letter-spacing: 0.42em; text-transform: uppercase;
+        color: var(--green); margin-bottom: 1rem;
+      }
+      .hero h1 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: clamp(2.5rem, 7.5vw, 5rem);
+        font-weight: 900; line-height: 0.92; letter-spacing: -0.015em;
+        max-width: 880px; margin: 0 auto;
+      }
+      .hero h1 .amp { color: var(--green); font-style: italic; padding: 0 0.06em; }
+      .hero .lead {
+        font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+        color: var(--muted); max-width: 36rem;
+        margin: 1.4rem auto 2.5rem; line-height: 1.55;
+      }
+      .ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 0.95rem;
+        letter-spacing: 0.16em; text-transform: uppercase;
+        padding: 0.95rem 1.6rem; border-radius: 999px;
+        border: 1px solid var(--line);
+        transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .btn-primary { background: var(--green); color: var(--brand-dark); border-color: var(--green); }
+      .btn-ghost { background: rgba(255,255,255,0.04); color: var(--ink); }
+      .btn-ghost:hover { border-color: var(--green-edge); }
+
+      .hero-meta {
+        display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+        margin-top: 2.5rem; font-size: 0.78rem; color: var(--dim);
+        font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.18em; text-transform: uppercase;
+      }
+      .hero-meta strong { color: var(--ink); font-weight: 800; }
+
+      /* Sections */
+      .section-head { text-align: center; margin: 4rem 0 2.5rem; }
+      .section-head .kicker {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.4em; text-transform: uppercase;
+        color: var(--green); margin-bottom: 0.6rem;
+      }
+      .section-head h2 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: clamp(1.75rem, 4vw, 2.6rem);
+        font-weight: 900; letter-spacing: -0.01em;
+      }
+      .section-head p {
+        color: var(--muted); margin-top: 0.85rem;
+        max-width: 38rem; margin-left: auto; margin-right: auto; line-height: 1.55;
+      }
+
+      /* Feature grid */
+      .features {
+        display: grid; gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .feat {
+        position: relative; padding: 1.4rem 1.4rem 1.5rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--green-edge); border-radius: 18px;
+        transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+      }
+      .feat:hover { transform: translateY(-2px); border-color: var(--green); background: rgba(152,205,2,0.04); }
+      .feat .ico {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: var(--green-soft); border: 1px solid var(--green-edge);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 1rem; color: var(--green);
+      }
+      .feat h3 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.15rem; font-weight: 800; letter-spacing: 0.02em;
+        text-transform: uppercase; margin-bottom: 0.4rem;
+      }
+      .feat p { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+
+      /* Steps */
+      .steps {
+        display: grid; gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      }
+      .step {
+        padding: 1.4rem; border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+        border: 1px solid var(--line);
+      }
+      .step .num {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 2.4rem; font-weight: 900; line-height: 1; color: var(--green);
+        display: block; margin-bottom: 0.4rem;
+      }
+      .step h3 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.05rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+        margin-bottom: 0.4rem;
+      }
+      .step p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+
+      /* DealBuddy band */
+      .dealbuddy {
+        margin: 4rem 0 0; padding: 2.2rem 1.6rem;
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(152, 205, 2, 0.06));
+        border: 1px solid rgba(255, 215, 0, 0.18);
+        border-radius: 22px; text-align: center;
+      }
+      .dealbuddy .badge {
+        display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px;
+        background: rgba(255, 215, 0, 0.12); color: #f6d34a;
+        font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;
+        margin-bottom: 1rem;
+      }
+      .dealbuddy h2 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+        font-weight: 900; letter-spacing: -0.01em; margin-bottom: 0.7rem;
+      }
+      .dealbuddy p { color: var(--muted); max-width: 38rem; margin: 0 auto 1.4rem; line-height: 1.55; }
+      .dealbuddy .row { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+
+      /* Platforms */
+      .platforms {
+        display: grid; gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 2rem;
+      }
+      .plat {
+        padding: 1.5rem; border-radius: 18px;
+        background: rgba(255,255,255,0.025); border: 1px solid var(--line);
+        text-align: center;
+      }
+      .plat .label {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.3em; text-transform: uppercase;
+        color: var(--green); margin-bottom: 0.5rem; display: block;
+      }
+      .plat h4 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.15rem; font-weight: 800; margin-bottom: 0.5rem;
+      }
+      .plat p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+      /* CTA bottom */
+      .cta-band {
+        margin: 4rem 0 5rem; padding: 3rem 1.6rem;
+        text-align: center;
+        background: radial-gradient(60% 100% at 50% 0%, rgba(152,205,2,0.18) 0%, transparent 70%);
+        border: 1px solid var(--green-edge); border-radius: 24px;
+      }
+      .cta-band h2 {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: clamp(1.75rem, 4vw, 2.6rem);
+        font-weight: 900; margin-bottom: 0.8rem; letter-spacing: -0.01em;
+      }
+      .cta-band p { color: var(--muted); margin-bottom: 1.8rem; max-width: 32rem; margin-left: auto; margin-right: auto; }
+
+      footer {
+        padding: 2rem 1.5rem 3rem; text-align: center;
+        font-size: 0.78rem; color: var(--dim); border-top: 1px solid var(--line);
+      }
+      footer a { color: rgba(255,255,255,0.7); }
+      footer a:hover { color: var(--green); }
+      footer .row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.7rem; }
+    </style>
+  </head>
+  <body>
+    <nav class="nav">
+      <a class="brand" href="/">
+        <img src="logo.png" alt="" />
+        <span>Swing &amp; Savor</span>
+      </a>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#wie">Wie es geht</a>
+        <a href="#plattform">Plattform</a>
+      </div>
+      <a class="cta" href="https://app.swingandsavor.at/">Zur App</a>
+    </nav>
+
+    <section class="hero">
+      <img src="logo.png" alt="Swing & Savor Wappen" class="logo" />
+      <div class="eyebrow">Match Play · Cup Bracket · Live-Scoring</div>
+      <h1>Golf-Turniere. Duelle. <span class="amp">&amp;</span> Live-Leaderboard.</h1>
+      <p class="lead">
+        Lege Ryder-Cup-Turniere an, fordere Freunde zu Match-Play-Duellen heraus
+        und verfolge jedes Loch live. 1.700+ Plätze weltweit, OSM-Daten direkt in der App.
+      </p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="https://app.swingandsavor.at/">App öffnen</a>
+        <a class="btn btn-ghost" href="#features">Features ansehen</a>
+      </div>
+      <div class="hero-meta">
+        <span><strong>1.745</strong> Plätze</span>
+        <span><strong>Live</strong> Scoring</span>
+        <span><strong>PWA</strong> + Native iOS/Android</span>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="section-head">
+        <span class="kicker">Was drin steckt</span>
+        <h2>Alles für die Runde — vor, während und nach dem Match</h2>
+        <p>Von der Tee-Time bis zur Auswertung. Mobile-first, ohne Schnickschnack.</p>
+      </div>
+      <div class="features">
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>
+            </svg>
+          </div>
+          <h3>Match Play</h3>
+          <p>Singles &amp; Doubles 2v2 mit Handicap-Vorgabe. Loch-für-Loch-Scoring mit Auto-Stand &amp; Dormie-Logik.</p>
+        </article>
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 21h8M12 17v4M5 4h14l-1 9a6 6 0 01-12 0L5 4z"/>
+            </svg>
+          </div>
+          <h3>Cup Bracket</h3>
+          <p>Eigene Ryder-Cup-Turniere mit Team A/B, Bracket-Verfolgung und Live-Punktestand auf einem Blick.</p>
+        </article>
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+          </div>
+          <h3>Live-Leaderboard</h3>
+          <p>Realtime über Supabase. Jeder Score-Eintrag taucht sofort beim ganzen Flight auf — auch ohne App.</p>
+        </article>
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="10" r="3"/><path d="M12 21s-7-7-7-12a7 7 0 0114 0c0 5-7 12-7 12z"/>
+            </svg>
+          </div>
+          <h3>1.700+ Plätze</h3>
+          <p>DE, AT, CH, ES (Mallorca, Costa del Sol), TR Belek, AE Dubai &amp; mehr — mit Par-/HCP-Daten pro Loch.</p>
+        </article>
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <h3>Freunde &amp; Duelle</h3>
+          <p>Such Freunde per @handle, schick eine Anfrage und fordere sie zum Singles- oder Doubles-Duell.</p>
+        </article>
+        <article class="feat">
+          <div class="ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 9h6v6H9z"/>
+            </svg>
+          </div>
+          <h3>Match-Statistik</h3>
+          <p>Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="wie">
+      <div class="section-head">
+        <span class="kicker">Wie es geht</span>
+        <h2>In drei Schritten zum Live-Match</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="num">01</span>
+          <h3>Anmelden</h3>
+          <p>8-stelliger Code per Email. Kein Passwort, kein Magic-Link. Profil mit Handle, HCP &amp; Heimatclub.</p>
+        </div>
+        <div class="step">
+          <span class="num">02</span>
+          <h3>Turnier oder Duell</h3>
+          <p>Eigenes Cup-Turnier mit Team A/B aufsetzen oder einen Freund direkt zum Match-Play herausfordern.</p>
+        </div>
+        <div class="step">
+          <span class="num">03</span>
+          <h3>Live spielen</h3>
+          <p>Loch für Loch eintippen. Stand, Lochgewinner und Restbahnen rechnen sich automatisch.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="dealbuddy">
+        <span class="badge">Mit DealBuddy verknüpft</span>
+        <h2>Freunde direkt herausfordern — mit echtem Einsatz</h2>
+        <p>
+          Jedes Duell lässt sich in einem Tap auf <a href="https://deal-buddy.app/" style="color:var(--green); text-decoration:underline;">DealBuddy</a>
+          posten. Einsatz festlegen, Reliability-Score aufbauen, AI-Sammelkarten gewinnen.
+          Kein Glücksspiel — soziale Wetten zwischen Freunden.
+        </p>
+        <div class="row">
+          <a class="btn btn-primary" href="https://app.swingandsavor.at/friends">Zu deinen Freunden</a>
+          <a class="btn btn-ghost" href="https://deal-buddy.app/">Was ist DealBuddy?</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="plattform">
+      <div class="section-head">
+        <span class="kicker">Verfügbar</span>
+        <h2>Browser-PWA und Native-Apps</h2>
+        <p>Spiel direkt im Browser, installiere die App auf dem Home-Screen oder lade die Native-Version aus dem Store.</p>
+      </div>
+      <div class="platforms">
+        <div class="plat">
+          <span class="label">Web</span>
+          <h4>app.swingandsavor.at</h4>
+          <p>Lädt sofort, ohne Install. Optimiert für iOS- und Android-Browser.</p>
+        </div>
+        <div class="plat">
+          <span class="label">iOS</span>
+          <h4>App Store</h4>
+          <p>Native Wrapper über Capacitor 7. Push-Benachrichtigungen für Duelle.</p>
+        </div>
+        <div class="plat">
+          <span class="label">Android</span>
+          <h4>Google Play</h4>
+          <p>Eigene App-ID <code style="font-family:monospace;font-size:0.75em;color:var(--green);">de.commsconnect.swingandsavor</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="cta-band">
+        <h2>Bereit für die nächste Runde?</h2>
+        <p>Lade Freunde ein, leg ein Turnier an — und lass die App den Rest rechnen.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="https://app.swingandsavor.at/">App öffnen</a>
+          <a class="btn btn-ghost" href="mailto:hi@swingandsavor.at">Kontakt aufnehmen</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="row">
+        <a href="https://app.swingandsavor.at/">App</a>
+        <a href="mailto:hi@swingandsavor.at">Kontakt</a>
+        <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">Datenschutz</a>
+      </div>
+      <div>&copy; <span id="y"></span> Comms Connect GmbH &middot; <a href="mailto:hi@swingandsavor.at">hi@swingandsavor.at</a></div>
+      <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+    </footer>
+  </body>
+</html>

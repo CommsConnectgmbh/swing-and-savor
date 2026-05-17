@@ -1,0 +1,17 @@
+node_modules
+ios/App/build
+ios/App/Pods
+ios/App/Podfile.lock
+ios/DerivedData
+android/.gradle
+android/build
+android/app/build
+android/app/release
+android/local.properties
+android/.idea
+*.keystore
+*.jks
+*.p12
+*.p8
+.env
+.env.local

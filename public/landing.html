@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golf Cup — Ryder Cup Tournament Tracker</title>
+  <meta name="description" content="Golf Cup is a Ryder Cup-style tournament tracker. Live scoreboard, match play scoring, team management. Free PWA — install on any device." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0b0d12;
+      --bg2:      #0f1218;
+      --bg3:      #13161f;
+      --border:   #1e2538;
+      --border2:  #252c3d;
+      --muted:    #4a5568;
+      --text:     #e5e7eb;
+      --green:    #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --blue:     #3b82f6;
+      --red:      #ef4444;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 400;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRID TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34,197,94,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,197,94,0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── FADE-IN ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(.16,1,.3,1), transform 0.7s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 60px;
+      background: rgba(11,13,18,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.25rem;
+      letter-spacing: 0.06em;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--green); }
+
+    .nav-cta {
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: var(--green);
+      color: #000;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 100px 24px 80px;
+      overflow: hidden;
+    }
+
+    /* glow orbs */
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-eyebrow::before,
+    .hero-eyebrow::after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--green);
+      opacity: 0.4;
+    }
+
+    .hero-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(4.5rem, 18vw, 8rem);
+      line-height: 0.92;
+      letter-spacing: -0.01em;
+      color: #fff;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .hero-title-line2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.4rem, 5vw, 2.2rem);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    /* live score widget */
+    .hero-score {
+      display: inline-flex;
+      align-items: stretch;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      margin-bottom: 40px;
+    }
+    .score-team {
+      padding: 14px 24px;
+      text-align: center;
+    }
+    .score-team-a { background: rgba(59,130,246,0.08); }
+    .score-team-b { background: rgba(239,68,68,0.08); }
+    .score-team-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .score-team-a .score-team-label { color: var(--blue); }
+    .score-team-b .score-team-label { color: var(--red); }
+    .score-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 2.8rem;
+      line-height: 1;
+    }
+    .score-team-a .score-num { color: var(--blue); }
+    .score-team-b .score-num { color: var(--red); }
+    .score-divider {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .score-divider span {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--border2);
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 28px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-outline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 28px;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border2);
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    .btn-outline:hover {
+      border-color: rgba(229,231,235,0.3);
+      background: rgba(229,231,235,0.04);
+      transform: translateY(-1px);
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+    .hero-scroll span {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .scroll-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    /* ─── SECTION BASE ─── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 80px 24px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--green);
+    }
+
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 7vw, 3rem);
+      line-height: 1.0;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 48px;
+    }
+
+    /* ─── FEATURES ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .feature-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .feature-card:hover {
+      border-color: rgba(34,197,94,0.25);
+      background: rgba(34,197,94,0.03);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+    .feature-icon svg { color: var(--green); }
+
+    .feature-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ─── MOCKUP / SCREENSHOTS ─── */
+    .mockup-section {
+      padding: 80px 0;
+      overflow: hidden;
+    }
+
+    .mockup-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .phones-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .phone {
+      width: 160px;
+      border-radius: 28px;
+      border: 1.5px solid var(--border2);
+      background: var(--bg2);
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    }
+    .phone.center {
+      width: 180px;
+      transform: translateY(-20px);
+      border-color: rgba(34,197,94,0.3);
+      box-shadow: 0 0 40px rgba(34,197,94,0.1), 0 40px 80px rgba(0,0,0,0.8);
+    }
+    .phone-notch {
+      width: 60px;
+      height: 6px;
+      background: var(--border2);
+      border-radius: 10px;
+      margin: 12px auto 0;
+    }
+    .phone-screen {
+      padding: 12px 10px 16px;
+    }
+
+    /* Board mockup */
+    .mock-board-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .mock-eyebrow {
+      font-size: 6px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mock-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 16px;
+      color: #fff;
+      margin: 2px 0;
+    }
+    .mock-badge {
+      display: inline-block;
+      font-size: 6px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.25);
+    }
+    .mock-score-card {
+      display: flex;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      margin-bottom: 8px;
+    }
+    .mock-score-side {
+      flex: 1;
+      text-align: center;
+      padding: 10px 6px;
+    }
+    .mock-score-side.a { background: rgba(59,130,246,0.08); }
+    .mock-score-side.b { background: rgba(239,68,68,0.08); }
+    .mock-score-lbl {
+      font-size: 5px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .mock-score-side.a .mock-score-lbl { color: var(--blue); }
+    .mock-score-side.b .mock-score-lbl { color: var(--red); }
+    .mock-score-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      line-height: 1;
+    }
+    .mock-score-side.a .mock-score-num { color: var(--blue); }
+    .mock-score-side.b .mock-score-num { color: var(--red); }
+    .mock-score-mid {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .mock-score-mid span {
+      font-size: 10px;
+      color: var(--border2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+    }
+    .mock-match {
+      border-radius: 8px;
+      padding: 7px 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .mock-match-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .mock-match-type {
+      font-size: 5px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mock-match-status {
+      font-size: 5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f59e0b;
+    }
+    .mock-match-players {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .mock-player {
+      flex: 1;
+      font-size: 7px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mock-player.a { color: #93c5fd; }
+    .mock-player.b { color: #fca5a5; text-align: right; }
+    .mock-standing {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 11px;
+      color: var(--blue);
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: rgba(59,130,246,0.12);
+    }
+
+    /* Match detail mockup */
+    .mock-detail-header {
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .mock-detail-type {
+      font-size: 6px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .mock-detail-score {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 28px;
+      line-height: 1;
+    }
+    .mock-hole-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr 20px;
+      gap: 3px;
+      margin-bottom: 3px;
+      align-items: center;
+    }
+    .mock-par {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .mock-par-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 12px;
+      color: #fff;
+    }
+    .mock-par-hole {
+      font-size: 6px;
+      color: var(--muted);
+    }
+    .mock-input {
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+    }
+    .mock-input.a-win { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .mock-input.b-win { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .mock-input.empty { background: #1a2030; color: transparent; }
+    .mock-dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      margin: 0 auto;
+    }
+    .mock-dot.a { background: var(--blue); }
+    .mock-dot.b { background: var(--red); }
+    .mock-dot.empty { background: #1a2030; }
+    .mock-dot.half { background: #f59e0b; }
+
+    /* Teams mockup */
+    .mock-team-header {
+      margin-bottom: 8px;
+    }
+    .mock-team-section {
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+    .mock-team-label {
+      font-size: 6px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .mock-player-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .mock-player-name {
+      font-size: 8px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .mock-hc-badge {
+      font-size: 5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 1.5px 4px;
+      border-radius: 4px;
+      background: var(--bg3);
+      color: var(--muted);
+      border: 1px solid var(--border2);
+    }
+
+    /* ─── DOWNLOAD ─── */
+    .download-section {
+      padding: 80px 24px;
+      max-width: 640px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .download-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .download-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34,197,94,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .download-platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .platform-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    .platform-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+
+    .platform-card.android .platform-icon {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+    .platform-card.ios .platform-icon {
+      background: rgba(229,231,235,0.05);
+      border: 1px solid var(--border2);
+    }
+
+    .platform-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .platform-desc {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .btn-download {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--green);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn-download:hover { opacity: 0.85; }
+
+    .btn-ios-guide {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border2);
+      cursor: default;
+      opacity: 0.6;
+    }
+
+    .ios-steps {
+      margin-top: 12px;
+      text-align: left;
+    }
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .ios-step:last-child { border-bottom: none; }
+    .ios-step-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .ios-step-text {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.5rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .footer-logo span { color: var(--green); }
+
+    .footer-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ─── DIVIDER LINE ─── */
+    .section-divider {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 480px) {
+      .phones-row { gap: 8px; }
+      .phone { width: 120px; }
+      .phone.center { width: 140px; }
+      .hero-title { font-size: clamp(3.5rem, 20vw, 5rem); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">Golf<span>Cup</span></a>
+    <a href="#download" class="nav-cta">Download</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow reveal">Match Play Tracker</div>
+
+    <h1 class="hero-title reveal reveal-delay-1">Golf<br>Cup</h1>
+    <p class="hero-title-line2 reveal reveal-delay-2">Ryder Cup-Style Tournament</p>
+
+    <!-- Live score widget -->
+    <div class="hero-score reveal reveal-delay-2">
+      <div class="score-team score-team-a">
+        <span class="score-team-label">Europe</span>
+        <span class="score-num">9</span>
+      </div>
+      <div class="score-divider"><span>—</span></div>
+      <div class="score-team score-team-b">
+        <span class="score-team-label">USA</span>
+        <span class="score-num">7</span>
+      </div>
+    </div>
+
+    <div class="hero-buttons reveal reveal-delay-3">
+      <a href="golf-cup.apk" download="golf-cup.apk" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download for Android
+      </a>
+      <a href="https://swingandsavor.at/app/" class="btn-outline" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        Open Web App
+      </a>
+    </div>
+
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-label reveal">Features</div>
+    <h2 class="section-title reveal reveal-delay-1">Built for the course.</h2>
+
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <div class="feature-title">Live Board</div>
+        <div class="feature-desc">Real-time Ryder Cup scoreboard via Supabase WebSockets.</div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/></svg>
+        </div>
+        <div class="feature-title">Match Play</div>
+        <div class="feature-desc">18-hole scorecard. Singles & doubles. Auto-save every hole.</div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div class="feature-title">Teams</div>
+        <div class="feature-desc">Manage players with handicap. Custom team names.</div>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-4">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+        </div>
+        <div class="feature-title">PWA</div>
+        <div class="feature-desc">Install on any device. Works great on iOS & Android.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- MOCKUP SCREENSHOTS -->
+  <section class="mockup-section">
+    <div class="mockup-inner">
+      <div class="section-label reveal">App Preview</div>
+      <h2 class="section-title reveal reveal-delay-1">Every screen,<br>refined.</h2>
+
+      <div class="phones-row">
+
+        <!-- Phone Left: Teams -->
+        <div class="phone reveal reveal-delay-1">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="mock-team-header">
+              <div class="mock-eyebrow">Golf Cup</div>
+              <div class="mock-title">Teams</div>
+            </div>
+            <div class="mock-team-section">
+              <div class="mock-team-label" style="color: #60a5fa;">Europe · 4</div>
+              <div class="mock-player-row">
+                <span class="mock-player-name">McIlroy</span>
+                <span class="mock-hc-badge">HC 1.2</span>
+              </div>
+              <div class="mock-player-row">
+                <span class="mock-player-name">Rahm</span>
+                <span class="mock-hc-badge">HC 0.4</span>
+              </div>
+              <div class="mock-player-row">
+                <span class="mock-player-name">Fleetwood</span>
+                <span class="mock-hc-badge">HC 2.1</span>
+              </div>
+            </div>
+            <div class="mock-team-section">
+              <div class="mock-team-label" style="color: #fca5a5;">USA · 3</div>
+              <div class="mock-player-row">
+                <span class="mock-player-name">Scheffler</span>
+                <span class="mock-hc-badge">HC 0.1</span>
+              </div>
+              <div class="mock-player-row">
+                <span class="mock-player-name">Cantlay</span>
+                <span class="mock-hc-badge">HC 1.8</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Center: Board -->
+        <div class="phone center reveal reveal-delay-2">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="mock-board-header">
+              <div class="mock-eyebrow">12 Jun 2025</div>
+              <div class="mock-title">Ryder Cup</div>
+              <span class="mock-badge">Active</span>
+            </div>
+            <div class="mock-score-card">
+              <div class="mock-score-side a">
+                <span class="mock-score-lbl">Europe</span>
+                <span class="mock-score-num">9</span>
+              </div>
+              <div class="mock-score-mid"><span>—</span></div>
+              <div class="mock-score-side b">
+                <span class="mock-score-lbl">USA</span>
+                <span class="mock-score-num">7</span>
+              </div>
+            </div>
+            <div class="mock-match">
+              <div class="mock-match-top">
+                <span class="mock-match-type">Singles</span>
+                <span class="mock-match-status">● H.14</span>
+              </div>
+              <div class="mock-match-players">
+                <span class="mock-player a">McIlroy</span>
+                <span class="mock-standing">2UP</span>
+                <span class="mock-player b">Scheffler</span>
+              </div>
+            </div>
+            <div class="mock-match">
+              <div class="mock-match-top">
+                <span class="mock-match-type">Doubles</span>
+                <span class="mock-match-status" style="color:#22c55e;">FIN</span>
+              </div>
+              <div class="mock-match-players">
+                <span class="mock-player a">Rahm & Co</span>
+                <span class="mock-standing" style="color:#f59e0b; background:rgba(245,158,11,0.1);">A/S</span>
+                <span class="mock-player b">USA pair</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Right: Match Detail -->
+        <div class="phone reveal reveal-delay-3">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="mock-detail-header">
+              <div class="mock-detail-type">Singles</div>
+              <div class="mock-detail-score">
+                <span style="color:#22c55e;">5</span>
+                <span style="color:#1e2538; font-size:20px;">:</span>
+                <span style="color:#9ca3af;">3</span>
+              </div>
+            </div>
+            <div class="mock-hole-row">
+              <div class="mock-par"><span class="mock-par-num">4</span><span class="mock-par-hole"> 1</span></div>
+              <div class="mock-input a-win">4</div>
+              <div class="mock-input b-win" style="background:rgba(239,68,68,0.15); color:#fca5a5; border: 1px solid rgba(239,68,68,0.3);">5</div>
+              <div class="mock-dot a"></div>
+            </div>
+            <div class="mock-hole-row">
+              <div class="mock-par"><span class="mock-par-num">3</span><span class="mock-par-hole"> 2</span></div>
+              <div class="mock-input b-win" style="background:#141820; color:#4a5568; border:1px solid transparent;">3</div>
+              <div class="mock-input a-win" style="background:rgba(239,68,68,0.15); color:#fca5a5; border: 1px solid rgba(239,68,68,0.3);">2</div>
+              <div class="mock-dot b"></div>
+            </div>
+            <div class="mock-hole-row">
+              <div class="mock-par"><span class="mock-par-num">5</span><span class="mock-par-hole"> 3</span></div>
+              <div class="mock-input a-win">5</div>
+              <div class="mock-input b-win" style="background:#141820; color:#4a5568; border:1px solid transparent;">5</div>
+              <div class="mock-dot half"></div>
+            </div>
+            <div class="mock-hole-row">
+              <div class="mock-par"><span class="mock-par-num">4</span><span class="mock-par-hole"> 4</span></div>
+              <div class="mock-input empty">–</div>
+              <div class="mock-input empty">–</div>
+              <div class="mock-dot empty"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- DOWNLOAD -->
+  <section class="download-section" id="download">
+    <div class="section-label reveal" style="justify-content:center;">Get the App</div>
+    <h2 class="section-title reveal reveal-delay-1">Install on<br>any device.</h2>
+
+    <div class="download-card reveal reveal-delay-2">
+      <div class="download-platforms">
+
+        <!-- Android -->
+        <div class="platform-card android">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 16V8a7 7 0 0114 0v8"/><rect x="3" y="16" width="18" height="5" rx="2"/><line x1="8" y1="16" x2="8" y2="21"/><line x1="16" y1="16" x2="16" y2="21"/>
+            </svg>
+          </div>
+          <div class="platform-name">Android</div>
+          <div class="platform-desc">Download the APK and install directly on your device.</div>
+          <a href="golf-cup.apk" download="golf-cup.apk" class="btn-download">Download APK</a>
+        </div>
+
+        <!-- iOS -->
+        <div class="platform-card ios">
+          <div class="platform-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <div class="platform-name">iPhone</div>
+          <div class="platform-desc">Open in Safari and add to your home screen.</div>
+          <span class="btn-ios-guide">Add to Home Screen</span>
+        </div>
+
+      </div>
+
+      <!-- iOS Steps -->
+      <div class="ios-steps reveal reveal-delay-3">
+        <p style="font-size:0.7rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">iOS Install Guide</p>
+        <div class="ios-step">
+          <span class="ios-step-num">1</span>
+          <span class="ios-step-text">Open <strong style="color:var(--text);">swingandsavor.at/app</strong> in Safari</span>
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-num">2</span>
+          <span class="ios-step-text">Tap the Share icon <strong style="color:var(--text);">⎙</strong> at the bottom</span>
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-num">3</span>
+          <span class="ios-step-text">Tap <strong style="color:var(--text);">"Add to Home Screen"</strong></span>
+        </div>
+        <div class="ios-step">
+          <span class="ios-step-num">4</span>
+          <span class="ios-step-text">Tap <strong style="color:var(--text);">"Add"</strong> — Golf Cup appears on your home screen</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Golf<span>Cup</span></div>
+    <p class="footer-text">Golf Cup · Built with ❤️ for Match Play fans</p>
+    <div class="footer-links">
+      <a href="#" onclick="openModal('impressum');return false;">Impressum</a>
+      <span>·</span>
+      <a href="#" onclick="openModal('datenschutz');return false;">Datenschutz</a>
+    </div>
+  </footer>
+
+  <!-- IMPRESSUM MODAL -->
+  <div id="modal-impressum" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Impressum</h2>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <div class="legal-block">
+          <p class="legal-label">Angaben gemäß § 5 TMG</p>
+          <p><strong>Comms Connect GmbH</strong></p>
+          <p>Tal 30<br>80331 München<br>Deutschland</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Kontakt</p>
+          <p>Telefon: <a href="tel:+498945221556">+49 89 4522 1556</a></p>
+          <p>E-Mail: <a href="mailto:info@deal-buddy.app">info@deal-buddy.app</a></p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Vertreten durch</p>
+          <p>Rainer Roloff (Geschäftsführer)</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Handelsregister</p>
+          <p>Amtsgericht München · HRB 295951</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Umsatzsteuer-ID</p>
+          <p>DE451966748</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Streitschlichtung</p>
+          <p>Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. EU-Streitschlichtung: <a href="https://ec.europa.eu/consumers/odr" target="_blank">ec.europa.eu/consumers/odr</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATENSCHUTZ MODAL -->
+  <div id="modal-datenschutz" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Datenschutzerklärung</h2>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <div class="legal-block">
+          <p class="legal-label">Verantwortlicher</p>
+          <p><strong>Comms Connect GmbH</strong><br>Tal 30, 80331 München<br>Tel: +49 89 4522 1556<br>E-Mail: <a href="mailto:info@deal-buddy.app">info@deal-buddy.app</a></p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Welche Daten werden gespeichert?</p>
+          <p>Golf Cup speichert ausschließlich Turnierdaten, die Nutzer selbst eingeben: Turniernamen, Spielernamen, Mannschaftsnamen und Spielergebnisse. Es werden keine personenbezogenen Daten ohne Einwilligung erhoben.</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Hosting & Infrastruktur</p>
+          <p>Die Datenspeicherung erfolgt über <strong>Supabase Inc.</strong> auf EU-Servern (Frankfurt). Es besteht ein Datenverarbeitungsvertrag gemäß Art. 28 DSGVO. Es findet keine Datenübertragung außerhalb der EU statt.</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Cookies & Tracking</p>
+          <p>Golf Cup verwendet keine Werbe-Cookies, kein Analytics-Tracking und keine Retargeting-Technologien. Die App speichert lediglich technisch notwendige Daten im lokalen Gerätespeicher (localStorage/sessionStorage) für die App-Funktionalität.</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Rechtsgrundlage</p>
+          <p>Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Betrieb der App).</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Ihre Rechte</p>
+          <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit Ihrer gespeicherten Daten (Art. 15–20 DSGVO). Anfragen richten Sie bitte an: <a href="mailto:info@deal-buddy.app">info@deal-buddy.app</a></p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-label">Datenlöschung</p>
+          <p>Turnierdaten werden auf Anfrage des Erstellers gelöscht. Nach Löschung werden Daten innerhalb von 30 Tagen vollständig entfernt.</p>
+        </div>
+        <p class="legal-version">Version 1.0 · März 2026 · DSGVO-konform</p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-box {
+      background: #13161f;
+      border: 1px solid var(--border2);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 640px;
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.3s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .modal-close {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-content {
+      overflow-y: auto;
+      padding: 20px 24px 40px;
+      flex: 1;
+    }
+    .legal-block {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .legal-block:last-of-type { border-bottom: none; }
+    .legal-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .legal-block p {
+      font-size: 0.82rem;
+      color: #9ca3af;
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+    .legal-block strong { color: var(--text); }
+    .legal-block a { color: var(--green); text-decoration: none; }
+    .legal-block a:hover { text-decoration: underline; }
+    .legal-version {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+
+  <script>
+    // Intersection Observer for reveal animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.12 })
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
+
+    // Modal
+    function openModal(id) {
+      document.getElementById('modal-' + id).classList.add('open')
+      document.body.style.overflow = 'hidden'
+    }
+    function closeModal() {
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'))
+      document.body.style.overflow = ''
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() })
+  </script>
+
+</body>
+</html>

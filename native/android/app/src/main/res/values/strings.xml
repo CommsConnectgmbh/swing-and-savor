@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Swing &amp; Savor</string>
+    <string name="title_activity_main">Swing &amp; Savor</string>
+    <string name="package_name">de.commsconnect.swingandsavor</string>
+    <string name="custom_url_scheme">de.commsconnect.swingandsavor</string>
+</resources>

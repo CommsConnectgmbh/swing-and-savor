@@ -1,0 +1,29 @@
+{
+  "name": "swing-and-savor-native",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capacitor shell for iOS/Android — wraps https://app.swingandsavor.at/",
+  "scripts": {
+    "cap": "cap",
+    "sync": "cap sync",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "add:ios": "cap add ios",
+    "add:android": "cap add android",
+    "assets": "capacitor-assets generate --iconBackgroundColor \"#1f3f2c\" --iconBackgroundColorDark \"#0d271e\" --splashBackgroundColor \"#0d271e\" --splashBackgroundColorDark \"#0d271e\""
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.1",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/browser": "^7.0.1",
+    "@capacitor/core": "^7.0.1",
+    "@capacitor/haptics": "^7.0.1",
+    "@capacitor/ios": "^7.0.1",
+    "@capacitor/splash-screen": "^7.0.1",
+    "@capacitor/status-bar": "^7.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.1"
+  }
+}

@@ -1,192 +1,528 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { calcMatchStanding } from '../lib/scoring'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
+import PasswordGate from '../components/PasswordGate'
+import CourseEditor from '../components/CourseEditor'
+import CoursePicker from '../components/CoursePicker'
+import { applyCourseEdit } from '../lib/courses'
+
+const TEAM_A = '#60a5fa'
+const TEAM_B = '#fb7185'
+
+function isUnlocked(t) {
+  if (!t?.edit_password) return true
+  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
+}
+
+function initHoles() {
+  return Array.from({ length: 18 }, (_, i) => ({
+    hole_number: i + 1, par: 4, strokes_a: '', strokes_b: '', winner: null,
+  }))
+}
+
+function calcWinner(sa, sb) {
+  const a = parseInt(sa), b = parseInt(sb)
+  if (!a || !b || a < 1 || b < 1) return null
+  if (a < b) return 'A'
+  if (b < a) return 'B'
+  return 'halved'
+}
+
+function fmtPts(v) { return v % 1 === 0 ? String(v) : v.toFixed(1) }
+
+function fmtDelta(v) {
+  if (v === null) return null
+  if (v === 0) return 'E'
+  return v > 0 ? `+${v}` : String(v)
+}
+
+function ResultDot({ winner }) {
+  if (!winner) {
+    return <div className="w-9 h-9 rounded-full border border-line" />
+  }
+  if (winner === 'A') {
+    return <div className="w-9 h-9 rounded-full" style={{ background: TEAM_A }} />
+  }
+  if (winner === 'halved') {
+    return (
+      <div className="w-9 h-9 rounded-full bg-warn flex items-center justify-center">
+        <span className="text-brandDark font-black text-sm leading-none">½</span>
+      </div>
+    )
+  }
+  return <div className="w-9 h-9 rounded-full" style={{ background: TEAM_B }} />
+}
 
 export default function MatchDetailScreen() {
   const { matchId } = useParams()
   const navigate = useNavigate()
   const [match, setMatch] = useState(null)
-  const [holeResults, setHoleResults] = useState([])
+  const [holes, setHoles] = useState(initHoles)
   const [loading, setLoading] = useState(true)
-  const [showHoleForm, setShowHoleForm] = useState(false)
-  const [deleteHoleId, setDeleteHoleId] = useState(null)
-  const [holeForm, setHoleForm] = useState({ strokes_a: '', strokes_b: '', stroke_advantage: 'none' })
+  const [confirmFinish, setConfirmFinish] = useState(false)
+  const [showGate, setShowGate] = useState(false)
+  const [showViewGate, setShowViewGate] = useState(false)
+  const [course, setCourse] = useState(null)
+  const [showCourseEditor, setShowCourseEditor] = useState(false)
+  const [showCoursePicker, setShowCoursePicker] = useState(false)
+  const matchRef = useRef(null)
 
   useEffect(() => { loadAll() }, [matchId])
 
+  function getPars() {
+    try { return JSON.parse(localStorage.getItem(`par_${matchId}`)) || null } catch { return null }
+  }
+  function setPars(holesArr) {
+    try { localStorage.setItem(`par_${matchId}`, JSON.stringify(holesArr.map(h => h.par))) } catch {}
+  }
+
   async function loadAll() {
-    const [{ data: m }, { data: h }] = await Promise.all([
+    const [{ data: m }, { data: hrs }] = await Promise.all([
       supabase.from('matches').select(`
         *,
-        pa1:team_a_player1_id(name, handicap),
-        pa2:team_a_player2_id(name, handicap),
-        pb1:team_b_player1_id(name, handicap),
-        pb2:team_b_player2_id(name, handicap),
-        tournament:tournament_id(team_a_name, team_b_name)
+        pa1:team_a_player1_id(name),
+        pa2:team_a_player2_id(name),
+        pb1:team_b_player1_id(name),
+        pb2:team_b_player2_id(name),
+        tournament:tournament_id(id, team_a_name, team_b_name, edit_password),
+        course:course_id(id, name, city, country, hole_pars, hole_handicaps, total_par, contributor_count)
       `).eq('id', matchId).single(),
-      supabase.from('hole_results').select('*').eq('match_id', matchId).order('hole_number'),
+      supabase.from('hole_results')
+        .select('*').eq('match_id', matchId).order('hole_number'),
     ])
+
+    matchRef.current = m
     setMatch(m)
-    setHoleResults(h || [])
+    setCourse(m?.course || null)
+
+    // Priority: 1) match snapshot, 2) course defaults, 3) localStorage, 4) Par 4 fallback
+    const localPars = getPars()
+    const matchPars = (m?.hole_pars && m.hole_pars.length === 18) ? m.hole_pars : null
+    const coursePars = (m?.course?.hole_pars && m.course.hole_pars.length === 18) ? m.course.hole_pars : null
+    const sourcePars = matchPars || coursePars || localPars
+
+    const next = initHoles()
+    if (sourcePars) sourcePars.forEach((p, i) => { if (p) next[i].par = p })
+    if (hrs) {
+      hrs.forEach(hr => {
+        const i = hr.hole_number - 1
+        if (i >= 0 && i < 18) {
+          next[i] = {
+            ...next[i],
+            strokes_a: String(hr.strokes_a),
+            strokes_b: String(hr.strokes_b),
+            winner: hr.winner,
+          }
+        }
+      })
+    }
+    setHoles(next)
     setLoading(false)
+
+    if (m?.tournament && !isUnlocked(m.tournament)) setShowViewGate(true)
   }
 
-  const nextHole = holeResults.length + 1
-  const standing = calcMatchStanding(holeResults)
-  const canAddHole = nextHole <= 18 && match?.status !== 'finished'
-
-  async function handleAddHole(e) {
-    e.preventDefault()
-    const sa = parseInt(holeForm.strokes_a)
-    const sb = parseInt(holeForm.strokes_b)
-    if (!sa || !sb || sa < 1 || sb < 1) return
-    const winner = sa < sb ? 'A' : sb < sa ? 'B' : 'halved'
-    await supabase.from('hole_results').insert([{
-      match_id: matchId,
-      hole_number: nextHole,
-      strokes_a: sa,
-      strokes_b: sb,
-      winner,
-      stroke_advantage: holeForm.stroke_advantage,
-    }])
-    await supabase.from('matches').update({ status: 'active' }).eq('id', matchId)
-    setHoleForm({ strokes_a: '', strokes_b: '', stroke_advantage: 'none' })
-    setShowHoleForm(false)
-    loadAll()
-  }
-
-  async function handleFinishMatch() {
-    const winner = standing.leader !== 'none' ? standing.leader : 'halved'
-    await supabase.from('matches').update({ status: 'finished', winner }).eq('id', matchId)
-    loadAll()
-  }
-
-  async function handleDeleteHole() {
-    await supabase.from('hole_results').delete().eq('id', deleteHoleId)
+  // When user picks/changes the course for this match
+  async function pickCourse(c) {
+    if (!c) return
+    setCourse(c)
+    // Update match record (snapshot pars + handicaps)
     await supabase.from('matches').update({
-      status: holeResults.length <= 1 ? 'pending' : 'active',
-      winner: null
+      course_id: c.id,
+      hole_pars: c.hole_pars?.length ? c.hole_pars : [],
+      hole_handicaps: c.hole_handicaps?.length ? c.hole_handicaps : [],
     }).eq('id', matchId)
-    setDeleteHoleId(null)
-    loadAll()
+    // Re-apply pars in UI if no holes played yet (don't overwrite player data)
+    if (c.hole_pars?.length === 18) {
+      setHoles(prev => prev.map((h, i) =>
+        h.winner === null && !h.strokes_a && !h.strokes_b
+          ? { ...h, par: c.hole_pars[i] }
+          : h
+      ))
+    }
   }
 
-  if (loading) return <div className="p-4 pt-8"><LoadingSpinner /></div>
-  if (!match) return <div className="p-4 pt-8 text-muted">Match nicht gefunden</div>
+  // Save the on-screen pars back to the course (community share)
+  async function shareScorecardToCourse() {
+    if (!course) return
+    const pars = holes.map(h => h.par)
+    try {
+      const updated = await applyCourseEdit(course.id, pars, course.hole_handicaps || [], matchId)
+      setCourse(prev => ({ ...prev, ...updated }))
+      await supabase.from('matches').update({ hole_pars: pars }).eq('id', matchId)
+    } catch (e) { console.error('[match] share course:', e) }
+  }
 
-  const teamA = [match.pa1?.name, match.pa2?.name].filter(Boolean).join(' / ')
-  const teamB = [match.pb1?.name, match.pb2?.name].filter(Boolean).join(' / ')
-  const tA = match.tournament?.team_a_name
-  const tB = match.tournament?.team_b_name
+  function adjustPar(holeNum, delta) {
+    setHoles(prev => {
+      const next = prev.map(h =>
+        h.hole_number === holeNum
+          ? { ...h, par: Math.max(3, Math.min(5, h.par + delta)) }
+          : h
+      )
+      setPars(next)
+      return next
+    })
+  }
+
+  async function handleStroke(holeNum, field, value) {
+    const next = holes.map(h => {
+      if (h.hole_number !== holeNum) return h
+      const updated = { ...h, [field]: value }
+      updated.winner = calcWinner(updated.strokes_a, updated.strokes_b)
+      return updated
+    })
+    setHoles(next)
+
+    const hole = next.find(h => h.hole_number === holeNum)
+    const sa = parseInt(hole.strokes_a)
+    const sb = parseInt(hole.strokes_b)
+    if (sa >= 1 && sb >= 1) {
+      await supabase.from('hole_results').upsert(
+        [{
+          match_id: matchId, hole_number: holeNum,
+          strokes_a: sa, strokes_b: sb,
+          winner: hole.winner, stroke_advantage: 'none',
+        }],
+        { onConflict: 'match_id,hole_number' }
+      )
+      if (matchRef.current?.status === 'pending') {
+        await supabase.from('matches').update({ status: 'active' }).eq('id', matchId)
+        const upd = { ...matchRef.current, status: 'active' }
+        matchRef.current = upd
+        setMatch(upd)
+      }
+    }
+  }
+
+  async function handleFinish() {
+    let a = 0, b = 0
+    holes.forEach(h => {
+      if (h.winner === 'A') a++
+      else if (h.winner === 'B') b++
+    })
+    const winner = a > b ? 'A' : b > a ? 'B' : 'halved'
+    await supabase.from('matches').update({ status: 'finished', winner }).eq('id', matchId)
+    const upd = { ...matchRef.current, status: 'finished', winner }
+    matchRef.current = upd
+    setMatch(upd)
+    setConfirmFinish(false)
+  }
+
+  if (loading) return <LoadingSpinner />
+  if (!match) return <div className="p-6 text-inkMuted text-sm">Match nicht gefunden</div>
+
+  const tA   = match.tournament?.team_a_name || 'Team A'
+  const tB   = match.tournament?.team_b_name || 'Team B'
+  const nameA = [match.pa1?.name, match.pa2?.name].filter(Boolean).join(' & ')
+  const nameB = [match.pb1?.name, match.pb2?.name].filter(Boolean).join(' & ')
+  const done  = match.status === 'finished'
+  const locked = !isUnlocked(match.tournament)
+
+  let ptsA = 0, ptsB = 0
+  holes.forEach(h => {
+    if (h.winner === 'A') ptsA++
+    else if (h.winner === 'B') ptsB++
+    else if (h.winner === 'halved') { ptsA += 0.5; ptsB += 0.5 }
+  })
+
+  const played     = holes.filter(h => h.winner !== null)
+  const totalPar   = holes.reduce((s, h) => s + h.par, 0)
+  const playedPar  = played.reduce((s, h) => s + h.par, 0)
+  const totA       = holes.reduce((s, h) => s + (parseInt(h.strokes_a) || 0), 0)
+  const totB       = holes.reduce((s, h) => s + (parseInt(h.strokes_b) || 0), 0)
+  const dA         = totA > 0 ? totA - playedPar : null
+  const dB         = totB > 0 ? totB - playedPar : null
+
+  const COLS = '86px 1fr 1fr 48px'
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center gap-3 pt-4 mb-6">
-        <button onClick={() => navigate(-1)} className="text-muted text-2xl leading-none">‹</button>
-        <div>
-          <div className="text-xs text-muted">{match.type === 'singles' ? '⚔️ Einzel' : '👥 Doppel'}</div>
-          <div className="font-bold">{teamA} vs {teamB}</div>
-        </div>
-      </div>
+    <div className="max-w-lg mx-auto pb-44 animate-fade-up">
 
-      {/* Standing */}
-      <div className="bg-surface border border-border rounded-2xl p-5 mb-6 text-center">
-        <div className={`text-4xl font-black mb-1 ` +
-          (standing.leader === 'A' ? 'text-accent' : standing.leader === 'B' ? 'text-danger' : 'text-white')}>
-          {standing.label}
-        </div>
-        {standing.leader !== 'none' && (
-          <div className="text-muted text-sm">{standing.leader === 'A' ? tA : tB} führt</div>
-        )}
-        <div className="text-muted text-xs mt-1">
-          {holeResults.length === 0 ? 'Noch kein Loch gespielt' : `Nach Loch ${holeResults.length}`}
-        </div>
-        {match.status === 'finished' && <div className="mt-2 text-accent font-bold text-sm">MATCH BEENDET</div>}
-      </div>
-
-      {/* Hole table */}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden mb-4">
-        <div className="grid grid-cols-5 text-xs text-muted uppercase tracking-widest px-4 py-2 border-b border-border">
-          <span>Loch</span>
-          <span className="text-center">{tA?.substring(0,6)}</span>
-          <span className="text-center">{tB?.substring(0,6)}</span>
-          <span className="text-center">Vorg.</span>
-          <span className="text-center">Erg.</span>
-        </div>
-        {holeResults.map(h => (
-          <div key={h.id}
-            className="grid grid-cols-5 px-4 py-3 border-b border-border last:border-0 items-center active:bg-border/20"
-            onClick={() => setDeleteHoleId(h.id)}>
-            <span className="font-mono font-bold text-accent">{h.hole_number}</span>
-            <span className={`text-center font-mono ` + (h.winner === 'A' ? 'text-accent font-bold' : 'text-white')}>{h.strokes_a}</span>
-            <span className={`text-center font-mono ` + (h.winner === 'B' ? 'text-danger font-bold' : 'text-white')}>{h.strokes_b}</span>
-            <span className="text-center text-xs text-muted">{h.stroke_advantage === 'none' ? '—' : h.stroke_advantage}</span>
-            <span className={`text-center text-xs font-medium ` +
-              (h.winner === 'A' ? 'text-accent' : h.winner === 'B' ? 'text-danger' : 'text-muted')}>
-              {h.winner === 'A' ? 'A' : h.winner === 'B' ? 'B' : '½'}
-            </span>
-          </div>
-        ))}
-        {holeResults.length === 0 && <div className="text-muted text-sm text-center py-6">Noch keine Löcher eingetragen</div>}
-      </div>
-      {holeResults.length > 0 && <p className="text-muted text-xs text-center mb-4">Loch antippen zum Löschen</p>}
-
-      {/* Add hole */}
-      {canAddHole && (
-        showHoleForm ? (
-          <form onSubmit={handleAddHole} className="bg-surface border border-border rounded-2xl p-4 mb-4 flex flex-col gap-3">
-            <div className="text-sm font-medium text-accent">Loch {nextHole}</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted mb-1 block">{tA} – Schläge</label>
-                <input type="number" min="1" max="20"
-                  className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-white text-center text-xl font-bold"
-                  placeholder="—" value={holeForm.strokes_a}
-                  onChange={e => setHoleForm(f => ({ ...f, strokes_a: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="text-xs text-muted mb-1 block">{tB} – Schläge</label>
-                <input type="number" min="1" max="20"
-                  className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-white text-center text-xl font-bold"
-                  placeholder="—" value={holeForm.strokes_b}
-                  onChange={e => setHoleForm(f => ({ ...f, strokes_b: e.target.value }))} required />
-              </div>
-            </div>
-            <select className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-white"
-              value={holeForm.stroke_advantage}
-              onChange={e => setHoleForm(f => ({ ...f, stroke_advantage: e.target.value }))}>
-              <option value="none">Keine Vorgabe</option>
-              <option value="A">{tA} bekommt Vorgabe</option>
-              <option value="B">{tB} bekommt Vorgabe</option>
-            </select>
-            <button type="submit" className="bg-accent text-black font-bold py-3 rounded-xl">
-              Loch {nextHole} speichern
-            </button>
-            <button type="button" onClick={() => setShowHoleForm(false)} className="text-muted text-sm text-center py-1">Abbrechen</button>
-          </form>
-        ) : (
-          <button onClick={() => setShowHoleForm(true)}
-            className="w-full bg-accent text-black font-bold py-4 rounded-2xl text-lg mb-3">
-            + Loch {nextHole} eintragen
-          </button>
-        )
-      )}
-
-      {holeResults.length > 0 && match.status === 'active' && (
-        <button onClick={handleFinishMatch}
-          className="w-full border border-accent text-accent font-bold py-4 rounded-2xl text-lg">
-          Match beenden
+      {/* ── header ── */}
+      <div className="flex items-center px-4 pt-5 pb-4 border-b border-lineSoft">
+        <button onClick={() => navigate(-1)}
+          className="p-1 -ml-1 flex-shrink-0 text-inkMuted active:scale-90 transition-transform">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
         </button>
+
+        <div className="flex-1 text-center">
+          <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-inkMuted">
+            {match.type === 'singles' ? 'Singles' : 'Doubles'}
+          </p>
+          <p className="font-condensed font-black text-4xl leading-tight mt-0.5 tabular-nums">
+            <span style={{ color: ptsA >= ptsB ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
+            <span className="mx-2 text-line">:</span>
+            <span style={{ color: ptsB > ptsA ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
+          </p>
+        </div>
+
+        {done
+          ? <span className="text-[10px] font-bold tracking-wider uppercase text-accent bg-accent/12 border border-accent/30 px-2 py-1 rounded-lg flex-shrink-0">FIN</span>
+          : <div className="w-12 flex-shrink-0" />
+        }
+      </div>
+
+      {/* ── team names ── */}
+      <div className="grid mx-3 my-3 rounded-card overflow-hidden bg-surface border border-line"
+        style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div className="px-4 py-3" style={{ background: 'rgba(96,165,250,0.08)' }}>
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1 text-teamA">{tA}</p>
+          <p className="font-semibold text-sm leading-tight text-ink truncate">{nameA || '—'}</p>
+        </div>
+        <div className="flex items-center justify-center px-4 border-l border-r border-lineSoft">
+          <span className="text-xs font-bold tracking-widest text-line">VS</span>
+        </div>
+        <div className="px-4 py-3 text-right" style={{ background: 'rgba(251,113,133,0.08)' }}>
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1 text-teamB">{tB}</p>
+          <p className="font-semibold text-sm leading-tight text-ink truncate">{nameB || '—'}</p>
+        </div>
+      </div>
+
+      {/* ── course banner ── */}
+      <div className="mx-3 mb-2 rounded-xl px-4 py-2.5 flex items-center justify-between bg-surface border border-line">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98cd02"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M2 22h20M5 22V11l5-3 5 3v11M9 22V14h2v8" />
+          </svg>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-ink truncate">
+              {course?.name || 'Kein Platz gewählt'}
+            </p>
+            {course && (
+              <p className="text-[10px] text-inkDim truncate">
+                {[course.city, course.country].filter(Boolean).join(', ')}
+                {course.total_par > 0 && <span> · Par {course.total_par}</span>}
+                {course.contributor_count > 0 && <span> · {course.contributor_count} Edits</span>}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {!locked && !done && (
+            <button onClick={() => setShowCoursePicker(true)}
+              className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-bg text-inkMuted border border-line active:scale-95 transition-transform">
+              {course ? 'Platz' : 'Wählen'}
+            </button>
+          )}
+          {course && !locked && !done && (
+            <button onClick={() => setShowCourseEditor(true)}
+              className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-accent/15 text-accent border border-accent/30 active:scale-95 transition-transform">
+              Scorekarte
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── lock banner ── */}
+      {locked && !done && (
+        <div className="mx-3 mb-2 rounded-xl px-4 py-3 flex items-center justify-between bg-lock/8 border border-lock/25">
+          <div className="flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5b94a"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <span className="text-xs font-semibold text-lock">Schreibgeschützt</span>
+          </div>
+          <button
+            onClick={() => setShowGate(true)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg bg-lock text-brandDark active:scale-95 transition-transform"
+          >
+            Entsperren
+          </button>
+        </div>
       )}
 
-      {deleteHoleId && (
+      {/* ── column header ── */}
+      <div className="grid px-4 py-2 border-b border-lineSoft bg-bg/60 sticky"
+        style={{ gridTemplateColumns: COLS, top: 'calc(env(safe-area-inset-top) + 64px)' }}>
+        <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-inkMuted">Par</span>
+        <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-center truncate text-teamA">{tA}</span>
+        <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-center truncate text-teamB">{tB}</span>
+        <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-center text-inkMuted">Pts</span>
+      </div>
+
+      {/* ── 18 hole rows ── */}
+      {holes.map(h => {
+        const played = h.winner !== null
+        return (
+          <div
+            key={h.hole_number}
+            className="grid px-4 py-2 items-center border-b border-lineSoft"
+            style={{ gridTemplateColumns: COLS, minHeight: '64px' }}
+          >
+            {/* PAR + hole number */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => adjustPar(h.hole_number, -1)}
+                disabled={h.par <= 3 || done || locked}
+                className="flex items-center justify-center rounded-xl text-lg font-bold transition-opacity disabled:opacity-20 active:scale-90 bg-surface2 text-inkMuted"
+                style={{ width: 30, height: 30 }}
+              >–</button>
+              <div className="text-center" style={{ minWidth: 22 }}>
+                <p className="font-condensed font-black text-xl leading-none text-ink tabular-nums">{h.par}</p>
+                <p className="text-[9px] leading-none mt-0.5 text-inkDim tabular-nums">{h.hole_number}</p>
+              </div>
+              <button
+                onClick={() => adjustPar(h.hole_number, 1)}
+                disabled={h.par >= 5 || done || locked}
+                className="flex items-center justify-center rounded-xl text-lg font-bold transition-opacity disabled:opacity-20 active:scale-90 bg-surface2 text-inkMuted"
+                style={{ width: 30, height: 30 }}
+              >+</button>
+            </div>
+
+            {/* Team A strokes */}
+            <div className="px-1.5">
+              <input
+                type="number" inputMode="numeric" pattern="[0-9]*" min="1" max="20"
+                value={h.strokes_a}
+                onChange={e => handleStroke(h.hole_number, 'strokes_a', e.target.value)}
+                placeholder="–"
+                disabled={done || locked}
+                className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
+                style={{
+                  background: played && h.winner === 'A' ? 'rgba(96,165,250,0.18)'
+                    : played ? '#143024' : '#1a3a2c',
+                  color: played && h.winner === 'A' ? TEAM_A
+                    : played ? '#6b7a72' : '#ffffff',
+                  border: played && h.winner === 'A'
+                    ? '1.5px solid rgba(96,165,250,0.45)'
+                    : '1.5px solid transparent',
+                }}
+              />
+            </div>
+
+            {/* Team B strokes */}
+            <div className="px-1.5">
+              <input
+                type="number" inputMode="numeric" pattern="[0-9]*" min="1" max="20"
+                value={h.strokes_b}
+                onChange={e => handleStroke(h.hole_number, 'strokes_b', e.target.value)}
+                placeholder="–"
+                disabled={done || locked}
+                className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
+                style={{
+                  background: played && h.winner === 'B' ? 'rgba(251,113,133,0.18)'
+                    : played ? '#143024' : '#1a3a2c',
+                  color: played && h.winner === 'B' ? TEAM_B
+                    : played ? '#6b7a72' : '#ffffff',
+                  border: played && h.winner === 'B'
+                    ? '1.5px solid rgba(251,113,133,0.45)'
+                    : '1.5px solid transparent',
+                }}
+              />
+            </div>
+
+            {/* Result dot */}
+            <div className="flex items-center justify-center">
+              <ResultDot winner={h.winner} />
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Finish button */}
+      {!done && !locked && played.length > 0 && (
+        <div className="px-4 pt-4 pb-2">
+          <button
+            onClick={() => setConfirmFinish(true)}
+            className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide active:scale-[0.98] transition-transform bg-surface text-ink border border-line hover:border-accent/50"
+          >
+            Match beenden
+          </button>
+        </div>
+      )}
+
+      {/* ── fixed bottom summary ── */}
+      <div
+        className="fixed inset-x-0 z-40 bg-surface/96 backdrop-blur-md border-t border-line shadow-lift"
+        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      >
+        <div className="max-w-lg mx-auto grid px-4 py-3" style={{ gridTemplateColumns: COLS }}>
+          <div className="text-center">
+            <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-inkMuted">Par</p>
+            <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totalPar}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-teamA truncate">{tA}</p>
+            <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totA || '—'}</p>
+            {dA !== null && (
+              <p className="text-[11px] font-bold mt-0.5 tabular-nums"
+                style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#98cd02' : '#6b7a72' }}>
+                {fmtDelta(dA)}
+              </p>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-teamB truncate">{tB}</p>
+            <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totB || '—'}</p>
+            {dB !== null && (
+              <p className="text-[11px] font-bold mt-0.5 tabular-nums"
+                style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#98cd02' : '#6b7a72' }}>
+                {fmtDelta(dB)}
+              </p>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-inkMuted">Pts</p>
+            <p className="font-condensed font-black text-lg leading-none tabular-nums">
+              <span style={{ color: ptsA >= ptsB ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
+              <span className="text-line">:</span>
+              <span style={{ color: ptsB > ptsA ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {confirmFinish && (
         <ConfirmDialog
-          message="Loch-Ergebnis wirklich löschen?"
-          onConfirm={handleDeleteHole}
-          onCancel={() => setDeleteHoleId(null)}
+          message="Match beenden?"
+          confirmText="Beenden"
+          onConfirm={handleFinish}
+          onCancel={() => setConfirmFinish(false)}
+        />
+      )}
+
+      {showGate && match?.tournament && (
+        <PasswordGate
+          correctPassword={match.tournament.edit_password}
+          tournamentId={match.tournament.id}
+          onSuccess={() => { setShowGate(false) }}
+          onCancel={() => setShowGate(false)}
+        />
+      )}
+
+      {showViewGate && match?.tournament && (
+        <PasswordGate
+          viewMode
+          correctPassword={match.tournament.edit_password}
+          tournamentId={match.tournament.id}
+          onSuccess={() => setShowViewGate(false)}
+          onCancel={() => { setShowViewGate(false); navigate(-1) }}
+        />
+      )}
+
+      {showCoursePicker && (
+        <CoursePicker
+          value={course}
+          onChange={(c) => pickCourse(c)}
+          onClose={() => setShowCoursePicker(false)}
+        />
+      )}
+
+      {showCourseEditor && course && (
+        <CourseEditor
+          course={{ ...course, hole_pars: holes.map(h => h.par) }}
+          sourceMatchId={matchId}
+          onClose={() => setShowCourseEditor(false)}
+          onSaved={(updated) => setCourse(prev => ({ ...prev, ...updated }))}
         />
       )}
     </div>

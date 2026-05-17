@@ -1,23 +1,76 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
-import CupScreen from './screens/CupScreen'
-import MatchesScreen from './screens/MatchesScreen'
-import MatchDetailScreen from './screens/MatchDetailScreen'
-import TeamsScreen from './screens/TeamsScreen'
-import BoardScreen from './screens/BoardScreen'
+import BrandHeader from './components/BrandHeader'
+import LoadingSpinner from './components/LoadingSpinner'
+import { useAuth } from './lib/auth'
+
+// Sign-in + Onboarding are eager: they appear before any other screen on first load.
+import SignInScreen from './screens/SignInScreen'
+import OnboardingScreen from './screens/OnboardingScreen'
+
+// Everything else: lazy-load so the initial bundle stays small.
+const BoardScreen        = lazy(() => import('./screens/BoardScreen'))
+const DiscoverScreen     = lazy(() => import('./screens/DiscoverScreen'))
+const ChallengesScreen   = lazy(() => import('./screens/ChallengesScreen'))
+const MatchesScreen      = lazy(() => import('./screens/MatchesScreen'))
+const MatchDetailScreen  = lazy(() => import('./screens/MatchDetailScreen'))
+const FriendsScreen      = lazy(() => import('./screens/FriendsScreen'))
+const TeamsScreen        = lazy(() => import('./screens/TeamsScreen'))
+const CupScreen          = lazy(() => import('./screens/CupScreen'))
+const ProfileScreen      = lazy(() => import('./screens/ProfileScreen'))
+
+const TITLES = {
+  '/board':      'Leaderboard',
+  '/discover':   'Entdecken',
+  '/challenges': 'Duelle',
+  '/matches':    'Matches',
+  '/friends':    'Freunde',
+  '/teams':      'Teams',
+  '/cup':        'Turniere',
+  '/me':         'Profil',
+  '/u/':         'Profil',
+}
+
+function HeaderForRoute() {
+  const { pathname } = useLocation()
+  const match = Object.keys(TITLES).find((p) => pathname.startsWith(p))
+  return <BrandHeader title={match ? TITLES[match] : null} />
+}
+
+function ScreenFallback() {
+  return <div className="flex items-center justify-center py-20"><LoadingSpinner /></div>
+}
 
 export default function App() {
+  const { user, profile, loading } = useAuth()
+
+  if (loading) {
+    return <div className="min-h-screen bg-bg flex items-center justify-center"><LoadingSpinner /></div>
+  }
+  if (!user) return <SignInScreen />
+  if (!profile) return <OnboardingScreen />
+
   return (
-    <div className="min-h-screen bg-bg text-white">
+    <div className="min-h-screen bg-bg text-ink">
+      <HeaderForRoute />
       <main className="pb-safe">
-        <Routes>
-          <Route path="/" element={<Navigate to="/board" replace />} />
-          <Route path="/cup" element={<CupScreen />} />
-          <Route path="/matches" element={<MatchesScreen />} />
-          <Route path="/matches/:matchId" element={<MatchDetailScreen />} />
-          <Route path="/teams" element={<TeamsScreen />} />
-          <Route path="/board" element={<BoardScreen />} />
-        </Routes>
+        <Suspense fallback={<ScreenFallback />}>
+          <Routes>
+            <Route path="/"                  element={<Navigate to="/board" replace />} />
+            <Route path="/board"             element={<BoardScreen />} />
+            <Route path="/discover"          element={<DiscoverScreen />} />
+            <Route path="/challenges"        element={<ChallengesScreen />} />
+            <Route path="/matches"           element={<MatchesScreen />} />
+            <Route path="/matches/:matchId"  element={<MatchDetailScreen />} />
+            <Route path="/friends"           element={<FriendsScreen />} />
+            <Route path="/teams"             element={<TeamsScreen />} />
+            <Route path="/cup"               element={<CupScreen />} />
+            <Route path="/me"                element={<ProfileScreen />} />
+            <Route path="/u/:handle"         element={<ProfileScreen />} />
+            <Route path="*"                  element={<Navigate to="/board" replace />} />
+          </Routes>
+        </Suspense>
       </main>
       <BottomNav />
     </div>
