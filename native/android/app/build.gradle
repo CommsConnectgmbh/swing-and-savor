@@ -16,10 +16,22 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def keystoreFile = System.getenv("SWINGSAVOR_KEYSTORE_PATH") ?: "${rootDir}/upload-keystore.jks"
+            storeFile file(keystoreFile)
+            storePassword System.getenv("SWINGSAVOR_KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("SWINGSAVOR_KEY_ALIAS") ?: "swingsavor-upload"
+            keyPassword System.getenv("SWINGSAVOR_KEY_PASSWORD") ?: ""
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (file(System.getenv("SWINGSAVOR_KEYSTORE_PATH") ?: "${rootDir}/upload-keystore.jks").exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

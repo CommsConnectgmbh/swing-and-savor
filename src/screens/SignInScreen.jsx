@@ -14,6 +14,16 @@ export default function SignInScreen() {
   async function sendCode(e) {
     e.preventDefault()
     if (!email || !email.includes('@')) { setError(t('signIn.errorGeneric')); return }
+
+    // Reviewer-Bypass: Code wird nicht per Mail versendet — Reviewer kennt
+    // den Code aus den App-Review-Demo-Credentials. Direkt zum Code-Step.
+    const lowered = email.toLowerCase().trim()
+    if (lowered === 'apple-review@swingandsavor.at' ||
+        lowered === 'play-review@swingandsavor.at') {
+      setStep('code')
+      return
+    }
+
     setBusy(true); setError(null)
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -28,6 +38,38 @@ export default function SignInScreen() {
     e.preventDefault()
     if (!code || code.length !== 8) { setError(t('signIn.errorGeneric')); return }
     setBusy(true); setError(null)
+
+    // Reviewer-Bypass für Apple + Google App-Review (statische Demo-Accounts).
+    // Der Bypass wird nur akzeptiert wenn die Edge-Function reviewer-bypass
+    // Email + Code matcht; sonst fällt der normale OTP-Flow durch.
+    const lowered = email.toLowerCase().trim()
+    if (lowered === 'apple-review@swingandsavor.at' ||
+        lowered === 'play-review@swingandsavor.at') {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reviewer-bypass`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ email: lowered, code: code.trim() }),
+          },
+        )
+        if (res.ok) {
+          const { redirect } = await res.json()
+          if (redirect) {
+            window.location.href = redirect
+            return
+          }
+        }
+      } catch (err) {
+        console.error('[auth] reviewer-bypass failed', err)
+      }
+      // Reviewer-Bypass abgelehnt -> normaler OTP-Pfad fängt es ab
+    }
+
     const { error } = await supabase.auth.verifyOtp({
       email, token: code.trim(), type: 'email',
     })
