@@ -1,0 +1,14 @@
+{
+  "name": "swing-and-savor-apple-bootstrap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vollautonome iOS-Credentials-Provisioning für Swing & Savor",
+  "scripts": {
+    "bootstrap": "node bootstrap.js",
+    "asc:app": "node create-asc-app.js",
+    "gh:secrets": "node set-gh-secrets.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}

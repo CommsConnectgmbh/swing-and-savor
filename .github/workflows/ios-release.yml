@@ -1,0 +1,212 @@
+name: iOS · Release IPA + TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: "Build nach erfolgreichem xcodebuild zu TestFlight hochladen"
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'ios-v*'
+
+env:
+  BUNDLE_ID: de.commsconnect.swingandsavor
+  PROFILE_NAME: "Swing and Savor v1.0 App Store"
+  SCHEME: App
+  CONFIG: Release
+
+jobs:
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: native
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Show Xcode + tooling
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun --find xcodebuild
+          pod --version || sudo gem install cocoapods --no-document
+          pod --version
+
+      - name: Install native deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Capacitor add iOS (falls noch nicht scaffolded)
+        run: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          else
+            echo "native/ios/ vorhanden, skip cap add"
+          fi
+
+      - name: Generate iOS Icons + Splash
+        run: |
+          npx capacitor-assets generate --ios \
+            --iconBackgroundColor "#1f3f2c" --iconBackgroundColorDark "#0d271e" \
+            --splashBackgroundColor "#0d271e" --splashBackgroundColorDark "#0d271e"
+
+      - name: Capacitor sync iOS
+        run: npx cap sync ios
+
+      - name: Patch iOS project (Privacy Manifest + Manual Signing + Location)
+        env:
+          APPLE_TEAM_ID:    ${{ secrets.APPLE_TEAM_ID }}
+          IOS_PROFILE_NAME: ${{ env.PROFILE_NAME }}
+        run: node scripts/patch-ios-project.mjs
+
+      - name: CocoaPods install
+        working-directory: native/ios/App
+        run: pod install --repo-update
+
+      - name: Validate signing secrets present
+        env:
+          P12_B64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          P12_PASS: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=""
+          [ -z "$P12_B64" ]     && missing="$missing IOS_DIST_CERT_P12_BASE64"
+          [ -z "$P12_PASS" ]    && missing="$missing IOS_DIST_CERT_PASSWORD"
+          [ -z "$PROFILE_B64" ] && missing="$missing IOS_PROVISIONING_PROFILE_BASE64"
+          [ -z "$TEAM_ID" ]     && missing="$missing APPLE_TEAM_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Fehlende Secrets:$missing  -> siehe .apple-bootstrap/README.md"
+            exit 1
+          fi
+
+      - name: Import distribution cert into temp keychain
+        env:
+          P12_B64:  ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          P12_PASS: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          set -e
+          KEYCHAIN_PATH=$RUNNER_TEMP/swingsavor-build.keychain-db
+          KEYCHAIN_PASS=$(uuidgen)
+          P12_PATH=$RUNNER_TEMP/dist.p12
+          echo "$P12_B64" | base64 --decode -o "$P12_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+          security import "$P12_PATH" -P "$P12_PASS" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychain -d user | xargs)
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -e
+          PROFILE_DIR=$HOME/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p "$PROFILE_DIR"
+          PROFILE_PATH="$PROFILE_DIR/SwingSavor_AppStore.mobileprovision"
+          echo "$PROFILE_B64" | base64 --decode -o "$PROFILE_PATH"
+          ls -la "$PROFILE_DIR"
+          /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< "$(security cms -D -i "$PROFILE_PATH")"
+
+      - name: Generate ExportOptions.plist
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>            <string>app-store</string>
+            <key>destination</key>       <string>export</string>
+            <key>teamID</key>            <string>${TEAM_ID}</string>
+            <key>signingStyle</key>      <string>manual</string>
+            <key>stripSwiftSymbols</key> <true/>
+            <key>uploadSymbols</key>     <true/>
+            <key>compileBitcode</key>    <false/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${{ env.BUNDLE_ID }}</key>
+              <string>${{ env.PROFILE_NAME }}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+          cat $RUNNER_TEMP/ExportOptions.plist
+
+      - name: Archive (xcodebuild)
+        working-directory: native/ios/App
+        run: |
+          set -e
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme "${{ env.SCHEME }}" \
+            -configuration "${{ env.CONFIG }}" \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/SwingSavor.xcarchive" \
+            archive
+          test -d "$RUNNER_TEMP/SwingSavor.xcarchive"
+
+      - name: Export IPA
+        run: |
+          set -e
+          xcodebuild \
+            -exportArchive \
+            -archivePath "$RUNNER_TEMP/SwingSavor.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export"
+          ls -la "$RUNNER_TEMP/export"
+
+      - name: Read version
+        id: version
+        working-directory: native/ios/App
+        run: |
+          MARKETING=$(grep -E 'MARKETING_VERSION' App.xcodeproj/project.pbxproj | head -1 | sed -E 's/.*= ([^;]+);.*/\1/')
+          BUILD=$(grep -E 'CURRENT_PROJECT_VERSION' App.xcodeproj/project.pbxproj | head -1 | sed -E 's/.*= ([^;]+);.*/\1/')
+          echo "marketing=$MARKETING" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swingsavor-ios-${{ steps.version.outputs.marketing }}-${{ steps.version.outputs.build }}
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Setup ASC API key file
+        if: ${{ github.event_name == 'push' || inputs.upload_to_testflight }}
+        env:
+          ASC_KEY_B64:    ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_KEY_ID:     ${{ secrets.ASC_API_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_B64" | base64 --decode -o "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          ls -la ~/.appstoreconnect/private_keys
+
+      - name: Upload to TestFlight
+        if: ${{ github.event_name == 'push' || inputs.upload_to_testflight }}
+        env:
+          ASC_KEY_ID:    ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          IPA=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)
+          echo "Uploading $IPA"
+          xcrun altool --upload-app \
+            -f "$IPA" \
+            -t ios \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
