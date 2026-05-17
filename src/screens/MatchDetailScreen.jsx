@@ -6,8 +6,14 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import CourseEditor from '../components/CourseEditor'
 import CoursePicker from '../components/CoursePicker'
+import SocialBar from '../components/SocialBar'
+import CommentsThread from '../components/CommentsThread'
 import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
+import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
+import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
+import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
+import { useAuth } from '../lib/auth'
 
 const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
@@ -56,10 +62,22 @@ function ResultDot({ winner }) {
   return <div className="w-9 h-9 rounded-full" style={{ background: TEAM_B }} />
 }
 
+function StablefordPill({ a, b }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 text-[10px] font-black tabular-nums leading-none">
+      <span style={{ color: TEAM_A }}>{a ?? '–'}</span>
+      <span style={{ color: TEAM_B }}>{b ?? '–'}</span>
+    </div>
+  )
+}
+
 export default function MatchDetailScreen() {
   const { matchId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [match, setMatch] = useState(null)
+  const [socialCount, setSocialCount] = useState({ likes: 0, comments: 0 })
+  const [iLiked, setILiked] = useState(false)
   const [holes, setHoles] = useState(initHoles)
   const [loading, setLoading] = useState(true)
   const [confirmFinish, setConfirmFinish] = useState(false)
@@ -145,6 +163,46 @@ export default function MatchDetailScreen() {
     setLoading(false)
 
     if (m?.tournament && !isUnlocked(m.tournament)) setShowViewGate(true)
+
+    // Social-Counts laden
+    const [counts, mine] = await Promise.all([
+      fetchSocialCounts([matchId]),
+      user?.id ? fetchMyReactions([matchId], user.id) : Promise.resolve(new Set()),
+    ])
+    setSocialCount(counts[matchId] || { likes: 0, comments: 0 })
+    setILiked(mine.has(matchId))
+  }
+
+  async function handleShare() {
+    if (!match) return
+    try {
+      const namesA = flightNames.A.length ? flightNames.A : [match.pa1?.name, match.pa2?.name].filter(Boolean)
+      const namesB = flightNames.B.length ? flightNames.B : [match.pb1?.name, match.pb2?.name].filter(Boolean)
+      const typeStr = match.type === 'singles' ? 'Singles'
+                     : match.type === 'doubles' ? 'Doubles'
+                     : `Flight ${namesA.length}v${namesB.length}`
+      const scoreLine = match.status === 'finished'
+        ? (match.winner === 'A' ? (match.tournament?.team_a_name || 'TEAM A')
+          : match.winner === 'B' ? (match.tournament?.team_b_name || 'TEAM B')
+          : 'A/S')
+        : `${ptsA} : ${ptsB}`
+      const statusLabel = match.status === 'finished' ? 'Beendet'
+                         : match.status === 'active'  ? `Live · Loch ${played.length}`
+                         : 'Offen'
+      const { blob } = await renderMatchShareCard({
+        type: typeStr, namesA, namesB,
+        teamANameLabel: match.tournament?.team_a_name,
+        teamBNameLabel: match.tournament?.team_b_name,
+        scoreLine, statusLabel,
+        courseName: match.course?.name,
+        cupName: match.tournament?.name,
+      })
+      await shareOrDownload({
+        blob, filename: `swingandsavor-${matchId.slice(0, 8)}.png`,
+        title: 'Swing & Savor', text: 'Schau das Match!',
+        url: `https://app.swingandsavor.at/matches/${matchId}`,
+      })
+    } catch (e) { console.error('[match] share', e) }
   }
 
   // When user picks/changes the course for this match
@@ -221,12 +279,18 @@ export default function MatchDetailScreen() {
   }
 
   async function handleFinish() {
-    let a = 0, b = 0
-    holes.forEach(h => {
-      if (h.winner === 'A') a++
-      else if (h.winner === 'B') b++
-    })
-    const winner = a > b ? 'A' : b > a ? 'B' : 'halved'
+    let winner
+    if (matchRef.current?.format === 'stableford') {
+      const { a, b } = calcStablefordTotals(holes)
+      winner = a > b ? 'A' : b > a ? 'B' : 'halved'
+    } else {
+      let a = 0, b = 0
+      holes.forEach(h => {
+        if (h.winner === 'A') a++
+        else if (h.winner === 'B') b++
+      })
+      winner = a > b ? 'A' : b > a ? 'B' : 'halved'
+    }
     await supabase.from('matches').update({ status: 'finished', winner }).eq('id', matchId)
     const upd = { ...matchRef.current, status: 'finished', winner }
     matchRef.current = upd
@@ -245,24 +309,32 @@ export default function MatchDetailScreen() {
                 : [match.pb1?.name, match.pb2?.name].filter(Boolean)
   const nameA  = namesA.join(' · ')
   const nameB  = namesB.join(' · ')
-  const isFlight = match.type === 'flight'
-  const typeLbl  = match.type === 'singles' ? 'Singles'
-                  : match.type === 'doubles' ? 'Doubles'
-                  : `Flight ${namesA.length}v${namesB.length}`
-  const factorA = Number(match.team_a_factor ?? 1)
-  const factorB = Number(match.team_b_factor ?? 1)
-  const hasFactor = factorA !== 1 || factorB !== 1
-  const done  = match.status === 'finished'
+  const isFlight     = match.type === 'flight'
+  const isStableford = match.format === 'stableford'
+  const baseTypeLbl  = match.type === 'singles' ? 'Singles'
+                      : match.type === 'doubles' ? 'Doubles'
+                      : `Flight ${namesA.length}v${namesB.length}`
+  const typeLbl   = isStableford ? `${baseTypeLbl} · Stableford` : baseTypeLbl
+  const factorA   = Number(match.team_a_factor ?? 1)
+  const factorB   = Number(match.team_b_factor ?? 1)
+  const hasFactor = !isStableford && (factorA !== 1 || factorB !== 1)
+  const done   = match.status === 'finished'
   const locked = !isUnlocked(match.tournament)
 
-  let rawA = 0, rawB = 0
-  holes.forEach(h => {
-    if (h.winner === 'A') rawA++
-    else if (h.winner === 'B') rawB++
-    else if (h.winner === 'halved') { rawA += 0.5; rawB += 0.5 }
-  })
-  const ptsA = Math.round(rawA * factorA * 100) / 100
-  const ptsB = Math.round(rawB * factorB * 100) / 100
+  let ptsA, ptsB
+  if (isStableford) {
+    const t = calcStablefordTotals(holes)
+    ptsA = t.a; ptsB = t.b
+  } else {
+    let rawA = 0, rawB = 0
+    holes.forEach(h => {
+      if (h.winner === 'A') rawA++
+      else if (h.winner === 'B') rawB++
+      else if (h.winner === 'halved') { rawA += 0.5; rawB += 0.5 }
+    })
+    ptsA = Math.round(rawA * factorA * 100) / 100
+    ptsB = Math.round(rawB * factorB * 100) / 100
+  }
 
   const played     = holes.filter(h => h.winner !== null)
   const totalPar   = holes.reduce((s, h) => s + h.par, 0)
@@ -366,6 +438,19 @@ export default function MatchDetailScreen() {
           <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1 text-teamB">{tB}</p>
           <p className="font-semibold text-sm leading-tight text-ink truncate">{nameB || '—'}</p>
         </div>
+      </div>
+
+      {/* ── social bar ── */}
+      <div className="mx-3 mb-2 rounded-xl bg-surface border border-line overflow-hidden">
+        <SocialBar matchId={matchId}
+          likes={socialCount.likes} comments={socialCount.comments} liked={iLiked}
+          onCommentClick={() => {
+            const el = document.getElementById('comments-anchor')
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+          onShareClick={handleShare}
+          onChange={({ liked, likes }) => { setILiked(liked); setSocialCount(s => ({ ...s, likes })) }}
+        />
       </div>
 
       {/* ── course banner ── */}
@@ -515,9 +600,11 @@ export default function MatchDetailScreen() {
               />
             </div>
 
-            {/* Result dot */}
+            {/* Result dot (Match Play) oder Stableford-Punkte-Pille */}
             <div className="flex items-center justify-center">
-              <ResultDot winner={h.winner} />
+              {isStableford
+                ? <StablefordPill a={stablefordPoints(h.strokes_a, h.par)} b={stablefordPoints(h.strokes_b, h.par)} />
+                : <ResultDot winner={h.winner} />}
             </div>
           </div>
         )
@@ -534,6 +621,10 @@ export default function MatchDetailScreen() {
           </button>
         </div>
       )}
+
+      {/* Comments */}
+      <div id="comments-anchor" />
+      <CommentsThread matchId={matchId} />
 
       {/* ── fixed bottom summary ── */}
       <div

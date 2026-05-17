@@ -1,11 +1,13 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BottomNav from './components/BottomNav'
 import BrandHeader from './components/BrandHeader'
 import LoadingSpinner from './components/LoadingSpinner'
+import Toaster from './components/Toaster'
 import { useAuth } from './lib/auth'
 import { captureReferralFromUrl } from './lib/referral'
+import { startLiveEvents } from './lib/liveEvents'
 
 // Sign-in + Onboarding are eager: they appear before any other screen on first load.
 import SignInScreen from './screens/SignInScreen'
@@ -18,6 +20,7 @@ const DiscoverScreen     = lazy(() => import('./screens/DiscoverScreen'))
 const MessagesScreen     = lazy(() => import('./screens/MessagesScreen'))
 const ConversationScreen = lazy(() => import('./screens/ConversationScreen'))
 const LeaderboardScreen  = lazy(() => import('./screens/LeaderboardScreen'))
+const TourScreen         = lazy(() => import('./screens/TourScreen'))
 const ChallengesScreen   = lazy(() => import('./screens/ChallengesScreen'))
 const MatchesScreen      = lazy(() => import('./screens/MatchesScreen'))
 const MatchDetailScreen  = lazy(() => import('./screens/MatchDetailScreen'))
@@ -43,6 +46,7 @@ function HeaderForRoute() {
     '/cup':         t('nav.cups'),
     '/messages':    t('nav.messages',    'Nachrichten'),
     '/leaderboard': t('nav.leaderboard', 'Rangliste'),
+    '/tour':        t('nav.tour',        'Tour'),
     '/me':          t('nav.profile'),
     '/u/':          t('nav.profile'),
   }
@@ -58,6 +62,13 @@ export default function App() {
   const { user, profile, loading } = useAuth()
   const { pathname } = useLocation()
   const isPublicCup = pathname.startsWith('/c/')
+
+  // Globale Realtime-Bridge für Toasts (DM, Like, Comment, Match-Status)
+  useEffect(() => {
+    if (!user?.id) return
+    const stop = startLiveEvents(user)
+    return () => { if (typeof stop === 'function') stop() }
+  }, [user?.id])
 
   if (loading) {
     return <div className="min-h-screen bg-bg flex items-center justify-center"><LoadingSpinner /></div>
@@ -81,6 +92,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg text-ink">
       <HeaderForRoute />
+      <Toaster />
       <main className="pb-safe">
         <Suspense fallback={<ScreenFallback />}>
           <Routes>
@@ -97,6 +109,7 @@ export default function App() {
             <Route path="/messages"          element={<MessagesScreen />} />
             <Route path="/messages/:conversationId" element={<ConversationScreen />} />
             <Route path="/leaderboard"       element={<LeaderboardScreen />} />
+            <Route path="/tour"              element={<TourScreen />} />
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />

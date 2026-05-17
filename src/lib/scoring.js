@@ -37,6 +37,31 @@ export function suggestFactors(sizeA, sizeB) {
 
 function round2(n) { return Math.round(n * 100) / 100 }
 
+// Brutto-Stableford pro Loch.
+// 4 = Eagle, 3 = Birdie, 2 = Par, 1 = Bogey, 0 = Doppel-Bogey oder schlimmer.
+// strokes/par müssen positive Integers sein, sonst null.
+export function stablefordPoints(strokes, par) {
+  const s = parseInt(strokes), p = parseInt(par)
+  if (!s || !p || s < 1 || p < 3) return null
+  const diff = s - p
+  if (diff <= -2) return 4
+  if (diff === -1) return 3
+  if (diff ===  0) return 2
+  if (diff ===  1) return 1
+  return 0
+}
+
+export function calcStablefordTotals(holes) {
+  let a = 0, b = 0
+  for (const h of (holes || [])) {
+    const pa = stablefordPoints(h.strokes_a, h.par)
+    const pb = stablefordPoints(h.strokes_b, h.par)
+    if (pa !== null) a += pa
+    if (pb !== null) b += pb
+  }
+  return { a, b }
+}
+
 export function calcTeamPoints(matches, holesByMatch = {}) {
   let A = 0
   let B = 0

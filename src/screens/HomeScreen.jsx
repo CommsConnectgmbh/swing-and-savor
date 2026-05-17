@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { calcMatchStanding } from '../lib/scoring'
+import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
+import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
+import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
+import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const TEAM_A = '#60a5fa'
@@ -23,6 +26,8 @@ export default function HomeScreen() {
   const [holesByMatch, setHolesByMatch] = useState({})
   const [filter, setFilter] = useState('all')
   const [friendOwnerIds, setFriendOwnerIds] = useState(new Set())
+  const [social, setSocial] = useState({})    // matchId → {likes, comments}
+  const [myLikes, setMyLikes] = useState(new Set())
   const channelRef = useRef(null)
 
   useEffect(() => {
@@ -120,6 +125,16 @@ export default function HomeScreen() {
     }
 
     setMatches(enriched)
+
+    // Social-Counts batch laden
+    const matchIds = enriched.map(m => m.id)
+    const [counts, mine] = await Promise.all([
+      fetchSocialCounts(matchIds),
+      user?.id ? fetchMyReactions(matchIds, user.id) : Promise.resolve(new Set()),
+    ])
+    setSocial(counts)
+    setMyLikes(mine)
+
     setLoading(false)
   }
 
@@ -128,8 +143,45 @@ export default function HomeScreen() {
     const ch = supabase.channel('home-feed')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reactions' }, () => refreshSocial())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_comments' }, () => refreshSocial())
       .subscribe()
     channelRef.current = ch
+  }
+
+  async function refreshSocial() {
+    const ids = matches.map(m => m.id)
+    if (ids.length === 0) return
+    const counts = await fetchSocialCounts(ids)
+    setSocial(counts)
+  }
+
+  async function handleShare(m) {
+    try {
+      const { blob } = await renderMatchShareCard({
+        type: m.type === 'singles' ? 'Singles' : m.type === 'doubles' ? 'Doubles' : `Flight ${m._namesA.length}v${m._namesB.length}`,
+        namesA: m._namesA, namesB: m._namesB,
+        teamANameLabel: m.tournament?.team_a_name, teamBNameLabel: m.tournament?.team_b_name,
+        scoreLine: scoreLineFor(m),
+        statusLabel: m.status === 'active' ? 'Live' : m.status === 'finished' ? 'Beendet' : 'Offen',
+        courseName: m.course?.name, cupName: m.tournament?.name,
+        ownerHandle: m._owner?.handle,
+      })
+      await shareOrDownload({
+        blob, filename: `swingandsavor-${m.id.slice(0, 8)}.png`,
+        title: 'Swing & Savor', text: 'Schau das Match!',
+        url: `https://app.swingandsavor.at/matches/${m.id}`,
+      })
+    } catch (e) { console.error('[share]', e) }
+  }
+
+  function scoreLineFor(m) {
+    if (m.status === 'finished') {
+      if (m.winner === 'A') return m.tournament?.team_a_name || 'TEAM A'
+      if (m.winner === 'B') return m.tournament?.team_b_name || 'TEAM B'
+      return 'A/S'
+    }
+    return '—'
   }
 
   if (loading) return <LoadingSpinner />
@@ -156,8 +208,8 @@ export default function HomeScreen() {
         </p>
       </div>
 
-      {/* Filter-Chips */}
-      <div className="px-3 mb-3 flex gap-1.5">
+      {/* Filter-Chips + Tour-Pill */}
+      <div className="px-3 mb-3 flex gap-1.5 items-center">
         {FILTERS.map(f => (
           <button key={f.key}
             onClick={() => setFilter(f.key)}
@@ -172,13 +224,21 @@ export default function HomeScreen() {
             )}
           </button>
         ))}
+        <button onClick={() => navigate('/tour')}
+          className="ml-auto px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide bg-surface text-inkMuted border border-line active:scale-95 transition-transform hover:text-accent">
+          Tour ⛳
+        </button>
       </div>
 
       {/* Feed */}
       <div className="mx-3 rounded-card overflow-hidden bg-surface border border-line">
         {filtered.map((m, idx) => (
           <FeedCard key={m.id} match={m} holes={holesByMatch[m.id] || []}
+            social={social[m.id] || { likes: 0, comments: 0 }}
+            liked={myLikes.has(m.id)}
             onOpen={() => navigate(`/matches/${m.id}`)}
+            onCommentClick={() => navigate(`/matches/${m.id}#comments`)}
+            onShareClick={() => handleShare(m)}
             divider={idx < filtered.length - 1} />
         ))}
 
@@ -195,14 +255,15 @@ export default function HomeScreen() {
   )
 }
 
-function FeedCard({ match: m, holes, onOpen, divider }) {
-  const isActive   = m.status === 'active'
-  const isFinished = m.status === 'finished'
-  const standing   = isActive ? calcMatchStanding(holes) : null
+function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onShareClick, divider }) {
+  const isActive     = m.status === 'active'
+  const isFinished   = m.status === 'finished'
+  const isStableford = m.format === 'stableford'
 
-  const typeLbl = m.type === 'singles' ? 'Singles'
-                 : m.type === 'doubles' ? 'Doubles'
-                 : `Flight ${m._namesA.length}v${m._namesB.length}`
+  const baseTypeLbl = m.type === 'singles' ? 'Singles'
+                     : m.type === 'doubles' ? 'Doubles'
+                     : `Flight ${m._namesA.length}v${m._namesB.length}`
+  const typeLbl = isStableford ? `${baseTypeLbl} · Stableford` : baseTypeLbl
 
   const namesA = m._namesA.join(' · ') || '—'
   const namesB = m._namesB.join(' · ') || '—'
@@ -216,9 +277,20 @@ function FeedCard({ match: m, holes, onOpen, divider }) {
     else if (m.winner === 'B') { scoreLabel = m.tournament?.team_b_name ? `${m.tournament.team_b_name}` : 'B'; scoreColor = TEAM_B; scoreBg = 'rgba(251,113,133,0.12)' }
     else                       { scoreLabel = 'A/S'; scoreColor = '#a8b5ad'; scoreBg = 'rgba(168,181,173,0.08)' }
   } else if (isActive) {
-    if (standing.leader === 'A')      { scoreLabel = standing.label; scoreColor = TEAM_A; scoreBg = 'rgba(96,165,250,0.10)' }
-    else if (standing.leader === 'B') { scoreLabel = standing.label; scoreColor = TEAM_B; scoreBg = 'rgba(251,113,133,0.10)' }
-    else                              { scoreLabel = 'A/S'; scoreColor = LIVE; scoreBg = 'rgba(152,205,2,0.10)' }
+    if (isStableford) {
+      const t = calcStablefordTotals(holes)
+      const leader = t.a > t.b ? 'A' : t.b > t.a ? 'B' : 'none'
+      scoreLabel = `${t.a}:${t.b}`
+      scoreColor = leader === 'A' ? TEAM_A : leader === 'B' ? TEAM_B : LIVE
+      scoreBg    = leader === 'A' ? 'rgba(96,165,250,0.10)'
+                  : leader === 'B' ? 'rgba(251,113,133,0.10)'
+                                   : 'rgba(152,205,2,0.10)'
+    } else {
+      const standing = calcMatchStanding(holes)
+      if (standing.leader === 'A')      { scoreLabel = standing.label; scoreColor = TEAM_A; scoreBg = 'rgba(96,165,250,0.10)' }
+      else if (standing.leader === 'B') { scoreLabel = standing.label; scoreColor = TEAM_B; scoreBg = 'rgba(251,113,133,0.10)' }
+      else                              { scoreLabel = 'A/S'; scoreColor = LIVE; scoreBg = 'rgba(152,205,2,0.10)' }
+    }
   }
 
   const subline = isActive
@@ -228,9 +300,9 @@ function FeedCard({ match: m, holes, onOpen, divider }) {
       : (m.course?.name || m.tournament?.name || '')
 
   return (
-    <button onClick={onOpen}
-      className="w-full text-left active:scale-[0.99] transition-transform block"
-      style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
+    <div className="w-full" style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
+      <button onClick={onOpen}
+        className="w-full text-left active:scale-[0.99] transition-transform block">
 
       {m.photo_url && (
         <div className="relative w-full bg-bg overflow-hidden" style={{ aspectRatio: '16/9' }}>
@@ -287,9 +359,17 @@ function FeedCard({ match: m, holes, onOpen, divider }) {
 
       {/* Sub */}
       {subline && (
-        <p className="px-4 pb-3 text-[11px] text-inkDim truncate">{subline}</p>
+        <p className="px-4 pb-2 text-[11px] text-inkDim truncate">{subline}</p>
       )}
-    </button>
+      </button>
+
+      {/* Social-Bar */}
+      <div className="border-t border-lineSoft">
+        <SocialBar matchId={m.id}
+          likes={social.likes} comments={social.comments} liked={liked}
+          onCommentClick={onCommentClick} onShareClick={onShareClick} />
+      </div>
+    </div>
   )
 }
 

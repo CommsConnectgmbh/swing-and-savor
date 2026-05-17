@@ -63,6 +63,7 @@ const emptyForm = {
   factorTouched: false,
   course: null,
   visibility: null,             // null = vom Turnier erben
+  format: 'match_play',         // 'match_play' | 'stableford'
 }
 
 function expandedSize(type, size) {
@@ -199,6 +200,7 @@ export default function MatchesScreen() {
         factorTouched: false,
         course: null,
         visibility: m.visibility ?? null,
+        format: m.format || 'match_play',
       })
       setEditId(m.id); setMode('edit')
     })
@@ -336,6 +338,7 @@ export default function MatchesScreen() {
       hole_pars: form.course?.hole_pars?.length ? form.course.hole_pars : [],
       hole_handicaps: form.course?.hole_handicaps?.length ? form.course.hole_handicaps : [],
       visibility: form.visibility,
+      format: form.format || 'match_play',
     }
 
     if (mode === 'create') await supabase.from('matches').insert([{ ...payload, tournament_id: selected.id }])
@@ -506,6 +509,28 @@ export default function MatchesScreen() {
                 <span className="text-[9px] tracking-wide opacity-75">{hint}</span>
               </button>
             ))}
+          </div>
+
+          {/* Format-Toggle */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Spielformat</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ['match_play', 'Match Play', 'Loch gegen Loch'],
+                ['stableford', 'Stableford', 'Punkte pro Loch (brutto)'],
+              ].map(([val, label, hint]) => (
+                <button key={val} type="button"
+                  onClick={() => setForm(f => ({ ...f, format: val }))}
+                  className={`flex flex-col items-center gap-0.5 py-2 rounded-xl active:scale-[0.97] transition-all ${
+                    form.format === val
+                      ? 'bg-accent/15 text-accent border border-accent/40'
+                      : 'bg-bg text-inkMuted border border-line'
+                  }`}>
+                  <span className="text-sm font-bold">{label}</span>
+                  <span className="text-[9px] tracking-wide opacity-75">{hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Flight: Team-Größen-Picker */}

@@ -11,6 +11,7 @@ import AvatarPicker from '../components/AvatarPicker'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ShareSheet from '../components/ShareSheet'
+import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -34,6 +35,29 @@ export default function ProfileScreen() {
   const [deleteText, setDeleteText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [pushState, setPushState] = useState(null) // 'on' | 'off' | 'unavailable' | 'busy'
+
+  useEffect(() => {
+    if (!webPushAvailable()) { setPushState('unavailable'); return }
+    if (typeof Notification === 'undefined') { setPushState('unavailable'); return }
+    if (Notification.permission === 'denied') { setPushState('denied'); return }
+    navigator.serviceWorker?.getRegistration('/sw-push.js')
+      .then((reg) => reg?.pushManager?.getSubscription())
+      .then((sub) => setPushState(sub ? 'on' : 'off'))
+      .catch(() => setPushState('off'))
+  }, [])
+
+  async function togglePush() {
+    if (!me) return
+    setPushState('busy')
+    if (pushState === 'on') {
+      await disableWebPush(me)
+      setPushState('off')
+    } else {
+      const r = await ensureWebPush(me)
+      setPushState(r.ok ? 'on' : (r.reason === 'denied' ? 'denied' : 'off'))
+    }
+  }
 
   async function deleteAccount() {
     if (deleteText.trim().toUpperCase() !== 'LÖSCHEN') {
@@ -392,9 +416,11 @@ export default function ProfileScreen() {
       {/* Self-only quick links */}
       {isSelf && (
         <div className="mx-3 mt-2 rounded-card bg-surface border border-line overflow-hidden">
-          <ProfileLink to="/friends" label={t('nav.friends')} />
-          <ProfileLink to="/cup"     label={t('nav.cups')} />
-          <ProfileLink to="/teams"   label={t('nav.teams')} last />
+          <ProfileLink to="/friends"     label={t('nav.friends')} />
+          <ProfileLink to="/cup"         label={t('nav.cups')} />
+          <ProfileLink to="/teams"       label={t('nav.teams')} />
+          <ProfileLink to="/leaderboard" label={t('nav.leaderboard', 'Rangliste')} />
+          <ProfileLink to="/tour"        label={t('nav.tour', 'Tour')} last />
         </div>
       )}
 
@@ -462,6 +488,35 @@ export default function ProfileScreen() {
                 </button>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Notifications */}
+      {isSelf && pushState && pushState !== 'unavailable' && (
+        <div className="mx-3 mt-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">Benachrichtigungen</p>
+          <div className="rounded-card bg-surface border border-line p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent/12 border border-accent/30 text-accent text-lg">🔔</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-ink">Push-Mitteilungen</p>
+              <p className="text-[11px] text-inkMuted mt-0.5">
+                {pushState === 'on'   && 'Aktiv — du wirst über Likes, Kommentare und Matches informiert.'}
+                {pushState === 'off'  && 'Aus — schalte ein, damit du nichts verpasst.'}
+                {pushState === 'denied' && 'Vom Browser blockiert — in den Einstellungen erlauben.'}
+                {pushState === 'busy' && 'Moment…'}
+              </p>
+            </div>
+            {pushState !== 'denied' && (
+              <button onClick={togglePush} disabled={pushState === 'busy'}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold tracking-wide active:scale-95 transition-transform disabled:opacity-50 ${
+                  pushState === 'on'
+                    ? 'bg-surface text-inkMuted border border-line'
+                    : 'bg-accent text-brandDark'
+                }`}>
+                {pushState === 'on' ? 'Aus' : 'Einschalten'}
+              </button>
+            )}
           </div>
         </div>
       )}
