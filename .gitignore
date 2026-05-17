@@ -15,3 +15,8 @@ pwa_build/
 .local-secrets/
 .apple-bootstrap/secrets/
 .apple-bootstrap/node_modules/
+
+# Discord
+discord/node_modules/
+discord/.env
+
