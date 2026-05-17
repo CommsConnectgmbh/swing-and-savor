@@ -160,7 +160,12 @@ export function AuthProvider({ children }) {
 
     logDebug('auth.boot', { ua: navigator.userAgent, href: location.href })
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // IMPORTANT: This callback is invoked by supabase-js while it holds the
+    // internal auth-lock (navigator.locks). Any supabase.from()/auth.* call
+    // here will deadlock because PostgREST asks for the session token, which
+    // tries to acquire the SAME lock. Keep this body synchronous — defer all
+    // supabase work via setTimeout(0) so it runs after the lock is released.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return
       const u = session?.user ?? null
       const expSec = session?.expires_at ?? null
@@ -180,25 +185,25 @@ export function AuthProvider({ children }) {
         setProfile(null); setProfileChecked(true)
         return
       }
-      if (event === 'TOKEN_REFRESHED') {
-        if (loadedUidRef.current !== u.id) {
-          if (inflightPromiseRef.current) {
-            try { await inflightPromiseRef.current } catch {}
-          }
+
+      // Defer all supabase calls (loadProfile, refreshSession, getSession)
+      // so the auth-lock is released before they run.
+      setTimeout(() => {
+        if (cancelled) return
+        if (event === 'TOKEN_REFRESHED') {
           if (loadedUidRef.current !== u.id) {
-            await loadProfile(u.id, { force: true, reason: 'TOKEN_REFRESHED' })
+            loadProfile(u.id, { force: true, reason: 'TOKEN_REFRESHED' })
           }
+          return
         }
-        return
-      }
-      // SIGNED_IN or INITIAL_SESSION (or PASSWORD_RECOVERY)
-      if (loadedUidRef.current !== u.id) {
-        await loadProfile(u.id, { reason: event })
-      } else {
-        setProfileChecked(true)
-      }
-      // Fire-and-forget: claim any stored ref-code captured before signup
-      if (event === 'SIGNED_IN') claimReferralIfAny()
+        // SIGNED_IN or INITIAL_SESSION (or PASSWORD_RECOVERY)
+        if (loadedUidRef.current !== u.id) {
+          loadProfile(u.id, { reason: event })
+        } else {
+          setProfileChecked(true)
+        }
+        if (event === 'SIGNED_IN') claimReferralIfAny()
+      }, 0)
     })
 
     return () => {
