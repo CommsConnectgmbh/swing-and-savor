@@ -51,16 +51,35 @@ export default function OnboardingScreen() {
     }
   }, [user?.email])
 
-  // If a profile already exists for this user, recover automatically (e.g. after stale cache)
+  // If a profile already exists for this user, recover automatically (e.g.
+  // after a boot-time auth-race). Re-poll a few times because the recovery
+  // window may coincide with a token-refresh that hasn't landed yet.
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
+    let attempts = 0
     ;(async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-      if (!cancelled && data) {
-        console.log('[onboarding] existing profile found, recovering')
-        setProfileDirect(data)
-        navigate('/board', { replace: true })
+      while (!cancelled && attempts < 4) {
+        attempts++
+        try {
+          if (attempts > 1) {
+            try { await supabase.auth.refreshSession() } catch {}
+          }
+          const { data, error } = await supabase
+            .from('profiles').select('*').eq('id', user.id).maybeSingle()
+          if (cancelled) return
+          if (error) {
+            console.warn('[onboarding] recovery query error', error)
+          } else if (data) {
+            console.log('[onboarding] existing profile found, recovering')
+            setProfileDirect(data)
+            navigate('/board', { replace: true })
+            return
+          }
+        } catch (e) {
+          console.warn('[onboarding] recovery attempt failed', e)
+        }
+        await new Promise(r => setTimeout(r, 600 * attempts))
       }
     })()
     return () => { cancelled = true }

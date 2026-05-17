@@ -70,6 +70,7 @@ export function AuthProvider({ children }) {
 
   const loadedUidRef = useRef(null)
   const inflightUidRef = useRef(null)
+  const inflightPromiseRef = useRef(null)
 
   async function loadProfile(uid, { force = false } = {}) {
     if (!uid) {
@@ -81,43 +82,47 @@ export function AuthProvider({ children }) {
       setProfileChecked(true)
       return
     }
-    if (inflightUidRef.current === uid) return
+    if (inflightUidRef.current === uid) return inflightPromiseRef.current
+
     inflightUidRef.current = uid
+    const promise = (async () => {
+      try {
+        let result = await fetchProfileWithRetry(uid)
 
-    try {
-      let result = await fetchProfileWithRetry(uid)
-
-      // Edge case: on a fresh reload the session JWT can be in-flight
-      // for refresh while the first profile query already hits the server,
-      // which returns nothing under RLS. If the row "doesn't exist", give
-      // the auth state a moment and try one more time with a forced token
-      // refresh. This is what made the Onboarding-recovery-effect succeed
-      // a second later, so we fold that retry into the auth boot.
-      if (result === NOT_FOUND) {
-        try { await supabase.auth.getUser() } catch {}
-        await new Promise(r => setTimeout(r, 250))
-        try {
-          const second = await fetchProfileOnce(uid)
-          if (second !== NOT_FOUND) result = second
-        } catch (e) {
-          console.error('[auth] late retry failed', e)
+        if (result === NOT_FOUND) {
+          // On a stale-token reload the first attempt can race with the
+          // auto-refresh; force a session refresh and retry once.
+          try { await supabase.auth.refreshSession() } catch {}
+          await new Promise(r => setTimeout(r, 250))
+          try {
+            const second = await fetchProfileOnce(uid)
+            if (second !== NOT_FOUND) result = second
+          } catch (e) {
+            console.error('[auth] late retry failed', e)
+          }
         }
-      }
 
-      if (inflightUidRef.current !== uid) return
-      if (result === NOT_FOUND) {
-        setProfile(null)
-      } else {
-        setProfile(result)
+        if (inflightUidRef.current !== uid) return
+        if (result === NOT_FOUND) {
+          setProfile(null)
+          // Do NOT mark loadedUidRef — leaving it open lets a later
+          // TOKEN_REFRESHED (or manual refresh) try again with a fresh JWT,
+          // instead of permanently locking the user into Onboarding.
+        } else {
+          setProfile(result)
+          loadedUidRef.current = uid
+        }
+        setProfileChecked(true)
+      } catch (e) {
+        console.error('[auth] loadProfile transient failure, keeping prior state', e)
+        setProfileChecked(true)
+      } finally {
+        if (inflightUidRef.current === uid) inflightUidRef.current = null
+        if (inflightPromiseRef.current === promise) inflightPromiseRef.current = null
       }
-      loadedUidRef.current = uid
-      setProfileChecked(true)
-    } catch (e) {
-      console.error('[auth] loadProfile transient failure, keeping prior state', e)
-      setProfileChecked(true)
-    } finally {
-      if (inflightUidRef.current === uid) inflightUidRef.current = null
-    }
+    })()
+    inflightPromiseRef.current = promise
+    return promise
   }
 
   useEffect(() => {
@@ -139,10 +144,25 @@ export function AuthProvider({ children }) {
       setUser(u)
       setSessionChecked(true)
 
-      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return
+      if (event === 'USER_UPDATED') return
       if (event === 'SIGNED_OUT' || !u) {
         loadedUidRef.current = null
         setProfile(null); setProfileChecked(true)
+        return
+      }
+      if (event === 'TOKEN_REFRESHED') {
+        // Boot-time race: INITIAL_SESSION may fire with a stale access_token
+        // that makes the first profile fetch return nothing. Once the
+        // auto-refresh completes we get TOKEN_REFRESHED — use that as a
+        // second chance if no profile has been loaded yet for this user.
+        if (loadedUidRef.current !== u.id) {
+          if (inflightPromiseRef.current) {
+            try { await inflightPromiseRef.current } catch {}
+          }
+          if (loadedUidRef.current !== u.id) {
+            await loadProfile(u.id, { force: true })
+          }
+        }
         return
       }
       // SIGNED_IN or INITIAL_SESSION (or PASSWORD_RECOVERY)
