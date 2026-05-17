@@ -391,6 +391,7 @@
       footer .meta { color: var(--dim); }
 
       /* ===== Language switch ===== */
+      .lang-wrap { position: relative; margin-right: 0.6rem; }
       .lang-chip {
         display: inline-flex; align-items: center; gap: 0.4rem;
         padding: 0.45rem 0.8rem; border-radius: 999px;
@@ -401,10 +402,65 @@
         letter-spacing: 0.18em; text-transform: uppercase;
         color: var(--ink);
         cursor: pointer; transition: background 150ms ease, border-color 150ms ease;
-        margin-right: 0.6rem;
       }
       .lang-chip:hover { background: rgba(255,255,255,0.1); border-color: var(--green-edge); }
       .lang-chip .flag { font-size: 0.95rem; }
+      .lang-menu {
+        position: absolute; top: calc(100% + 6px); right: 0;
+        min-width: 170px; padding: 6px;
+        background: rgba(6, 20, 14, 0.96);
+        backdrop-filter: blur(14px) saturate(120%);
+        -webkit-backdrop-filter: blur(14px) saturate(120%);
+        border: 1px solid var(--line-strong); border-radius: 14px;
+        box-shadow: 0 24px 60px -10px rgba(0,0,0,0.6);
+        z-index: 60;
+        display: none; flex-direction: column; gap: 2px;
+      }
+      .lang-menu.open { display: flex; }
+      .lang-menu button {
+        display: flex; align-items: center; gap: 0.55rem;
+        padding: 0.5rem 0.7rem; border-radius: 9px;
+        background: transparent; border: none; color: var(--ink);
+        font-family: 'Barlow', sans-serif; font-size: 0.86rem;
+        cursor: pointer; text-align: left;
+        transition: background 120ms ease;
+      }
+      .lang-menu button:hover { background: rgba(255,255,255,0.06); }
+      .lang-menu button.active { background: var(--green-soft); color: var(--green); font-weight: 600; }
+      .lang-menu button .flag { font-size: 1.05rem; }
+
+      /* ===== Newsletter ===== */
+      .newsletter {
+        max-width: 460px; margin: 1.5rem auto 0;
+        display: flex; gap: 0.5rem; flex-wrap: wrap;
+      }
+      .newsletter input {
+        flex: 1; min-width: 220px;
+        padding: 0.85rem 1rem; border-radius: 12px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--line-strong);
+        color: var(--ink); font-family: 'Barlow', sans-serif; font-size: 0.92rem;
+        outline: none; transition: border-color 150ms ease;
+      }
+      .newsletter input::placeholder { color: var(--dim); }
+      .newsletter input:focus { border-color: var(--green-edge); }
+      .newsletter button {
+        padding: 0.85rem 1.3rem; border-radius: 12px;
+        background: var(--green); color: var(--brand-dark);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 0.85rem;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        border: none; cursor: pointer;
+        transition: transform 150ms ease, background 150ms ease;
+      }
+      .newsletter button:hover { transform: translateY(-1px); background: #b3e02a; }
+      .newsletter button:disabled { opacity: 0.55; cursor: default; transform: none; }
+      .newsletter-status {
+        text-align: center; font-size: 0.82rem;
+        color: var(--muted); margin-top: 0.7rem; min-height: 1.2em;
+      }
+      .newsletter-status.ok { color: var(--green); }
+      .newsletter-status.err { color: #ff7a90; }
 
       /* ===== App-store badges ===== */
       .stores {
@@ -594,9 +650,12 @@
           <a href="#platforms" data-i18n="nav.get">Get the app</a>
         </div>
         <div style="display:flex;align-items:center;">
-          <button class="lang-chip" id="langChip" type="button" aria-label="Switch language">
-            <span class="flag" id="langFlag">🇬🇧</span><span id="langCode">EN</span>
-          </button>
+          <div class="lang-wrap">
+            <button class="lang-chip" id="langChip" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Switch language">
+              <span class="flag" id="langFlag">🇬🇧</span><span id="langCode">EN</span>
+            </button>
+            <div class="lang-menu" id="langMenu" role="listbox"></div>
+          </div>
           <a class="cta" href="https://app.swingandsavor.at/" data-i18n="nav.openApp">Open app</a>
         </div>
       </div>
@@ -929,7 +988,17 @@
     </section>
 
     <footer>
-      <div class="links">
+      <p class="kicker" style="text-align:center; margin-bottom:0.6rem;" data-i18n="newsletter.kicker">Stay in the loop</p>
+      <p style="text-align:center; color:var(--muted); max-width:36rem; margin:0 auto; font-size:0.9rem; line-height:1.5;" data-i18n="newsletter.lead">
+        New cups, native-app releases, the occasional tip — no spam, unsubscribe anytime.
+      </p>
+      <form class="newsletter" id="newsletterForm" novalidate>
+        <input type="email" id="newsletterEmail" required autocomplete="email" placeholder="you@example.com" data-i18n-placeholder="newsletter.placeholder" />
+        <button type="submit" id="newsletterBtn" data-i18n="newsletter.cta">Subscribe</button>
+      </form>
+      <div class="newsletter-status" id="newsletterStatus"></div>
+
+      <div class="links" style="margin-top:2rem;">
         <a href="https://app.swingandsavor.at/" data-i18n="footer.app">App</a>
         <a href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener">Discord</a>
         <a href="mailto:hi@swingandsavor.at" data-i18n="footer.support">Support</a>
@@ -955,6 +1024,9 @@
 
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
+
+      const SUPABASE_URL = 'https://rcqichlyllhwougopfkg.supabase.co';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcWljaGx5bGxod291Z29wZmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDA2MTksImV4cCI6MjA5NDUxNjYxOX0.s-vvEaz_cqT3pS5lHZvUPNOXILgJMq2qHVp4idUY_wY';
 
       // ===== Translations =====
       const TRANSLATIONS = {
@@ -1029,6 +1101,13 @@
           "sticky.title": "Swing & Savor",
           "sticky.sub": "Cups, duels & live leaderboard",
           "sticky.cta": "Open app",
+          "newsletter.kicker": "Stay in the loop",
+          "newsletter.lead": "New cups, native-app releases, the occasional tip — no spam, unsubscribe anytime.",
+          "newsletter.placeholder": "you@example.com",
+          "newsletter.cta": "Subscribe",
+          "newsletter.ok": "Check your inbox to confirm.",
+          "newsletter.err": "Could not subscribe. Try again later.",
+          "newsletter.invalid": "Enter a valid email address.",
         },
         de: {
           "nav.features": "Features",
@@ -1101,10 +1180,231 @@
           "sticky.title": "Swing & Savor",
           "sticky.sub": "Cups, Duelle & Live-Leaderboard",
           "sticky.cta": "App öffnen",
+          "newsletter.kicker": "Bleib am Ball",
+          "newsletter.lead": "Neue Cups, Native-App-Releases, ab und zu ein Tipp — kein Spam, jederzeit abbestellbar.",
+          "newsletter.placeholder": "du@beispiel.de",
+          "newsletter.cta": "Abonnieren",
+          "newsletter.ok": "Bestätigungs-Mail in deinem Postfach.",
+          "newsletter.err": "Anmeldung fehlgeschlagen. Bitte später erneut versuchen.",
+          "newsletter.invalid": "Gib eine gültige E-Mail-Adresse ein.",
+        },
+        es: {
+          "nav.features": "Funciones", "nav.how": "Cómo funciona", "nav.community": "Comunidad",
+          "nav.get": "Descargar", "nav.openApp": "Abrir app",
+          "hero.eyebrow": "Match Play · Cup Bracket · Score en directo",
+          "hero.title": "Cada golpe <em>cuenta</em>.",
+          "hero.lead": "Crea torneos estilo Ryder Cup, reta a tus amigos a Match Play y sigue cada hoyo en directo. 1.745 campos en todo el mundo, datos de OSM.",
+          "hero.ctaPrimary": "Abrir app", "hero.ctaSecondary": "Ver funciones",
+          "hero.live": "En directo", "hero.statCourses": "Campos en el mundo",
+          "hero.statCountries": "Países", "hero.statPlatforms": "En todas partes",
+          "split1.kicker": "Match Play en serio",
+          "split1.title": "Hoyo a hoyo — el marcador <em>se calcula solo</em>.",
+          "split1.lead1": "Individual o Doubles 2 v 2. Hándicap automático, dormie incluido, ganador del hoyo bloqueado antes del siguiente tee. Tú metes los golpes, la app hace el resto.",
+          "split1.lead2": "Cada entrada se sincroniza en directo con todo el flight. Sin tarjeta de papel, sin discusiones sobre el marcador.",
+          "features.kicker": "Dentro de la app",
+          "features.title": "Todo para la ronda — <em>antes, durante, después</em>.",
+          "features.coursesT": "1.745 campos en todo el mundo",
+          "features.coursesB": "De Mallorca a Belek, DE/AT/CH completo. Par y HCP por hoyo. Mantenido por la comunidad.",
+          "features.matchT": "Match Play",
+          "features.matchB": "Individual y Doubles 2 v 2 con hándicap y lógica dormie.",
+          "features.cupT": "Cup brackets",
+          "features.cupB": "Tus propios torneos Ryder Cup con Equipo A/B y bracket en directo.",
+          "features.liveT": "Marcador en directo",
+          "features.liveB": "Sincronización en tiempo real. Cada entrada visible al instante.",
+          "features.friendsT": "Amigos y duelos",
+          "features.friendsB": "Encuentra jugadores por @handle, envía solicitud, rétalos al instante.",
+          "features.statsT": "Estadísticas",
+          "features.statsB": "Tasa de victoria, empates/ganados/perdidos, hoyos ganados — por perfil y total.",
+          "phones.kicker": "Un vistazo dentro",
+          "phones.title": "Hecho para la <em>ronda en sí</em>.",
+          "phones.label1": "Cup en directo", "phones.title1": "Copa Primavera 2026", "phones.cap1": "Clasificación",
+          "phones.label2": "Hoyo 14 · Par 4", "phones.cap2": "Detalle del partido",
+          "phones.label3": "Tus estadísticas", "phones.cap3": "Perfil",
+          "phones.statWin": "% victoria", "phones.statMatches": "Partidos", "phones.statHoles": "Hoyos ganados",
+          "how.kicker": "Cómo funciona",
+          "how.title": "Tres pasos para un <em>partido en directo</em>.",
+          "how.step1T": "Inicia sesión",
+          "how.step1B": "Código de 8 dígitos por email. Sin contraseña, sin magic link. Perfil con handle, HCP y campo habitual.",
+          "how.step2T": "Cup o duelo",
+          "how.step2B": "Monta un torneo con Equipo A/B, o reta a un amigo a Match Play directamente.",
+          "how.step3T": "Juega en directo",
+          "how.step3B": "Mete los golpes hoyo a hoyo. Marcador, ganador del hoyo y hoyos restantes — todo automático.",
+          "discord.title": "El clubhouse <em>después de la ronda</em>.",
+          "discord.lead": "Cups, clasificaciones, fotos del campo y charla del 19th hole — todo en nuestro Discord. Los resultados se publican automáticamente al final de un cup.",
+          "discord.cta": "Únete a Discord",
+          "deal.badge": "Con DealBuddy",
+          "deal.title": "Que cada partido <em>importe</em>.",
+          "deal.lead": "Envía cualquier duelo directamente a <a href=\"https://deal-buddy.app/\" style=\"color:var(--green);text-decoration:underline;\">DealBuddy</a> con un tap. Apuesta amistosa, sin discusiones. Apuestas sociales entre amigos — nunca juego de azar.",
+          "deal.cta1": "Encuentra a tus amigos", "deal.cta2": "¿Qué es DealBuddy?",
+          "get.kicker": "Descarga la app",
+          "get.title": "Web, iOS, Android — <em>tú decides</em>.",
+          "get.lead": "La app web está disponible ya. iOS y Android nativos llegarán pronto — regístrate en la web para que te avisemos.",
+          "get.pwaTop": "Juega ya", "get.pwaBot": "Abrir app web",
+          "get.appleTop": "Descarga en", "get.googleTop": "Disponible en",
+          "get.soon": "Pronto",
+          "final.kicker": "Último tee",
+          "final.title": "¿Listo para la <em>próxima ronda</em>?",
+          "final.lead": "Invita a tus amigos, monta un torneo — la app se encarga del resto.",
+          "final.cta": "Abrir app", "final.discord": "Únete a Discord",
+          "footer.app": "App", "footer.support": "Soporte",
+          "footer.impressum": "Aviso legal", "footer.privacy": "Privacidad", "footer.terms": "Términos",
+          "sticky.title": "Swing & Savor",
+          "sticky.sub": "Cups, duelos y marcador en directo",
+          "sticky.cta": "Abrir app",
+          "newsletter.kicker": "No te lo pierdas",
+          "newsletter.lead": "Nuevos cups, lanzamientos nativos, alguna pista — sin spam, te das de baja cuando quieras.",
+          "newsletter.placeholder": "tu@ejemplo.com",
+          "newsletter.cta": "Suscribirme",
+          "newsletter.ok": "Revisa tu bandeja para confirmar.",
+          "newsletter.err": "No se pudo suscribir. Inténtalo más tarde.",
+          "newsletter.invalid": "Introduce un email válido.",
+        },
+        fr: {
+          "nav.features": "Fonctions", "nav.how": "Comment ça marche", "nav.community": "Communauté",
+          "nav.get": "Télécharger", "nav.openApp": "Ouvrir l'app",
+          "hero.eyebrow": "Match Play · Cup Bracket · Live Scoring",
+          "hero.title": "Chaque coup <em>compte</em>.",
+          "hero.lead": "Crée des tournois style Ryder Cup, défie tes amis en Match Play et suis chaque trou en direct. 1 745 parcours dans le monde, données OSM.",
+          "hero.ctaPrimary": "Ouvrir l'app", "hero.ctaSecondary": "Voir les fonctions",
+          "hero.live": "En direct", "hero.statCourses": "Parcours dans le monde",
+          "hero.statCountries": "Pays", "hero.statPlatforms": "Partout disponible",
+          "split1.kicker": "Match Play, version sérieuse",
+          "split1.title": "Trou par trou — le score <em>se calcule tout seul</em>.",
+          "split1.lead1": "Single ou Doubles 2 v 2. Handicap automatique, logique dormie intégrée, vainqueur du trou figé avant le prochain départ. Tu rentres les coups, l'app fait le reste.",
+          "split1.lead2": "Chaque saisie se synchronise en direct avec tout le flight. Pas de carte papier, pas de débat sur le score.",
+          "features.kicker": "Dans l'app",
+          "features.title": "Tout pour la partie — <em>avant, pendant, après</em>.",
+          "features.coursesT": "1 745 parcours dans le monde",
+          "features.coursesB": "De Majorque à Belek, DE/AT/CH complet. Par et HCP par trou. Maintenu par la communauté.",
+          "features.matchT": "Match Play",
+          "features.matchB": "Single et Doubles 2 v 2 avec handicap et logique dormie.",
+          "features.cupT": "Cup brackets",
+          "features.cupB": "Tes propres tournois Ryder Cup avec Équipe A/B et bracket en direct.",
+          "features.liveT": "Classement live",
+          "features.liveB": "Sync temps réel. Chaque saisie visible immédiatement par tous.",
+          "features.friendsT": "Amis et duels",
+          "features.friendsB": "Trouve des joueurs par @handle, envoie une demande, défie-les sur le champ.",
+          "features.statsT": "Stats joueur",
+          "features.statsB": "Taux de victoire, halved/gagnés/perdus, trous gagnés — par profil et global.",
+          "phones.kicker": "Un aperçu",
+          "phones.title": "Conçu pour la <em>partie elle-même</em>.",
+          "phones.label1": "Cup live", "phones.title1": "Coupe Printemps 2026", "phones.cap1": "Classement",
+          "phones.label2": "Trou 14 · Par 4", "phones.cap2": "Détail du match",
+          "phones.label3": "Tes stats", "phones.cap3": "Profil",
+          "phones.statWin": "Taux victoire", "phones.statMatches": "Matchs", "phones.statHoles": "Trous gagnés",
+          "how.kicker": "Comment ça marche",
+          "how.title": "Trois étapes pour un <em>match en direct</em>.",
+          "how.step1T": "Inscription",
+          "how.step1B": "Code à 8 chiffres par email. Pas de mot de passe, pas de magic link. Profil avec pseudo, HCP et parcours d'attache.",
+          "how.step2T": "Tournoi ou duel",
+          "how.step2B": "Lance un tournoi avec Équipe A/B, ou défie un ami en Match Play directement.",
+          "how.step3T": "Joue en direct",
+          "how.step3B": "Saisis tes coups trou par trou. Score, vainqueur et trous restants — tout automatique.",
+          "discord.title": "Le clubhouse <em>après la partie</em>.",
+          "discord.lead": "Tournois, classements, photos du parcours et discussions du 19th hole — tout sur notre Discord. Les résultats s'affichent automatiquement à la fin d'un cup.",
+          "discord.cta": "Rejoindre le Discord",
+          "deal.badge": "Avec DealBuddy",
+          "deal.title": "Que chaque match <em>compte</em>.",
+          "deal.lead": "Envoie un duel directement vers <a href=\"https://deal-buddy.app/\" style=\"color:var(--green);text-decoration:underline;\">DealBuddy</a> en un tap. Pari amical, règlement net. Paris sociaux entre amis — jamais du jeu d'argent.",
+          "deal.cta1": "Trouve tes amis", "deal.cta2": "Qu'est-ce que DealBuddy ?",
+          "get.kicker": "Télécharger",
+          "get.title": "Web, iOS, Android — <em>à toi de choisir</em>.",
+          "get.lead": "L'app web est dispo tout de suite. iOS et Android natifs arrivent bientôt — inscris-toi via la web app pour être prévenu.",
+          "get.pwaTop": "Joue tout de suite", "get.pwaBot": "Ouvrir l'app web",
+          "get.appleTop": "Télécharger sur", "get.googleTop": "Disponible sur",
+          "get.soon": "Bientôt",
+          "final.kicker": "Dernier tee",
+          "final.title": "Prêt pour la <em>prochaine partie</em> ?",
+          "final.lead": "Invite tes amis, monte un tournoi — l'app gère le reste.",
+          "final.cta": "Ouvrir l'app", "final.discord": "Rejoindre Discord",
+          "footer.app": "App", "footer.support": "Support",
+          "footer.impressum": "Mentions légales", "footer.privacy": "Confidentialité", "footer.terms": "CGU",
+          "sticky.title": "Swing & Savor",
+          "sticky.sub": "Tournois, duels & classement live",
+          "sticky.cta": "Ouvrir l'app",
+          "newsletter.kicker": "Reste dans la boucle",
+          "newsletter.lead": "Nouveaux tournois, sorties natives, des astuces — pas de spam, désabonnement à tout moment.",
+          "newsletter.placeholder": "toi@exemple.com",
+          "newsletter.cta": "S'abonner",
+          "newsletter.ok": "Vérifie ta boîte mail pour confirmer.",
+          "newsletter.err": "Inscription échouée. Réessaie plus tard.",
+          "newsletter.invalid": "Saisis une adresse email valide.",
+        },
+        ja: {
+          "nav.features": "機能", "nav.how": "使い方", "nav.community": "コミュニティ",
+          "nav.get": "アプリを入手", "nav.openApp": "アプリを開く",
+          "hero.eyebrow": "マッチプレー · カップブラケット · ライブスコアリング",
+          "hero.title": "ひと打ち、ひと打ち、<em>意味がある</em>。",
+          "hero.lead": "ライダーカップ形式の大会を作り、友達とマッチプレーで対戦し、すべてのホールをライブで追跡。世界中の1,745コース、OSM データ搭載。",
+          "hero.ctaPrimary": "アプリを開く", "hero.ctaSecondary": "機能を見る",
+          "hero.live": "ライブ", "hero.statCourses": "世界中のコース",
+          "hero.statCountries": "国", "hero.statPlatforms": "どこでも利用可能",
+          "split1.kicker": "本気のマッチプレー",
+          "split1.title": "ホールごとに、スコアは <em>自動計算</em>。",
+          "split1.lead1": "シングルスまたは 2 対 2 ダブルス。ハンディキャップは自動、ドーミーロジックも内蔵、ホール勝者は次のティーに立つ前に確定。あなたは打数を入力するだけ。",
+          "split1.lead2": "すべての入力が同じ組に即座に同期。紙のスコアカードもスコアの議論も不要。",
+          "features.kicker": "アプリの中身",
+          "features.title": "ラウンドのすべて — <em>前、中、後</em>。",
+          "features.coursesT": "世界1,745コース",
+          "features.coursesB": "マヨルカからベレクまで、DE/AT/CHは完全カバー。ホールごとのパーと HCP。コミュニティによって管理。",
+          "features.matchT": "マッチプレー",
+          "features.matchB": "シングルスと 2 対 2 ダブルス、ハンディキャップとドーミーロジック付き。",
+          "features.cupT": "カップブラケット",
+          "features.cupB": "自分でライダーカップ形式の大会を作成、チーム A/B とライブブラケット。",
+          "features.liveT": "ライブリーダーボード",
+          "features.liveB": "リアルタイム同期。すべての入力が組全体に即時表示。",
+          "features.friendsT": "フレンドとデュエル",
+          "features.friendsB": "@handle でプレイヤー検索、フレンド申請、その場で対戦。",
+          "features.statsT": "プレイヤー統計",
+          "features.statsB": "勝率、引き分け/勝/負、獲得ホール率 — プロフィール別と全試合通算。",
+          "phones.kicker": "中をちょっと",
+          "phones.title": "<em>ラウンドそのもの</em>のために。",
+          "phones.label1": "ライブカップ", "phones.title1": "スプリングカップ 2026", "phones.cap1": "リーダーボード",
+          "phones.label2": "14番ホール · パー 4", "phones.cap2": "マッチ詳細",
+          "phones.label3": "あなたの統計", "phones.cap3": "プロフィール",
+          "phones.statWin": "勝率", "phones.statMatches": "マッチ", "phones.statHoles": "獲得ホール",
+          "how.kicker": "使い方",
+          "how.title": "3ステップで <em>ライブマッチ</em>。",
+          "how.step1T": "サインイン",
+          "how.step1B": "8桁のコードをメールで。パスワードもマジックリンクも不要。ハンドル、HCP、ホームコースのプロフィール。",
+          "how.step2T": "カップまたはデュエル",
+          "how.step2B": "チーム A/B でカップ大会を立ち上げ、または友達に直接マッチプレーを挑戦。",
+          "how.step3T": "ライブでプレー",
+          "how.step3B": "ホールごとに打数を入力。スコア、ホール勝者、残りホールは自動計算。",
+          "discord.title": "<em>ラウンド後</em>のクラブハウス。",
+          "discord.lead": "カップ、リーダーボード、コースからの写真、19番ホールの会話 — すべて Discord で。カップ終了時にライブ結果が自動投稿。",
+          "discord.cta": "Discord に参加",
+          "deal.badge": "DealBuddy と連携",
+          "deal.title": "すべてのマッチを <em>意味のあるもの</em>に。",
+          "deal.lead": "どのデュエルもワンタップで <a href=\"https://deal-buddy.app/\" style=\"color:var(--green);text-decoration:underline;\">DealBuddy</a> へ。友好的な賭けで、議論なく決着。友達同士のソーシャルな賭け — 決してギャンブルではありません。",
+          "deal.cta1": "友達を見つける", "deal.cta2": "DealBuddy とは？",
+          "get.kicker": "アプリを入手",
+          "get.title": "Web、iOS、Android — <em>あなた次第</em>。",
+          "get.lead": "Web アプリは今すぐ利用可能。iOS と Android のネイティブ版はまもなくストアへ — Web アプリで登録して通知を受け取ろう。",
+          "get.pwaTop": "今すぐ遊ぶ", "get.pwaBot": "Web アプリを開く",
+          "get.appleTop": "ダウンロード", "get.googleTop": "入手する",
+          "get.soon": "近日",
+          "final.kicker": "最後のティー",
+          "final.title": "次のラウンドの <em>準備はできた</em>？",
+          "final.lead": "友達を招待し、カップを設定 — アプリが残りをやってくれます。",
+          "final.cta": "アプリを開く", "final.discord": "Discord に参加",
+          "footer.app": "アプリ", "footer.support": "サポート",
+          "footer.impressum": "運営者情報", "footer.privacy": "プライバシー", "footer.terms": "利用規約",
+          "sticky.title": "Swing & Savor",
+          "sticky.sub": "カップ、デュエル、ライブリーダーボード",
+          "sticky.cta": "アプリを開く",
+          "newsletter.kicker": "最新情報を逃さない",
+          "newsletter.lead": "新しいカップ、ネイティブアプリのリリース、ちょっとしたヒント — スパムなし、いつでも解除できます。",
+          "newsletter.placeholder": "you@example.com",
+          "newsletter.cta": "登録",
+          "newsletter.ok": "メールをご確認ください。",
+          "newsletter.err": "登録に失敗しました。後でもう一度お試しください。",
+          "newsletter.invalid": "有効なメールアドレスを入力してください。",
         }
       };
-      const FLAGS = { en: '🇬🇧', de: '🇩🇪' };
-      const NAMES = { en: 'EN', de: 'DE' };
+      const FLAGS = { en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', fr: '🇫🇷', ja: '🇯🇵' };
+      const NAMES = { en: 'EN', de: 'DE', es: 'ES', fr: 'FR', ja: 'JA' };
+      const LANG_LABELS = { en: 'English', de: 'Deutsch', es: 'Español', fr: 'Français', ja: '日本語' };
 
       function pickLang() {
         const q = new URL(location.href).searchParams.get('lang');
@@ -1127,18 +1427,83 @@
           const key = el.getAttribute('data-i18n-html');
           if (dict[key] != null) el.innerHTML = dict[key];
         });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+          const key = el.getAttribute('data-i18n-placeholder');
+          if (dict[key] != null) el.setAttribute('placeholder', dict[key]);
+        });
         document.getElementById('langFlag').textContent = FLAGS[lang];
         document.getElementById('langCode').textContent = NAMES[lang];
+        // update menu active state
+        document.querySelectorAll('#langMenu button').forEach((b) => {
+          b.classList.toggle('active', b.dataset.lang === lang);
+        });
         localStorage.setItem('sns_marketing_lang', lang);
       }
+
+      // Build language dropdown
+      const langMenu = document.getElementById('langMenu');
+      Object.keys(LANG_LABELS).forEach((code) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.dataset.lang = code;
+        b.innerHTML = `<span class="flag">${FLAGS[code]}</span><span>${LANG_LABELS[code]}</span>`;
+        b.addEventListener('click', () => {
+          currentLang = code;
+          applyLang(currentLang);
+          langMenu.classList.remove('open');
+          document.getElementById('langChip').setAttribute('aria-expanded', 'false');
+        });
+        langMenu.appendChild(b);
+      });
 
       // Initial render
       let currentLang = pickLang();
       applyLang(currentLang);
 
-      document.getElementById('langChip').addEventListener('click', () => {
-        currentLang = currentLang === 'en' ? 'de' : 'en';
-        applyLang(currentLang);
+      const langChip = document.getElementById('langChip');
+      langChip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = langMenu.classList.toggle('open');
+        langChip.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', (e) => {
+        if (!langMenu.contains(e.target) && e.target !== langChip) {
+          langMenu.classList.remove('open');
+          langChip.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Newsletter submit
+      const newsForm = document.getElementById('newsletterForm');
+      const newsStatus = document.getElementById('newsletterStatus');
+      const newsBtn = document.getElementById('newsletterBtn');
+      newsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('newsletterEmail').value.trim();
+        const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          newsStatus.textContent = dict['newsletter.invalid'];
+          newsStatus.className = 'newsletter-status err';
+          return;
+        }
+        newsBtn.disabled = true;
+        newsStatus.textContent = '…';
+        newsStatus.className = 'newsletter-status';
+        try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/subscribe-newsletter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+            body: JSON.stringify({ email, lang: currentLang, source: 'marketing-site' }),
+          });
+          if (!res.ok) throw new Error('http ' + res.status);
+          newsStatus.textContent = dict['newsletter.ok'];
+          newsStatus.className = 'newsletter-status ok';
+          newsForm.reset();
+        } catch {
+          newsStatus.textContent = dict['newsletter.err'];
+          newsStatus.className = 'newsletter-status err';
+        } finally {
+          newsBtn.disabled = false;
+        }
       });
 
       // Nav scroll-state + mobile sticky bar visibility
@@ -1160,9 +1525,8 @@
       document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
       // Live stats fetch
-      const SUPABASE_URL = 'https://rcqichlyllhwougopfkg.supabase.co';
-      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcWljaGx5bGxod291Z29wZmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDA2MTksImV4cCI6MjA5NDUxNjYxOX0.s-vvEaz_cqT3pS5lHZvUPNOXILgJMq2qHVp4idUY_wY';
-      const numFmt = (n) => new Intl.NumberFormat(currentLang === 'de' ? 'de-DE' : 'en-US').format(n);
+      const localeMap = { en: 'en-US', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', ja: 'ja-JP' };
+      const numFmt = (n) => new Intl.NumberFormat(localeMap[currentLang] || 'en-US').format(n);
       fetch(`${SUPABASE_URL}/functions/v1/public-stats`, { headers: { apikey: ANON_KEY } })
         .then((r) => r.ok ? r.json() : null)
         .then((s) => {
