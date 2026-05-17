@@ -12,6 +12,7 @@ import SignInScreen from './screens/SignInScreen'
 import OnboardingScreen from './screens/OnboardingScreen'
 
 // Everything else: lazy-load so the initial bundle stays small.
+const HomeScreen         = lazy(() => import('./screens/HomeScreen'))
 const BoardScreen        = lazy(() => import('./screens/BoardScreen'))
 const DiscoverScreen     = lazy(() => import('./screens/DiscoverScreen'))
 const ChallengesScreen   = lazy(() => import('./screens/ChallengesScreen'))
@@ -29,6 +30,7 @@ function HeaderForRoute() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const titles = {
+    '/home':       t('nav.home', 'Home'),
     '/board':      t('nav.board'),
     '/discover':   t('nav.discover'),
     '/challenges': t('nav.challenges'),
@@ -77,7 +79,8 @@ export default function App() {
       <main className="pb-safe">
         <Suspense fallback={<ScreenFallback />}>
           <Routes>
-            <Route path="/"                  element={<Navigate to="/board" replace />} />
+            <Route path="/"                  element={<Navigate to="/home" replace />} />
+            <Route path="/home"              element={<HomeScreen />} />
             <Route path="/board"             element={<BoardScreen />} />
             <Route path="/discover"          element={<DiscoverScreen />} />
             <Route path="/challenges"        element={<ChallengesScreen />} />
@@ -88,7 +91,7 @@ export default function App() {
             <Route path="/cup"               element={<CupScreen />} />
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
-            <Route path="*"                  element={<Navigate to="/board" replace />} />
+            <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>
       </main>

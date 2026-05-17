@@ -9,6 +9,7 @@ export default function ChallengesScreen() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const presetOpponentId = searchParams.get('opponent')
+  const wantsNew = searchParams.get('new') === '1'
   const { user, profile } = useAuth()
   const [tab, setTab]       = useState('incoming') // incoming | active | sent | finished
   const [creating, setCreating] = useState(false)
@@ -20,8 +21,13 @@ export default function ChallengesScreen() {
   useEffect(() => { if (user) load() }, [user, tab])
 
   // If we were sent here from a friend row with ?opponent=<uid>, open the
-  // create form pre-filled with that friend.
+  // create form pre-filled with that friend.  Or just ?new=1 → open empty form.
   useEffect(() => {
+    if (wantsNew && !presetOpponentId) {
+      setCreating(true)
+      setSearchParams({}, { replace: true })
+      return
+    }
     if (!presetOpponentId) return
     let cancelled = false
     ;(async () => {
@@ -34,7 +40,7 @@ export default function ChallengesScreen() {
       }
     })()
     return () => { cancelled = true }
-  }, [presetOpponentId])
+  }, [presetOpponentId, wantsNew])
 
   async function load() {
     setLoading(true)

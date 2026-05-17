@@ -4,6 +4,7 @@
     "tagline": "Spielen. Scoren. Geniessen."
   },
   "nav": {
+    "home": "Home",
     "board": "Board",
     "discover": "Entdecken",
     "challenges": "Duelle",
@@ -11,7 +12,8 @@
     "cups": "Turniere",
     "profile": "Profil",
     "friends": "Freunde",
-    "teams": "Teams"
+    "teams": "Teams",
+    "create": "Neu"
   },
   "common": {
     "loading": "Lade…",

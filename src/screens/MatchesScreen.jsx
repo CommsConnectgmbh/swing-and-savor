@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
 import { suggestFactors } from '../lib/scoring'
@@ -94,6 +94,7 @@ function SizeChips({ value, onChange, label }) {
 
 export default function MatchesScreen() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [tournaments, setTournaments] = useState([])
   const [selected, setSelected] = useState(null)
   const [matches, setMatches] = useState([])
@@ -116,6 +117,15 @@ export default function MatchesScreen() {
         setLoading(false)
       })
   }, [])
+
+  // Auto-Open des Create-Forms wenn ?new=1 (via Plus-FAB-Sheet)
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return
+    if (!selected) return
+    if (mode) return
+    setForm(emptyForm); setEditId(null); setMode('create')
+    setSearchParams({}, { replace: true })
+  }, [searchParams, selected])
 
   useEffect(() => {
     if (selected) {
