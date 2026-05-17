@@ -1,21 +1,32 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Swing &amp; Savor — Golf-Turniere, Duelle &amp; Live-Leaderboard</title>
-    <meta name="description" content="Match Play, Cup-Bracket, 1.700+ Plätze weltweit, Live-Scoring und direkte Duelle gegen Freunde — als PWA und Native-App für iOS &amp; Android." />
+    <title>Swing &amp; Savor — Golf cups, duels &amp; live leaderboard</title>
+    <meta name="description" content="Match Play, cup brackets, 1,745+ courses worldwide, live scoring and head-to-head duels with friends — PWA and native app for iOS &amp; Android." />
 
     <meta name="theme-color" content="#0d271e" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
-    <meta property="og:title" content="Swing &amp; Savor — Golf-Turniere &amp; Duelle" />
-    <meta property="og:description" content="Match Play, Cup-Bracket, 1.700+ Plätze, Live-Scoring. PWA + Native iOS/Android." />
+    <link rel="alternate" hreflang="en" href="https://swingandsavor.at/" />
+    <link rel="alternate" hreflang="de" href="https://swingandsavor.at/?lang=de" />
+    <link rel="alternate" hreflang="x-default" href="https://swingandsavor.at/" />
+    <link rel="canonical" href="https://swingandsavor.at/" />
+
+    <meta property="og:title" content="Swing &amp; Savor — Golf cups &amp; live leaderboard" />
+    <meta property="og:description" content="Match Play, cup brackets, 1,745+ courses, live scoring. PWA + native iOS &amp; Android." />
     <meta property="og:image" content="https://swingandsavor.at/img/hero.jpg" />
     <meta property="og:url" content="https://swingandsavor.at/" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Swing &amp; Savor — Golf cups &amp; live leaderboard" />
+    <meta name="twitter:description" content="Match Play, cup brackets, 1,745+ courses, live scoring." />
+    <meta name="twitter:image" content="https://swingandsavor.at/img/hero.jpg" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -378,7 +389,194 @@
       footer .links a { color: rgba(255,255,255,0.66); transition: color 150ms ease; }
       footer .links a:hover { color: var(--green); }
       footer .meta { color: var(--dim); }
-    </style>
+
+      /* ===== Language switch ===== */
+      .lang-chip {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.45rem 0.8rem; border-radius: 999px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--line-strong);
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 0.74rem;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--ink);
+        cursor: pointer; transition: background 150ms ease, border-color 150ms ease;
+        margin-right: 0.6rem;
+      }
+      .lang-chip:hover { background: rgba(255,255,255,0.1); border-color: var(--green-edge); }
+      .lang-chip .flag { font-size: 0.95rem; }
+
+      /* ===== App-store badges ===== */
+      .stores {
+        display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
+        margin-top: 1.4rem;
+      }
+      .store-badge {
+        display: inline-flex; align-items: center; gap: 0.7rem;
+        padding: 0.7rem 1.1rem; border-radius: 12px;
+        background: rgba(0,0,0,0.65);
+        border: 1px solid var(--line-strong);
+        transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+        position: relative;
+      }
+      .store-badge:hover { transform: translateY(-1px); border-color: var(--green-edge); }
+      .store-badge .logo { width: 26px; height: 26px; color: var(--ink); flex-shrink: 0; }
+      .store-badge .copy { display: flex; flex-direction: column; gap: 0.05rem; line-height: 1; }
+      .store-badge .top {
+        font-size: 0.62rem; letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.62); text-transform: uppercase;
+        font-family: 'Barlow', sans-serif; font-weight: 500;
+      }
+      .store-badge .bot {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700; font-size: 1rem;
+        color: var(--ink); letter-spacing: 0.02em;
+      }
+      .store-badge .soon {
+        position: absolute; top: -7px; right: -7px;
+        font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+        font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+        background: var(--green); color: var(--brand-dark);
+        padding: 0.18rem 0.45rem; border-radius: 999px;
+      }
+      .store-badge.pwa {
+        background: var(--green); border-color: var(--green);
+      }
+      .store-badge.pwa .top, .store-badge.pwa .bot { color: var(--brand-dark); }
+      .store-badge.pwa:hover { background: #b3e02a; border-color: #b3e02a; }
+
+      /* ===== Discord band ===== */
+      .discord-band {
+        position: relative; overflow: hidden;
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background:
+          radial-gradient(80% 100% at 50% 0%, rgba(88, 101, 242, 0.22) 0%, transparent 60%),
+          linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+        border: 1px solid rgba(88, 101, 242, 0.32);
+      }
+      .discord-band .discord-icon {
+        width: 56px; height: 56px; border-radius: 14px;
+        background: #5865F2; color: white;
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-bottom: 1rem;
+      }
+      .discord-band h2 { max-width: 22ch; margin: 0 auto 0.8rem; }
+      .discord-band .lead { max-width: 40rem; margin: 0 auto 1.6rem; }
+      .discord-band .btn-discord {
+        background: #5865F2; color: white; border-color: #5865F2;
+      }
+      .discord-band .btn-discord:hover { background: #4752c4; border-color: #4752c4; }
+      .discord-band .channels {
+        display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center;
+        margin-top: 1.4rem; font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.78rem; letter-spacing: 0.06em;
+      }
+      .discord-band .channels span {
+        padding: 0.3rem 0.65rem; border-radius: 999px;
+        background: rgba(88, 101, 242, 0.12); color: #b8c0ff;
+        border: 1px solid rgba(88, 101, 242, 0.2);
+      }
+
+      /* ===== Phone mockup gallery ===== */
+      .phones {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 2.5rem; align-items: end; justify-items: center;
+        max-width: 1000px; margin: 0 auto;
+        perspective: 1200px;
+      }
+      @media (max-width: 800px) { .phones { grid-template-columns: 1fr; gap: 3rem; } }
+      .phone {
+        position: relative; width: 100%; max-width: 240px;
+        aspect-ratio: 9/19.5;
+        border-radius: 36px;
+        background: #0a0a0a;
+        padding: 8px;
+        box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08);
+        transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+      }
+      .phone.tilt-l { transform: rotateY(8deg) translateY(20px); }
+      .phone.tilt-r { transform: rotateY(-8deg) translateY(20px); }
+      .phone:hover { transform: rotateY(0) translateY(0); }
+      .phone::before {
+        content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+        width: 80px; height: 22px; border-radius: 999px; background: #0a0a0a; z-index: 2;
+      }
+      .phone .screen {
+        width: 100%; height: 100%; border-radius: 28px; overflow: hidden;
+        background: linear-gradient(180deg, var(--brand-dark), var(--brand-deep));
+        display: flex; flex-direction: column;
+        position: relative;
+        font-family: 'Barlow', sans-serif;
+      }
+      .phone .screen-pad { padding: 38px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+      .phone .phone-label {
+        position: absolute; bottom: -36px; left: 0; right: 0;
+        text-align: center; font-size: 0.72rem;
+        letter-spacing: 0.22em; text-transform: uppercase;
+        color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+        font-weight: 700;
+      }
+      .ph-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 10px; border-radius: 10px;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+      }
+      .ph-row .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--green); flex-shrink: 0; box-shadow: 0 0 8px var(--green); }
+      .ph-row .dot.off { background: var(--line); box-shadow: none; }
+      .ph-row .who { flex: 1; min-width: 0; font-size: 0.65rem; color: var(--ink); font-weight: 600; }
+      .ph-row .score { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.8rem; color: var(--green); }
+      .ph-hero { padding: 10px; border-radius: 10px; background: var(--green-soft); border: 1px solid var(--green-edge); }
+      .ph-hero .lbl { font-size: 0.52rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green); font-weight: 700; margin-bottom: 2px; }
+      .ph-hero .title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.85rem; color: var(--ink); line-height: 1.1; }
+      .ph-hole {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 10px; border-radius: 10px;
+        background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+      }
+      .ph-hole .h { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; }
+      .ph-hole .pts { display: flex; gap: 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.8rem; }
+      .ph-hole .a { color: var(--green); }
+      .ph-hole .b { color: var(--gold); }
+
+      /* ===== Live counter ===== */
+      .live-pulse {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--green); font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+        margin-bottom: 0.3rem;
+      }
+      .live-pulse::before {
+        content: ''; width: 7px; height: 7px; border-radius: 999px;
+        background: var(--green); box-shadow: 0 0 6px var(--green);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.35; transform: scale(0.85); }
+      }
+      @media (prefers-reduced-motion: reduce) { .live-pulse::before { animation: none; } }
+
+      /* ===== Sticky mobile bottom CTA ===== */
+      .mobile-cta {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+        padding: 0.7rem 1rem max(0.7rem, env(safe-area-inset-bottom));
+        background: rgba(6, 20, 14, 0.92);
+        backdrop-filter: blur(14px) saturate(120%);
+        -webkit-backdrop-filter: blur(14px) saturate(120%);
+        border-top: 1px solid var(--line-strong);
+        display: none;
+        transform: translateY(100%);
+        transition: transform 250ms ease;
+      }
+      .mobile-cta.shown { transform: translateY(0); }
+      @media (max-width: 820px) { .mobile-cta { display: block; } body { padding-bottom: 64px; } }
+      .mobile-cta .row { display: flex; gap: 0.5rem; align-items: center; }
+      .mobile-cta .label { flex: 1; min-width: 0; }
+      .mobile-cta .label .t { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--ink); letter-spacing: 0.02em; }
+      .mobile-cta .label .s { font-size: 0.7rem; color: var(--muted); }
+      .mobile-cta .btn { padding: 0.7rem 1rem; font-size: 0.78rem; }
   </head>
   <body>
     <div class="grain"></div>
@@ -390,34 +588,50 @@
           <span>Swing &amp; Savor</span>
         </a>
         <div class="links">
-          <a href="#features">Features</a>
-          <a href="#how">Wie es geht</a>
-          <a href="#platforms">Plattform</a>
+          <a href="#features" data-i18n="nav.features">Features</a>
+          <a href="#how" data-i18n="nav.how">How it works</a>
+          <a href="#community" data-i18n="nav.community">Community</a>
+          <a href="#platforms" data-i18n="nav.get">Get the app</a>
         </div>
-        <a class="cta" href="https://app.swingandsavor.at/">Zur App</a>
+        <div style="display:flex;align-items:center;">
+          <button class="lang-chip" id="langChip" type="button" aria-label="Switch language">
+            <span class="flag" id="langFlag">🇬🇧</span><span id="langCode">EN</span>
+          </button>
+          <a class="cta" href="https://app.swingandsavor.at/" data-i18n="nav.openApp">Open app</a>
+        </div>
       </div>
     </nav>
 
     <!-- HERO -->
     <header class="hero">
       <div class="hero-inner">
-        <p class="eyebrow reveal">Match Play · Cup Bracket · Live-Scoring</p>
-        <h1 class="reveal">Wo jeder Schlag <em>zählt</em>.</h1>
-        <p class="lead reveal">
-          Lege Ryder-Cup-Turniere an, fordere Freunde zu Match-Play-Duellen heraus und
-          verfolge jedes Loch live. 1.700+ Plätze weltweit, OSM-Daten direkt in der App.
+        <p class="eyebrow reveal" data-i18n="hero.eyebrow">Match Play · Cup Bracket · Live Scoring</p>
+        <h1 class="reveal" data-i18n-html="hero.title">Every shot <em>counts</em>.</h1>
+        <p class="lead reveal" data-i18n="hero.lead">
+          Build Ryder-Cup-style tournaments, challenge friends to head-to-head Match Play and
+          watch every hole come in live. 1,745 courses worldwide, OSM-backed.
         </p>
         <div class="ctas reveal">
           <a class="btn btn-primary" href="https://app.swingandsavor.at/">
-            App öffnen
+            <span data-i18n="hero.ctaPrimary">Open the app</span>
             <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
-          <a class="btn btn-ghost" href="#features">Features ansehen</a>
+          <a class="btn btn-ghost" href="#features" data-i18n="hero.ctaSecondary">See features</a>
         </div>
-        <div class="hero-stats reveal">
-          <div><span class="v">1.745</span><span class="k">Plätze weltweit</span></div>
-          <div><span class="v">Live</span><span class="k">Realtime-Scoring</span></div>
-          <div><span class="v">iOS · Android · Web</span><span class="k">Überall verfügbar</span></div>
+        <div class="hero-stats reveal" id="heroStats">
+          <div>
+            <span class="live-pulse" data-i18n="hero.live">Live</span>
+            <span class="v"><span id="stat-courses">1,745</span></span>
+            <span class="k" data-i18n="hero.statCourses">Courses worldwide</span>
+          </div>
+          <div>
+            <span class="v"><span id="stat-countries">13</span></span>
+            <span class="k" data-i18n="hero.statCountries">Countries</span>
+          </div>
+          <div>
+            <span class="v">iOS · Android · Web</span>
+            <span class="k" data-i18n="hero.statPlatforms">Available everywhere</span>
+          </div>
         </div>
       </div>
     </header>
@@ -426,22 +640,21 @@
     <section class="band">
       <div class="band-inner split">
         <div class="text reveal">
-          <p class="kicker">Match Play, ernst gemeint</p>
-          <h2>Loch für Loch — der Stand <em>rechnet sich selbst</em>.</h2>
-          <p class="lead">
-            Singles oder Doubles 2 v 2. Handicap-Vorgabe automatisch, Dormie-Logik mitgerechnet,
-            Lochgewinner sichtbar bevor der nächste Tee steht. Du gibst nur die Schläge ein — die App
-            macht den Rest.
+          <p class="kicker" data-i18n="split1.kicker">Match Play, done right</p>
+          <h2 data-i18n-html="split1.title">Hole by hole — the score <em>tracks itself</em>.</h2>
+          <p class="lead" data-i18n="split1.lead1">
+            Singles or 2 v 2 Doubles. Handicap strokes computed automatically, dormie logic baked in,
+            hole winners locked before the next tee box. You enter the strokes — the app does the rest.
           </p>
-          <p class="lead">
-            Jede Eingabe synchronisiert in Echtzeit mit allen Mitspielern. Kein Sammelblatt am Ende,
-            kein Streit über den Stand.
+          <p class="lead" data-i18n="split1.lead2">
+            Every entry syncs live to all players in the flight. No paper scorecard, no debate
+            about where you stand.
           </p>
         </div>
         <div class="imgwrap reveal">
           <picture>
             <source srcset="img/detail-ball.webp" type="image/webp" />
-            <img src="img/detail-ball.jpg" alt="Golfball auf Tee im Morgentau" loading="lazy" />
+            <img src="img/detail-ball.jpg" alt="Golf ball on tee in morning dew" loading="lazy" />
           </picture>
         </div>
       </div>
@@ -451,8 +664,8 @@
     <section class="band" id="features" style="padding-top:0;">
       <div class="band-inner">
         <div style="text-align:center; max-width:600px; margin:0 auto 3rem;" class="reveal">
-          <p class="kicker">Was drin steckt</p>
-          <h2>Alles für die Runde — <em>vor, während, danach</em>.</h2>
+          <p class="kicker" data-i18n="features.kicker">Inside the app</p>
+          <h2 data-i18n-html="features.title">Everything for the round — <em>before, during, after</em>.</h2>
         </div>
 
         <div class="bento">
@@ -463,8 +676,8 @@
                 <circle cx="12" cy="10" r="3"/><path d="M12 21s-7-7-7-12a7 7 0 0114 0c0 5-7 12-7 12z"/>
               </svg>
             </div>
-            <h3>1.745 Plätze weltweit</h3>
-            <p>Von Mallorca bis Belek, DE/AT/CH komplett. Par- und HCP-Daten pro Loch. Community-gepflegt, OSM-fundiert.</p>
+            <h3 data-i18n="features.coursesT">1,745 courses worldwide</h3>
+            <p data-i18n="features.coursesB">From Mallorca to Belek, full coverage in DE/AT/CH. Par and HCP per hole. Community-curated, OSM-grounded.</p>
           </article>
 
           <article class="card cell reveal">
@@ -473,8 +686,8 @@
                 <circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>
               </svg>
             </div>
-            <h3>Match Play</h3>
-            <p>Singles &amp; Doubles 2v2 mit Handicap-Vorgabe und Dormie-Logik.</p>
+            <h3 data-i18n="features.matchT">Match Play</h3>
+            <p data-i18n="features.matchB">Singles &amp; 2 v 2 Doubles with handicap strokes and dormie logic.</p>
           </article>
 
           <article class="card cell reveal">
@@ -483,8 +696,8 @@
                 <path d="M8 21h8M12 17v4M5 4h14l-1 9a6 6 0 01-12 0L5 4z"/>
               </svg>
             </div>
-            <h3>Cup Bracket</h3>
-            <p>Eigene Ryder-Cup-Turniere mit Team A/B und Live-Bracket.</p>
+            <h3 data-i18n="features.cupT">Cup brackets</h3>
+            <p data-i18n="features.cupB">Build your own Ryder-Cup-style tournaments with Team A/B and live bracket.</p>
           </article>
 
           <article class="card cell reveal">
@@ -493,8 +706,8 @@
                 <path d="M3 12h18M3 6h18M3 18h18"/>
               </svg>
             </div>
-            <h3>Live-Leaderboard</h3>
-            <p>Realtime via Supabase. Jede Eingabe sofort beim ganzen Flight sichtbar.</p>
+            <h3 data-i18n="features.liveT">Live leaderboard</h3>
+            <p data-i18n="features.liveB">Realtime sync. Every entry is visible to the whole flight instantly.</p>
           </article>
 
           <article class="card cell reveal">
@@ -503,8 +716,8 @@
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
               </svg>
             </div>
-            <h3>Freunde &amp; Duelle</h3>
-            <p>Per @handle finden, anfragen, herausfordern — in der App oder via DealBuddy.</p>
+            <h3 data-i18n="features.friendsT">Friends &amp; duels</h3>
+            <p data-i18n="features.friendsB">Find players by @handle, send a friend request, challenge them on the spot.</p>
           </article>
 
           <article class="card wide reveal">
@@ -513,9 +726,63 @@
                 <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 9h6v6H9z"/>
               </svg>
             </div>
-            <h3>Match-Statistik</h3>
-            <p>Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.</p>
+            <h3 data-i18n="features.statsT">Player stats</h3>
+            <p data-i18n="features.statsB">Win rate, halved/won/lost, holes-won percentage — per profile and across every match.</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHONE MOCKUPS -->
+    <section class="band" style="padding-top:0;">
+      <div class="band-inner">
+        <div style="text-align:center; max-width:600px; margin:0 auto 3rem;" class="reveal">
+          <p class="kicker" data-i18n="phones.kicker">A glimpse inside</p>
+          <h2 data-i18n-html="phones.title">Built for the <em>round itself</em>.</h2>
+        </div>
+        <div class="phones">
+          <div class="phone tilt-l reveal">
+            <div class="screen">
+              <div class="screen-pad">
+                <div class="ph-hero">
+                  <div class="lbl" data-i18n="phones.label1">Live cup</div>
+                  <div class="title" data-i18n="phones.title1">Spring Cup 2026</div>
+                </div>
+                <div class="ph-row"><div class="dot"></div><div class="who">Team Birdie</div><div class="score">3.5</div></div>
+                <div class="ph-row"><div class="dot off"></div><div class="who">Team Bogey</div><div class="score">2.5</div></div>
+              </div>
+            </div>
+            <div class="phone-label" data-i18n="phones.cap1">Leaderboard</div>
+          </div>
+          <div class="phone reveal">
+            <div class="screen">
+              <div class="screen-pad">
+                <div class="ph-hero">
+                  <div class="lbl" data-i18n="phones.label2">Hole 14 · Par 4</div>
+                  <div class="title">A · 4 vs B · 5</div>
+                </div>
+                <div class="ph-hole"><span class="h">1</span><span class="pts"><span class="a">A</span><span style="color:var(--dim)">·</span><span class="b">−</span></span></div>
+                <div class="ph-hole"><span class="h">2</span><span class="pts"><span style="color:var(--dim)">−</span><span style="color:var(--dim)">·</span><span class="b">B</span></span></div>
+                <div class="ph-hole"><span class="h">3</span><span class="pts"><span style="color:var(--gold);font-size:0.65rem">½</span></span></div>
+                <div class="ph-hole"><span class="h">14</span><span class="pts"><span class="a">A</span></span></div>
+              </div>
+            </div>
+            <div class="phone-label" data-i18n="phones.cap2">Match detail</div>
+          </div>
+          <div class="phone tilt-r reveal">
+            <div class="screen">
+              <div class="screen-pad">
+                <div class="ph-hero">
+                  <div class="lbl" data-i18n="phones.label3">Your stats</div>
+                  <div class="title">@tiger</div>
+                </div>
+                <div class="ph-row"><div class="who" data-i18n="phones.statWin">Win rate</div><div class="score">68%</div></div>
+                <div class="ph-row"><div class="who" data-i18n="phones.statMatches">Matches</div><div class="score">22</div></div>
+                <div class="ph-row"><div class="who" data-i18n="phones.statHoles">Holes won</div><div class="score">71%</div></div>
+              </div>
+            </div>
+            <div class="phone-label" data-i18n="phones.cap3">Profile</div>
+          </div>
         </div>
       </div>
     </section>
@@ -524,21 +791,50 @@
     <section class="band" id="how" style="padding-top:0;">
       <div class="band-inner">
         <div style="text-align:center; max-width:560px; margin:0 auto 3rem;" class="reveal">
-          <p class="kicker">Wie es geht</p>
-          <h2>In drei Schritten <em>zum Live-Match</em>.</h2>
+          <p class="kicker" data-i18n="how.kicker">How it works</p>
+          <h2 data-i18n-html="how.title">Three steps to a <em>live match</em>.</h2>
         </div>
         <div class="process">
           <div class="step reveal">
-            <h3>Anmelden</h3>
-            <p>8-stelliger Code per Email. Kein Passwort, kein Magic-Link. Profil mit Handle, HCP und Heimatclub.</p>
+            <h3 data-i18n="how.step1T">Sign in</h3>
+            <p data-i18n="how.step1B">8-digit code by email. No password, no magic link. Profile with handle, HCP and home course.</p>
           </div>
           <div class="step reveal">
-            <h3>Turnier oder Duell</h3>
-            <p>Eigenes Cup-Turnier mit Team A/B aufsetzen oder einen Freund direkt zum Match-Play herausfordern.</p>
+            <h3 data-i18n="how.step2T">Cup or duel</h3>
+            <p data-i18n="how.step2B">Spin up a cup tournament with Team A/B, or challenge a friend to Match Play directly.</p>
           </div>
           <div class="step reveal">
-            <h3>Live spielen</h3>
-            <p>Loch für Loch eintippen. Stand, Lochgewinner und Restbahnen rechnen sich automatisch.</p>
+            <h3 data-i18n="how.step3T">Play live</h3>
+            <p data-i18n="how.step3B">Tap in your strokes hole by hole. Score, hole winners and remaining holes compute themselves.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DISCORD COMMUNITY -->
+    <section class="band" id="community" style="padding-top:0;">
+      <div class="band-inner">
+        <div class="discord-band reveal">
+          <div class="discord-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z"/>
+            </svg>
+          </div>
+          <h2 data-i18n-html="discord.title">The clubhouse <em>after the round</em>.</h2>
+          <p class="lead" data-i18n="discord.lead">
+            Cups, leaderboards, photos from the course and the 19th-hole talk — all in our Discord.
+            Live results post automatically when a cup ends.
+          </p>
+          <a class="btn btn-discord" href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener">
+            <span data-i18n="discord.cta">Join the Discord</span>
+            <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <div class="channels">
+            <span>#cups</span>
+            <span>#leaderboards</span>
+            <span>#fotos-vom-platz</span>
+            <span>#19th-hole</span>
+            <span>#platz-talk</span>
           </div>
         </div>
       </div>
@@ -548,16 +844,15 @@
     <section class="band" style="padding-top:0;">
       <div class="band-inner">
         <div class="deal-band reveal">
-          <span class="badge">Mit DealBuddy verknüpft</span>
-          <h2>Freunde herausfordern — <em>mit echtem Einsatz</em>.</h2>
-          <p class="lead">
-            Jedes Duell lässt sich in einem Tap auf <a href="https://deal-buddy.app/" style="color:var(--green); text-decoration:underline;">DealBuddy</a>
-            posten. Einsatz festlegen, Reliability-Score aufbauen, AI-Sammelkarten gewinnen.
-            Kein Glücksspiel — soziale Wetten zwischen Freunden.
+          <span class="badge" data-i18n="deal.badge">Powered by DealBuddy</span>
+          <h2 data-i18n-html="deal.title">Make every match <em>matter</em>.</h2>
+          <p class="lead" data-i18n="deal.lead">
+            Send any duel straight to <a href="https://deal-buddy.app/" style="color:var(--green); text-decoration:underline;">DealBuddy</a>
+            in one tap. Set a friendly stake, settle without arguments. Social bets between friends — never gambling.
           </p>
           <div class="row">
-            <a class="btn btn-primary" href="https://app.swingandsavor.at/friends">Zu deinen Freunden</a>
-            <a class="btn btn-ghost" href="https://deal-buddy.app/">Was ist DealBuddy?</a>
+            <a class="btn btn-primary" href="https://app.swingandsavor.at/friends" data-i18n="deal.cta1">Find your friends</a>
+            <a class="btn btn-ghost" href="https://deal-buddy.app/" data-i18n="deal.cta2">What is DealBuddy?</a>
           </div>
         </div>
       </div>
@@ -567,26 +862,50 @@
     <section class="band" id="platforms" style="padding-top:0;">
       <div class="band-inner">
         <div style="text-align:center; max-width:560px; margin:0 auto 3rem;" class="reveal">
-          <p class="kicker">Verfügbar</p>
-          <h2>Browser-PWA und <em>Native-Apps</em>.</h2>
-          <p class="lead" style="margin-top:0.8rem;">Spiel direkt im Browser, installiere die App auf dem Home-Screen oder lade die Native-Version aus dem Store.</p>
+          <p class="kicker" data-i18n="get.kicker">Get the app</p>
+          <h2 data-i18n-html="get.title">Web, iOS, Android — <em>your call</em>.</h2>
+          <p class="lead" style="margin-top:0.8rem;" data-i18n="get.lead">Open the web app right now. Native iOS and Android are coming to the stores — sign in via the web app to get notified.</p>
         </div>
-        <div class="platforms">
-          <div class="plat reveal">
-            <span class="lbl">Web</span>
-            <h4>app.swingandsavor.at</h4>
-            <p>Lädt sofort, ohne Install. Optimiert für iOS- und Android-Browser.</p>
-          </div>
-          <div class="plat reveal">
-            <span class="lbl">iOS</span>
-            <h4>App Store</h4>
-            <p>Native Wrapper über Capacitor 7. Push-Benachrichtigungen für Duelle.</p>
-          </div>
-          <div class="plat reveal">
-            <span class="lbl">Android</span>
-            <h4>Google Play</h4>
-            <p>Eigene App-ID <code style="font-family:ui-monospace,monospace;font-size:0.78em;color:var(--green);">de.commsconnect.swingandsavor</code>.</p>
-          </div>
+        <div class="stores" style="justify-content:center;">
+          <a class="store-badge pwa" href="https://app.swingandsavor.at/" aria-label="Open the web app">
+            <svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-15v6.5l5.5 3.3.7-1.18-4.8-2.84V7z"/>
+            </svg>
+            <span class="copy">
+              <span class="top" data-i18n="get.pwaTop">Play instantly</span>
+              <span class="bot" data-i18n="get.pwaBot">Open web app</span>
+            </span>
+          </a>
+          <a class="store-badge" href="https://app.swingandsavor.at/" aria-label="Coming soon to the App Store">
+            <span class="soon" data-i18n="get.soon">Soon</span>
+            <svg class="logo" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
+              <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+            </svg>
+            <span class="copy">
+              <span class="top" data-i18n="get.appleTop">Download on the</span>
+              <span class="bot">App Store</span>
+            </span>
+          </a>
+          <a class="store-badge" href="https://app.swingandsavor.at/" aria-label="Coming soon to Google Play">
+            <span class="soon" data-i18n="get.soon">Soon</span>
+            <svg class="logo" viewBox="0 0 512 512" aria-hidden="true">
+              <defs>
+                <linearGradient id="gp1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00d1ff"/><stop offset="1" stop-color="#0080ff"/></linearGradient>
+                <linearGradient id="gp2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffce00"/><stop offset="1" stop-color="#ff9c00"/></linearGradient>
+                <linearGradient id="gp3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00f176"/><stop offset="1" stop-color="#00a861"/></linearGradient>
+                <linearGradient id="gp4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3a44"/><stop offset="1" stop-color="#c70039"/></linearGradient>
+              </defs>
+              <path fill="url(#gp1)" d="M325 256L83 31c-7-7-17-9-26-5l242 230z"/>
+              <path fill="url(#gp2)" d="M325 256l84-49c14-8 14-30 0-38l-84-49-58 68z"/>
+              <path fill="url(#gp3)" d="M299 226L57 26c5-2 11-3 16-1l242 231z"/>
+              <path fill="url(#gp4)" d="M299 286l-242 200c-5 2-11 1-16-1l242-230z"/>
+              <path fill="url(#gp1)" d="M83 481l216-225L83 31c-9 6-15 16-15 28v394c0 12 6 22 15 28z"/>
+            </svg>
+            <span class="copy">
+              <span class="top" data-i18n="get.googleTop">Get it on</span>
+              <span class="bot">Google Play</span>
+            </span>
+          </a>
         </div>
       </div>
     </section>
@@ -595,15 +914,15 @@
     <section class="band" style="padding-top:0;">
       <div class="band-inner">
         <div class="final reveal">
-          <p class="kicker">Letzter Tee</p>
-          <h2>Bereit für die <em>nächste Runde</em>?</h2>
-          <p class="lead">Lade Freunde ein, leg ein Turnier an — und lass die App den Rest rechnen.</p>
+          <p class="kicker" data-i18n="final.kicker">Last tee</p>
+          <h2 data-i18n-html="final.title">Ready for the <em>next round</em>?</h2>
+          <p class="lead" data-i18n="final.lead">Invite your friends, set up a cup — let the app handle the rest.</p>
           <div class="ctas" style="justify-content:center; display:flex; gap:0.75rem; flex-wrap:wrap;">
             <a class="btn btn-primary" href="https://app.swingandsavor.at/">
-              App öffnen
+              <span data-i18n="final.cta">Open the app</span>
               <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
-            <a class="btn btn-ghost" href="mailto:hi@swingandsavor.at">Kontakt aufnehmen</a>
+            <a class="btn btn-ghost" href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener" data-i18n="final.discord">Join Discord</a>
           </div>
         </div>
       </div>
@@ -611,23 +930,224 @@
 
     <footer>
       <div class="links">
-        <a href="https://app.swingandsavor.at/">App</a>
-        <a href="mailto:hi@swingandsavor.at">Support</a>
-        <a href="/impressum">Impressum</a>
-        <a href="/datenschutz">Datenschutz</a>
-        <a href="/agb">AGB</a>
+        <a href="https://app.swingandsavor.at/" data-i18n="footer.app">App</a>
+        <a href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener">Discord</a>
+        <a href="mailto:hi@swingandsavor.at" data-i18n="footer.support">Support</a>
+        <a href="/impressum" data-i18n="footer.impressum">Imprint</a>
+        <a href="/datenschutz" data-i18n="footer.privacy">Privacy</a>
+        <a href="/agb" data-i18n="footer.terms">Terms</a>
       </div>
       <div class="meta">
         &copy; <span id="y"></span> Comms Connect GmbH &middot; Tal 30, 80331 München &middot; HRB 295951 AG München
       </div>
     </footer>
 
+    <!-- Sticky mobile bottom CTA (only visible on small screens after scroll) -->
+    <div class="mobile-cta" id="mobileCta" role="region" aria-label="Get the app">
+      <div class="row">
+        <div class="label">
+          <div class="t" data-i18n="sticky.title">Swing &amp; Savor</div>
+          <div class="s" data-i18n="sticky.sub">Cups, duels &amp; live leaderboard</div>
+        </div>
+        <a class="btn btn-primary" href="https://app.swingandsavor.at/" data-i18n="sticky.cta">Open app</a>
+      </div>
+    </div>
+
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
 
-      // Nav scroll-state
+      // ===== Translations =====
+      const TRANSLATIONS = {
+        en: {
+          "nav.features": "Features",
+          "nav.how": "How it works",
+          "nav.community": "Community",
+          "nav.get": "Get the app",
+          "nav.openApp": "Open app",
+          "hero.eyebrow": "Match Play · Cup Bracket · Live Scoring",
+          "hero.title": "Every shot <em>counts</em>.",
+          "hero.lead": "Build Ryder-Cup-style tournaments, challenge friends to head-to-head Match Play and watch every hole come in live. 1,745 courses worldwide, OSM-backed.",
+          "hero.ctaPrimary": "Open the app",
+          "hero.ctaSecondary": "See features",
+          "hero.live": "Live",
+          "hero.statCourses": "Courses worldwide",
+          "hero.statCountries": "Countries",
+          "hero.statPlatforms": "Available everywhere",
+          "split1.kicker": "Match Play, done right",
+          "split1.title": "Hole by hole — the score <em>tracks itself</em>.",
+          "split1.lead1": "Singles or 2 v 2 Doubles. Handicap strokes computed automatically, dormie logic baked in, hole winners locked before the next tee box. You enter the strokes — the app does the rest.",
+          "split1.lead2": "Every entry syncs live to all players in the flight. No paper scorecard, no debate about where you stand.",
+          "features.kicker": "Inside the app",
+          "features.title": "Everything for the round — <em>before, during, after</em>.",
+          "features.coursesT": "1,745 courses worldwide",
+          "features.coursesB": "From Mallorca to Belek, full coverage in DE/AT/CH. Par and HCP per hole. Community-curated, OSM-grounded.",
+          "features.matchT": "Match Play",
+          "features.matchB": "Singles & 2 v 2 Doubles with handicap strokes and dormie logic.",
+          "features.cupT": "Cup brackets",
+          "features.cupB": "Build your own Ryder-Cup-style tournaments with Team A/B and live bracket.",
+          "features.liveT": "Live leaderboard",
+          "features.liveB": "Realtime sync. Every entry is visible to the whole flight instantly.",
+          "features.friendsT": "Friends & duels",
+          "features.friendsB": "Find players by @handle, send a friend request, challenge them on the spot.",
+          "features.statsT": "Player stats",
+          "features.statsB": "Win rate, halved/won/lost, holes-won percentage — per profile and across every match.",
+          "phones.kicker": "A glimpse inside",
+          "phones.title": "Built for the <em>round itself</em>.",
+          "phones.label1": "Live cup", "phones.title1": "Spring Cup 2026", "phones.cap1": "Leaderboard",
+          "phones.label2": "Hole 14 · Par 4", "phones.cap2": "Match detail",
+          "phones.label3": "Your stats", "phones.cap3": "Profile",
+          "phones.statWin": "Win rate", "phones.statMatches": "Matches", "phones.statHoles": "Holes won",
+          "how.kicker": "How it works",
+          "how.title": "Three steps to a <em>live match</em>.",
+          "how.step1T": "Sign in",
+          "how.step1B": "8-digit code by email. No password, no magic link. Profile with handle, HCP and home course.",
+          "how.step2T": "Cup or duel",
+          "how.step2B": "Spin up a cup tournament with Team A/B, or challenge a friend to Match Play directly.",
+          "how.step3T": "Play live",
+          "how.step3B": "Tap in your strokes hole by hole. Score, hole winners and remaining holes compute themselves.",
+          "discord.title": "The clubhouse <em>after the round</em>.",
+          "discord.lead": "Cups, leaderboards, photos from the course and the 19th-hole talk — all in our Discord. Live results post automatically when a cup ends.",
+          "discord.cta": "Join the Discord",
+          "deal.badge": "Powered by DealBuddy",
+          "deal.title": "Make every match <em>matter</em>.",
+          "deal.lead": "Send any duel straight to <a href=\"https://deal-buddy.app/\" style=\"color:var(--green);text-decoration:underline;\">DealBuddy</a> in one tap. Set a friendly stake, settle without arguments. Social bets between friends — never gambling.",
+          "deal.cta1": "Find your friends",
+          "deal.cta2": "What is DealBuddy?",
+          "get.kicker": "Get the app",
+          "get.title": "Web, iOS, Android — <em>your call</em>.",
+          "get.lead": "Open the web app right now. Native iOS and Android are coming to the stores — sign in via the web app to get notified.",
+          "get.pwaTop": "Play instantly", "get.pwaBot": "Open web app",
+          "get.appleTop": "Download on the", "get.googleTop": "Get it on",
+          "get.soon": "Soon",
+          "final.kicker": "Last tee",
+          "final.title": "Ready for the <em>next round</em>?",
+          "final.lead": "Invite your friends, set up a cup — let the app handle the rest.",
+          "final.cta": "Open the app",
+          "final.discord": "Join Discord",
+          "footer.app": "App", "footer.support": "Support",
+          "footer.impressum": "Imprint", "footer.privacy": "Privacy", "footer.terms": "Terms",
+          "sticky.title": "Swing & Savor",
+          "sticky.sub": "Cups, duels & live leaderboard",
+          "sticky.cta": "Open app",
+        },
+        de: {
+          "nav.features": "Features",
+          "nav.how": "Wie es geht",
+          "nav.community": "Community",
+          "nav.get": "App holen",
+          "nav.openApp": "Zur App",
+          "hero.eyebrow": "Match Play · Cup Bracket · Live-Scoring",
+          "hero.title": "Wo jeder Schlag <em>zählt</em>.",
+          "hero.lead": "Lege Ryder-Cup-Turniere an, fordere Freunde zu Match-Play-Duellen heraus und verfolge jedes Loch live. 1.745 Plätze weltweit, OSM-Daten direkt in der App.",
+          "hero.ctaPrimary": "App öffnen",
+          "hero.ctaSecondary": "Features ansehen",
+          "hero.live": "Live",
+          "hero.statCourses": "Plätze weltweit",
+          "hero.statCountries": "Länder",
+          "hero.statPlatforms": "Überall verfügbar",
+          "split1.kicker": "Match Play, ernst gemeint",
+          "split1.title": "Loch für Loch — der Stand <em>rechnet sich selbst</em>.",
+          "split1.lead1": "Singles oder Doubles 2 v 2. Handicap-Vorgabe automatisch, Dormie-Logik mitgerechnet, Lochgewinner sichtbar bevor der nächste Tee steht. Du gibst nur die Schläge ein — die App macht den Rest.",
+          "split1.lead2": "Jede Eingabe synchronisiert in Echtzeit mit allen Mitspielern. Kein Sammelblatt am Ende, kein Streit über den Stand.",
+          "features.kicker": "Was drin steckt",
+          "features.title": "Alles für die Runde — <em>vor, während, danach</em>.",
+          "features.coursesT": "1.745 Plätze weltweit",
+          "features.coursesB": "Von Mallorca bis Belek, DE/AT/CH komplett. Par- und HCP-Daten pro Loch. Community-gepflegt, OSM-fundiert.",
+          "features.matchT": "Match Play",
+          "features.matchB": "Singles & Doubles 2 v 2 mit Handicap-Vorgabe und Dormie-Logik.",
+          "features.cupT": "Cup Bracket",
+          "features.cupB": "Eigene Ryder-Cup-Turniere mit Team A/B und Live-Bracket.",
+          "features.liveT": "Live-Leaderboard",
+          "features.liveB": "Realtime via Supabase. Jede Eingabe sofort beim ganzen Flight sichtbar.",
+          "features.friendsT": "Freunde & Duelle",
+          "features.friendsB": "Per @handle finden, anfragen, herausfordern — direkt aus der App.",
+          "features.statsT": "Match-Statistik",
+          "features.statsB": "Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.",
+          "phones.kicker": "Ein Blick rein",
+          "phones.title": "Gebaut für die <em>Runde selbst</em>.",
+          "phones.label1": "Live-Cup", "phones.title1": "Frühlings-Cup 2026", "phones.cap1": "Leaderboard",
+          "phones.label2": "Loch 14 · Par 4", "phones.cap2": "Match-Detail",
+          "phones.label3": "Deine Stats", "phones.cap3": "Profil",
+          "phones.statWin": "Win Rate", "phones.statMatches": "Matches", "phones.statHoles": "Löcher gew.",
+          "how.kicker": "Wie es geht",
+          "how.title": "In drei Schritten <em>zum Live-Match</em>.",
+          "how.step1T": "Anmelden",
+          "how.step1B": "8-stelliger Code per Email. Kein Passwort, kein Magic-Link. Profil mit Handle, HCP und Heimatclub.",
+          "how.step2T": "Turnier oder Duell",
+          "how.step2B": "Eigenes Cup-Turnier mit Team A/B aufsetzen oder einen Freund direkt zum Match Play herausfordern.",
+          "how.step3T": "Live spielen",
+          "how.step3B": "Loch für Loch eintippen. Stand, Lochgewinner und Restbahnen rechnen sich automatisch.",
+          "discord.title": "Das Clubhouse <em>nach der Runde</em>.",
+          "discord.lead": "Cups, Leaderboards, Fotos vom Platz und 19th-Hole-Talk — alles in unserem Discord. Live-Ergebnisse posten automatisch wenn ein Cup endet.",
+          "discord.cta": "Discord beitreten",
+          "deal.badge": "Mit DealBuddy verknüpft",
+          "deal.title": "Jedes Match — <em>mit Einsatz</em>.",
+          "deal.lead": "Jedes Duell kommt mit einem Tap auf <a href=\"https://deal-buddy.app/\" style=\"color:var(--green);text-decoration:underline;\">DealBuddy</a>. Freundlichen Einsatz festlegen, fair abrechnen. Soziale Wetten zwischen Freunden — kein Glücksspiel.",
+          "deal.cta1": "Zu deinen Freunden",
+          "deal.cta2": "Was ist DealBuddy?",
+          "get.kicker": "App holen",
+          "get.title": "Web, iOS, Android — <em>deine Wahl</em>.",
+          "get.lead": "Die Web-App läuft jetzt sofort. Native iOS und Android kommen in den Store — melde dich via Web-App an, um benachrichtigt zu werden.",
+          "get.pwaTop": "Sofort spielen", "get.pwaBot": "Web-App öffnen",
+          "get.appleTop": "Laden im", "get.googleTop": "Jetzt bei",
+          "get.soon": "Bald",
+          "final.kicker": "Letzter Tee",
+          "final.title": "Bereit für die <em>nächste Runde</em>?",
+          "final.lead": "Lade Freunde ein, leg ein Turnier an — und lass die App den Rest rechnen.",
+          "final.cta": "App öffnen",
+          "final.discord": "Discord beitreten",
+          "footer.app": "App", "footer.support": "Support",
+          "footer.impressum": "Impressum", "footer.privacy": "Datenschutz", "footer.terms": "AGB",
+          "sticky.title": "Swing & Savor",
+          "sticky.sub": "Cups, Duelle & Live-Leaderboard",
+          "sticky.cta": "App öffnen",
+        }
+      };
+      const FLAGS = { en: '🇬🇧', de: '🇩🇪' };
+      const NAMES = { en: 'EN', de: 'DE' };
+
+      function pickLang() {
+        const q = new URL(location.href).searchParams.get('lang');
+        if (q && TRANSLATIONS[q]) return q;
+        const stored = localStorage.getItem('sns_marketing_lang');
+        if (stored && TRANSLATIONS[stored]) return stored;
+        const browser = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        if (TRANSLATIONS[browser]) return browser;
+        return 'en';
+      }
+
+      function applyLang(lang) {
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+          const key = el.getAttribute('data-i18n');
+          if (dict[key] != null) el.textContent = dict[key];
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+          const key = el.getAttribute('data-i18n-html');
+          if (dict[key] != null) el.innerHTML = dict[key];
+        });
+        document.getElementById('langFlag').textContent = FLAGS[lang];
+        document.getElementById('langCode').textContent = NAMES[lang];
+        localStorage.setItem('sns_marketing_lang', lang);
+      }
+
+      // Initial render
+      let currentLang = pickLang();
+      applyLang(currentLang);
+
+      document.getElementById('langChip').addEventListener('click', () => {
+        currentLang = currentLang === 'en' ? 'de' : 'en';
+        applyLang(currentLang);
+      });
+
+      // Nav scroll-state + mobile sticky bar visibility
       const nav = document.getElementById('nav');
-      const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 32);
+      const sticky = document.getElementById('mobileCta');
+      const onScroll = () => {
+        nav.classList.toggle('scrolled', window.scrollY > 32);
+        if (sticky) sticky.classList.toggle('shown', window.scrollY > 420);
+      };
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
 
@@ -638,6 +1158,21 @@
         }
       }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
       document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+      // Live stats fetch
+      const SUPABASE_URL = 'https://rcqichlyllhwougopfkg.supabase.co';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcWljaGx5bGxod291Z29wZmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDA2MTksImV4cCI6MjA5NDUxNjYxOX0.s-vvEaz_cqT3pS5lHZvUPNOXILgJMq2qHVp4idUY_wY';
+      const numFmt = (n) => new Intl.NumberFormat(currentLang === 'de' ? 'de-DE' : 'en-US').format(n);
+      fetch(`${SUPABASE_URL}/functions/v1/public-stats`, { headers: { apikey: ANON_KEY } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((s) => {
+          if (!s) return;
+          const c = document.getElementById('stat-courses');
+          const cc = document.getElementById('stat-countries');
+          if (c && s.courses) c.textContent = numFmt(s.courses);
+          if (cc && s.countries) cc.textContent = numFmt(s.countries);
+        })
+        .catch(() => {});
     </script>
   </body>
 </html>
