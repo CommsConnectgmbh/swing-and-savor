@@ -535,12 +535,12 @@
         border: 1px solid rgba(88, 101, 242, 0.2);
       }
 
-      /* ===== Phone mockup gallery ===== */
+      /* ===== Phone mockup gallery (real app screenshots) ===== */
       .phones {
         display: grid; grid-template-columns: repeat(3, 1fr);
         gap: 2.5rem; align-items: end; justify-items: center;
         max-width: 1000px; margin: 0 auto;
-        perspective: 1200px;
+        perspective: 1400px;
       }
       @media (max-width: 800px) { .phones { grid-template-columns: 1fr; gap: 3rem; } }
       .phone {
@@ -548,25 +548,29 @@
         aspect-ratio: 9/19.5;
         border-radius: 36px;
         background: #0a0a0a;
-        padding: 8px;
+        padding: 7px;
         box-shadow: 0 40px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08);
         transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+        overflow: hidden;
       }
       .phone.tilt-l { transform: rotateY(8deg) translateY(20px); }
       .phone.tilt-r { transform: rotateY(-8deg) translateY(20px); }
       .phone:hover { transform: rotateY(0) translateY(0); }
       .phone::before {
-        content: ''; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-        width: 80px; height: 22px; border-radius: 999px; background: #0a0a0a; z-index: 2;
+        content: ''; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+        width: 78px; height: 20px; border-radius: 999px; background: #0a0a0a; z-index: 2;
       }
       .phone .screen {
-        width: 100%; height: 100%; border-radius: 28px; overflow: hidden;
-        background: linear-gradient(180deg, var(--brand-dark), var(--brand-deep));
-        display: flex; flex-direction: column;
+        width: 100%; height: 100%;
+        border-radius: 30px; overflow: hidden;
+        background: var(--brand-deep);
         position: relative;
-        font-family: 'Barlow', sans-serif;
       }
-      .phone .screen-pad { padding: 38px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+      .phone .screen img {
+        width: 100%; height: 100%;
+        object-fit: cover; object-position: top center;
+        display: block;
+      }
       .phone .phone-label {
         position: absolute; bottom: -36px; left: 0; right: 0;
         text-align: center; font-size: 0.72rem;
@@ -574,27 +578,6 @@
         color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
         font-weight: 700;
       }
-      .ph-row {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 10px; border-radius: 10px;
-        background: rgba(255,255,255,0.04); border: 1px solid var(--line);
-      }
-      .ph-row .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--green); flex-shrink: 0; box-shadow: 0 0 8px var(--green); }
-      .ph-row .dot.off { background: var(--line); box-shadow: none; }
-      .ph-row .who { flex: 1; min-width: 0; font-size: 0.65rem; color: var(--ink); font-weight: 600; }
-      .ph-row .score { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.8rem; color: var(--green); }
-      .ph-hero { padding: 10px; border-radius: 10px; background: var(--green-soft); border: 1px solid var(--green-edge); }
-      .ph-hero .lbl { font-size: 0.52rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green); font-weight: 700; margin-bottom: 2px; }
-      .ph-hero .title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.85rem; color: var(--ink); line-height: 1.1; }
-      .ph-hole {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 10px; border-radius: 10px;
-        background: rgba(255,255,255,0.03); border: 1px solid var(--line);
-      }
-      .ph-hole .h { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; }
-      .ph-hole .pts { display: flex; gap: 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.8rem; }
-      .ph-hole .a { color: var(--green); }
-      .ph-hole .b { color: var(--gold); }
 
       /* ===== Live counter ===== */
       .live-pulse {
@@ -802,43 +785,19 @@
         <div class="phones">
           <div class="phone tilt-l reveal">
             <div class="screen">
-              <div class="screen-pad">
-                <div class="ph-hero">
-                  <div class="lbl" data-i18n="phones.label1">Live cup</div>
-                  <div class="title" data-i18n="phones.title1">Spring Cup 2026</div>
-                </div>
-                <div class="ph-row"><div class="dot"></div><div class="who">Team Birdie</div><div class="score">3.5</div></div>
-                <div class="ph-row"><div class="dot off"></div><div class="who">Team Bogey</div><div class="score">2.5</div></div>
-              </div>
+              <img src="img/screens/board.png" alt="Live cup leaderboard" loading="lazy" />
             </div>
             <div class="phone-label" data-i18n="phones.cap1">Leaderboard</div>
           </div>
           <div class="phone reveal">
             <div class="screen">
-              <div class="screen-pad">
-                <div class="ph-hero">
-                  <div class="lbl" data-i18n="phones.label2">Hole 14 · Par 4</div>
-                  <div class="title">A · 4 vs B · 5</div>
-                </div>
-                <div class="ph-hole"><span class="h">1</span><span class="pts"><span class="a">A</span><span style="color:var(--dim)">·</span><span class="b">−</span></span></div>
-                <div class="ph-hole"><span class="h">2</span><span class="pts"><span style="color:var(--dim)">−</span><span style="color:var(--dim)">·</span><span class="b">B</span></span></div>
-                <div class="ph-hole"><span class="h">3</span><span class="pts"><span style="color:var(--gold);font-size:0.65rem">½</span></span></div>
-                <div class="ph-hole"><span class="h">14</span><span class="pts"><span class="a">A</span></span></div>
-              </div>
+              <img src="img/screens/matches.png" alt="Live matches" loading="lazy" />
             </div>
-            <div class="phone-label" data-i18n="phones.cap2">Match detail</div>
+            <div class="phone-label" data-i18n="phones.cap2">Match list</div>
           </div>
           <div class="phone tilt-r reveal">
             <div class="screen">
-              <div class="screen-pad">
-                <div class="ph-hero">
-                  <div class="lbl" data-i18n="phones.label3">Your stats</div>
-                  <div class="title">@tiger</div>
-                </div>
-                <div class="ph-row"><div class="who" data-i18n="phones.statWin">Win rate</div><div class="score">68%</div></div>
-                <div class="ph-row"><div class="who" data-i18n="phones.statMatches">Matches</div><div class="score">22</div></div>
-                <div class="ph-row"><div class="who" data-i18n="phones.statHoles">Holes won</div><div class="score">71%</div></div>
-              </div>
+              <img src="img/screens/profile.png" alt="Player profile with stats" loading="lazy" />
             </div>
             <div class="phone-label" data-i18n="phones.cap3">Profile</div>
           </div>
@@ -1065,10 +1024,7 @@
           "features.statsB": "Win rate, halved/won/lost, holes-won percentage — per profile and across every match.",
           "phones.kicker": "A glimpse inside",
           "phones.title": "Built for the <em>round itself</em>.",
-          "phones.label1": "Live cup", "phones.title1": "Spring Cup 2026", "phones.cap1": "Leaderboard",
-          "phones.label2": "Hole 14 · Par 4", "phones.cap2": "Match detail",
-          "phones.label3": "Your stats", "phones.cap3": "Profile",
-          "phones.statWin": "Win rate", "phones.statMatches": "Matches", "phones.statHoles": "Holes won",
+          "phones.cap1": "Leaderboard", "phones.cap2": "Live matches", "phones.cap3": "Profile",
           "how.kicker": "How it works",
           "how.title": "Three steps to a <em>live match</em>.",
           "how.step1T": "Sign in",
@@ -1144,10 +1100,7 @@
           "features.statsB": "Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.",
           "phones.kicker": "Ein Blick rein",
           "phones.title": "Gebaut für die <em>Runde selbst</em>.",
-          "phones.label1": "Live-Cup", "phones.title1": "Frühlings-Cup 2026", "phones.cap1": "Leaderboard",
-          "phones.label2": "Loch 14 · Par 4", "phones.cap2": "Match-Detail",
-          "phones.label3": "Deine Stats", "phones.cap3": "Profil",
-          "phones.statWin": "Win Rate", "phones.statMatches": "Matches", "phones.statHoles": "Löcher gew.",
+          "phones.cap1": "Leaderboard", "phones.cap2": "Live-Matches", "phones.cap3": "Profil",
           "how.kicker": "Wie es geht",
           "how.title": "In drei Schritten <em>zum Live-Match</em>.",
           "how.step1T": "Anmelden",
@@ -1217,10 +1170,7 @@
           "features.statsB": "Tasa de victoria, empates/ganados/perdidos, hoyos ganados — por perfil y total.",
           "phones.kicker": "Un vistazo dentro",
           "phones.title": "Hecho para la <em>ronda en sí</em>.",
-          "phones.label1": "Cup en directo", "phones.title1": "Copa Primavera 2026", "phones.cap1": "Clasificación",
-          "phones.label2": "Hoyo 14 · Par 4", "phones.cap2": "Detalle del partido",
-          "phones.label3": "Tus estadísticas", "phones.cap3": "Perfil",
-          "phones.statWin": "% victoria", "phones.statMatches": "Partidos", "phones.statHoles": "Hoyos ganados",
+          "phones.cap1": "Clasificación", "phones.cap2": "Partidos en directo", "phones.cap3": "Perfil",
           "how.kicker": "Cómo funciona",
           "how.title": "Tres pasos para un <em>partido en directo</em>.",
           "how.step1T": "Inicia sesión",
@@ -1288,10 +1238,7 @@
           "features.statsB": "Taux de victoire, halved/gagnés/perdus, trous gagnés — par profil et global.",
           "phones.kicker": "Un aperçu",
           "phones.title": "Conçu pour la <em>partie elle-même</em>.",
-          "phones.label1": "Cup live", "phones.title1": "Coupe Printemps 2026", "phones.cap1": "Classement",
-          "phones.label2": "Trou 14 · Par 4", "phones.cap2": "Détail du match",
-          "phones.label3": "Tes stats", "phones.cap3": "Profil",
-          "phones.statWin": "Taux victoire", "phones.statMatches": "Matchs", "phones.statHoles": "Trous gagnés",
+          "phones.cap1": "Classement", "phones.cap2": "Matchs en direct", "phones.cap3": "Profil",
           "how.kicker": "Comment ça marche",
           "how.title": "Trois étapes pour un <em>match en direct</em>.",
           "how.step1T": "Inscription",
@@ -1359,10 +1306,7 @@
           "features.statsB": "勝率、引き分け/勝/負、獲得ホール率 — プロフィール別と全試合通算。",
           "phones.kicker": "中をちょっと",
           "phones.title": "<em>ラウンドそのもの</em>のために。",
-          "phones.label1": "ライブカップ", "phones.title1": "スプリングカップ 2026", "phones.cap1": "リーダーボード",
-          "phones.label2": "14番ホール · パー 4", "phones.cap2": "マッチ詳細",
-          "phones.label3": "あなたの統計", "phones.cap3": "プロフィール",
-          "phones.statWin": "勝率", "phones.statMatches": "マッチ", "phones.statHoles": "獲得ホール",
+          "phones.cap1": "リーダーボード", "phones.cap2": "ライブマッチ", "phones.cap3": "プロフィール",
           "how.kicker": "使い方",
           "how.title": "3ステップで <em>ライブマッチ</em>。",
           "how.step1T": "サインイン",
