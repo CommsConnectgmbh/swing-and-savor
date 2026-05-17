@@ -13,9 +13,14 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
-          if (id.includes('@supabase')) return 'supabase'
-          if (id.includes('react-router')) return 'router'
-          if (id.includes('react-dom') || id.includes('/react/')) return 'react'
+          if (id.includes('/@supabase/')) return 'supabase'
+          if (id.includes('/react-router')) return 'router'
+          // Keep React core + every runtime dep together — splitting scheduler
+          // or use-sync-external-store off into `vendor` creates a vendor→react
+          // circular chunk and breaks createContext at boot.
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|use-sync-external-store|@babel[\\/]runtime|object-assign|prop-types)[\\/]/.test(id)) {
+            return 'react'
+          }
           return 'vendor'
         },
       },
