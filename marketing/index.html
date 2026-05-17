@@ -13,13 +13,14 @@
 
     <meta property="og:title" content="Swing &amp; Savor — Golf-Turniere &amp; Duelle" />
     <meta property="og:description" content="Match Play, Cup-Bracket, 1.700+ Plätze, Live-Scoring. PWA + Native iOS/Android." />
-    <meta property="og:image" content="https://swingandsavor.at/logo.png" />
+    <meta property="og:image" content="https://swingandsavor.at/img/hero.jpg" />
     <meta property="og:url" content="https://swingandsavor.at/" />
     <meta property="og:type" content="website" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="img/hero.webp" imagesrcset="img/hero.webp" />
 
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
@@ -29,410 +30,614 @@
         --brand-deep:  #06140e;
         --green:       #98cd02;
         --green-soft:  rgba(152, 205, 2, 0.12);
-        --green-edge:  rgba(152, 205, 2, 0.3);
+        --green-edge:  rgba(152, 205, 2, 0.32);
+        --gold:        #e8b44a;
         --ink:         #ffffff;
         --muted:       #a8b5ad;
         --dim:         rgba(255, 255, 255, 0.5);
         --line:        rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.14);
       }
+      html { scroll-behavior: smooth; }
       html, body { height: 100%; }
       body {
-        background: radial-gradient(120% 80% at 50% -10%, #1f3f2c 0%, #0d271e 55%, #06140e 100%);
+        background: var(--brand-deep);
         color: var(--ink);
         font-family: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
         min-height: 100vh;
+        overflow-x: hidden;
       }
       a { color: inherit; text-decoration: none; }
+      img { display: block; max-width: 100%; height: auto; }
 
+      /* Reveal on scroll */
+      .reveal { opacity: 0; transform: translateY(28px); transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+      .reveal.in { opacity: 1; transform: translateY(0); }
+      @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+      /* Grain overlay for filmic feel */
+      .grain {
+        position: fixed; inset: 0; pointer-events: none; z-index: 2;
+        opacity: 0.045; mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      /* ===== Nav ===== */
       .nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+        backdrop-filter: blur(14px) saturate(120%);
+        -webkit-backdrop-filter: blur(14px) saturate(120%);
+        background: rgba(6, 20, 14, 0.55);
+        border-bottom: 1px solid transparent;
+        transition: background 200ms ease, border-color 200ms ease;
+      }
+      .nav.scrolled { background: rgba(6, 20, 14, 0.85); border-color: var(--line); }
+      .nav-inner {
+        max-width: 1200px; margin: 0 auto;
+        padding: 0.9rem 1.5rem;
         display: flex; align-items: center; justify-content: space-between;
-        padding: 1.25rem 1.5rem; max-width: 1080px; margin: 0 auto;
       }
       .nav .brand {
-        display: flex; align-items: center; gap: 0.6rem;
+        display: flex; align-items: center; gap: 0.7rem;
         font-family: 'Barlow Condensed', sans-serif;
-        font-weight: 800; letter-spacing: 0.05em; font-size: 1.05rem; text-transform: uppercase;
+        font-weight: 800; letter-spacing: 0.06em;
+        font-size: 1.05rem; text-transform: uppercase;
       }
-      .nav .brand img { width: 32px; height: 32px; border-radius: 8px; }
-      .nav .links { display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+      .nav .brand img { width: 30px; height: 30px; border-radius: 7px; }
+      .nav .links { display: flex; gap: 1.5rem; font-size: 0.84rem; color: var(--muted); font-weight: 500; }
+      .nav .links a { transition: color 150ms ease; }
       .nav .links a:hover { color: var(--green); }
       .nav .cta {
         font-family: 'Barlow Condensed', sans-serif;
-        font-weight: 700; font-size: 0.85rem; letter-spacing: 0.16em; text-transform: uppercase;
+        font-weight: 700; font-size: 0.82rem; letter-spacing: 0.18em; text-transform: uppercase;
         padding: 0.55rem 1.1rem; border-radius: 999px;
         background: var(--green); color: var(--brand-dark);
+        transition: transform 150ms ease;
       }
-      @media (max-width: 640px) { .nav .links { display: none; } }
+      .nav .cta:hover { transform: translateY(-1px); }
+      @media (max-width: 720px) { .nav .links { display: none; } }
 
-      section { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
-
-      /* Hero */
+      /* ===== Hero ===== */
       .hero {
-        text-align: center; padding: 3rem 1.5rem 4rem;
-        position: relative;
+        position: relative; isolation: isolate;
+        min-height: 100vh; min-height: 100svh;
+        display: flex; align-items: flex-end;
+        padding: 6rem 1.5rem 5rem;
+        overflow: hidden;
       }
-      .hero .logo {
-        width: clamp(140px, 24vw, 220px); height: auto;
-        filter: drop-shadow(0 24px 60px rgba(0,0,0,0.55));
-        margin-bottom: 1.75rem;
+      .hero::before {
+        content: ''; position: absolute; inset: 0; z-index: -2;
+        background-image: url("img/hero.webp"), url("img/hero.jpg");
+        background-size: cover; background-position: center;
+        transform: scale(1.04); /* small overshoot for Ken Burns */
       }
-      .eyebrow {
+      .hero::after {
+        content: ''; position: absolute; inset: 0; z-index: -1;
+        background:
+          linear-gradient(180deg, rgba(6,20,14,0.55) 0%, rgba(6,20,14,0.05) 35%, rgba(6,20,14,0.4) 65%, rgba(6,20,14,0.95) 100%),
+          linear-gradient(110deg, rgba(6,20,14,0.6) 0%, transparent 60%);
+      }
+      .hero-inner {
+        max-width: 1200px; width: 100%; margin: 0 auto;
+        display: flex; flex-direction: column; gap: 1.5rem;
+      }
+      .hero .eyebrow {
         font-family: 'Barlow Condensed', sans-serif;
-        font-weight: 700; font-size: 0.78rem;
+        font-weight: 700; font-size: 0.8rem;
         letter-spacing: 0.42em; text-transform: uppercase;
-        color: var(--green); margin-bottom: 1rem;
+        color: var(--green);
       }
       .hero h1 {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: clamp(2.5rem, 7.5vw, 5rem);
-        font-weight: 900; line-height: 0.92; letter-spacing: -0.015em;
-        max-width: 880px; margin: 0 auto;
+        font-family: 'Fraunces', 'Barlow Condensed', serif;
+        font-size: clamp(2.8rem, 8vw, 6rem);
+        font-weight: 500;
+        line-height: 0.96; letter-spacing: -0.022em;
+        max-width: 18ch;
       }
-      .hero h1 .amp { color: var(--green); font-style: italic; padding: 0 0.06em; }
+      .hero h1 em { font-style: italic; color: var(--green); font-weight: 400; }
       .hero .lead {
-        font-size: clamp(1.05rem, 1.6vw, 1.2rem);
-        color: var(--muted); max-width: 36rem;
-        margin: 1.4rem auto 2.5rem; line-height: 1.55;
+        font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+        color: rgba(255,255,255,0.82);
+        max-width: 38rem; line-height: 1.55;
       }
-      .ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+      .hero .ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
       .btn {
-        display: inline-flex; align-items: center; gap: 0.5rem;
+        display: inline-flex; align-items: center; gap: 0.55rem;
         font-family: 'Barlow Condensed', sans-serif;
-        font-weight: 700; font-size: 0.95rem;
+        font-weight: 700; font-size: 0.93rem;
         letter-spacing: 0.16em; text-transform: uppercase;
-        padding: 0.95rem 1.6rem; border-radius: 999px;
-        border: 1px solid var(--line);
-        transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+        padding: 1rem 1.7rem; border-radius: 999px;
+        border: 1px solid var(--line-strong);
+        transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
       }
       .btn:hover { transform: translateY(-1px); }
       .btn-primary { background: var(--green); color: var(--brand-dark); border-color: var(--green); }
-      .btn-ghost { background: rgba(255,255,255,0.04); color: var(--ink); }
-      .btn-ghost:hover { border-color: var(--green-edge); }
+      .btn-primary:hover { background: #b3e02a; border-color: #b3e02a; }
+      .btn-ghost { background: rgba(255,255,255,0.06); color: var(--ink); backdrop-filter: blur(6px); }
+      .btn-ghost:hover { border-color: var(--green-edge); color: var(--green); }
+      .arrow-svg { width: 14px; height: 14px; }
 
-      .hero-meta {
-        display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
-        margin-top: 2.5rem; font-size: 0.78rem; color: var(--dim);
-        font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.18em; text-transform: uppercase;
-      }
-      .hero-meta strong { color: var(--ink); font-weight: 800; }
-
-      /* Sections */
-      .section-head { text-align: center; margin: 4rem 0 2.5rem; }
-      .section-head .kicker {
+      .hero-stats {
+        display: flex; gap: 2.4rem; flex-wrap: wrap;
+        margin-top: 2.5rem;
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: 0.75rem; font-weight: 700;
-        letter-spacing: 0.4em; text-transform: uppercase;
-        color: var(--green); margin-bottom: 0.6rem;
       }
-      .section-head h2 {
+      .hero-stats > div { display: flex; flex-direction: column; gap: 0.2rem; }
+      .hero-stats .v {
+        font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800;
+        color: var(--ink); letter-spacing: -0.01em;
+      }
+      .hero-stats .k {
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.3em; text-transform: uppercase;
+        color: var(--muted);
+      }
+      .hero-stats > div + div { padding-left: 2.4rem; border-left: 1px solid var(--line); }
+
+      /* ===== Generic section ===== */
+      section.band { padding: clamp(4rem, 9vw, 8rem) 1.5rem; position: relative; }
+      .band-inner { max-width: 1200px; margin: 0 auto; }
+
+      .kicker {
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: clamp(1.75rem, 4vw, 2.6rem);
-        font-weight: 900; letter-spacing: -0.01em;
+        font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.42em; text-transform: uppercase;
+        color: var(--green); margin-bottom: 0.8rem;
       }
-      .section-head p {
-        color: var(--muted); margin-top: 0.85rem;
-        max-width: 38rem; margin-left: auto; margin-right: auto; line-height: 1.55;
+      h2 {
+        font-family: 'Fraunces', serif;
+        font-size: clamp(2rem, 4.5vw, 3rem);
+        font-weight: 500; letter-spacing: -0.015em; line-height: 1.05;
+      }
+      h2 em { font-style: italic; color: var(--green); font-weight: 400; }
+      .lead {
+        font-size: clamp(1rem, 1.3vw, 1.1rem);
+        color: var(--muted); line-height: 1.6;
       }
 
-      /* Feature grid */
-      .features {
+      /* ===== Split block (image + copy) ===== */
+      .split {
+        display: grid; gap: 3rem;
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: center;
+      }
+      @media (max-width: 900px) { .split { grid-template-columns: 1fr; gap: 2rem; } }
+      .split.reverse { grid-template-columns: 0.9fr 1.1fr; }
+      @media (max-width: 900px) { .split.reverse { grid-template-columns: 1fr; } }
+      .split .text > * + * { margin-top: 1rem; }
+      .split .text .lead { max-width: 32rem; }
+      .split .imgwrap {
+        position: relative; border-radius: 18px; overflow: hidden;
+        aspect-ratio: 4/5;
+        box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6);
+        border: 1px solid var(--line-strong);
+      }
+      .split .imgwrap img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 800ms cubic-bezier(0.2,0.7,0.2,1);
+      }
+      .split .imgwrap:hover img { transform: scale(1.04); }
+      .split .imgwrap::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, transparent 60%, rgba(6,20,14,0.4) 100%);
+        pointer-events: none;
+      }
+
+      /* ===== Bento feature grid ===== */
+      .bento {
         display: grid; gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: minmax(180px, auto);
       }
-      .feat {
-        position: relative; padding: 1.4rem 1.4rem 1.5rem;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--green-edge); border-radius: 18px;
+      @media (max-width: 900px) { .bento { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 540px) { .bento { grid-template-columns: 1fr; } }
+      .card {
+        position: relative; overflow: hidden;
+        padding: 1.6rem 1.6rem 1.7rem;
+        background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+        border: 1px solid var(--line-strong); border-radius: 18px;
         transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+        display: flex; flex-direction: column; justify-content: flex-end; gap: 0.5rem;
       }
-      .feat:hover { transform: translateY(-2px); border-color: var(--green); background: rgba(152,205,2,0.04); }
-      .feat .ico {
-        width: 38px; height: 38px; border-radius: 10px;
+      .card:hover { transform: translateY(-3px); border-color: var(--green-edge); }
+      .card.big { grid-column: span 4; grid-row: span 2; min-height: 360px; }
+      .card.wide { grid-column: span 4; }
+      .card.tall { grid-column: span 2; grid-row: span 2; min-height: 360px; }
+      .card.cell { grid-column: span 2; }
+      @media (max-width: 900px) {
+        .card.big, .card.wide, .card.tall { grid-column: span 2; grid-row: auto; min-height: 260px; }
+        .card.cell { grid-column: span 2; }
+      }
+      @media (max-width: 540px) {
+        .card.big, .card.wide, .card.tall, .card.cell { grid-column: span 1; }
+      }
+      .card .ico {
+        width: 34px; height: 34px; border-radius: 9px;
         background: var(--green-soft); border: 1px solid var(--green-edge);
         display: flex; align-items: center; justify-content: center;
-        margin-bottom: 1rem; color: var(--green);
+        color: var(--green); margin-bottom: auto;
+        align-self: flex-start;
       }
-      .feat h3 {
+      .card h3 {
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.15rem; font-weight: 800; letter-spacing: 0.02em;
-        text-transform: uppercase; margin-bottom: 0.4rem;
+        font-size: 1.2rem; font-weight: 800;
+        letter-spacing: 0.02em; text-transform: uppercase;
       }
-      .feat p { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+      .card p { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+      .card.has-img { padding: 0; }
+      .card.has-img .img {
+        position: absolute; inset: 0;
+        background-size: cover; background-position: center;
+        z-index: -1;
+      }
+      .card.has-img::after {
+        content: ''; position: absolute; inset: 0; z-index: -1;
+        background: linear-gradient(180deg, rgba(6,20,14,0.2) 0%, rgba(6,20,14,0.9) 75%);
+      }
+      .card.has-img .ico { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: var(--ink); }
 
-      /* Steps */
-      .steps {
-        display: grid; gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      /* ===== Process / Steps ===== */
+      .process {
+        display: grid; gap: 1.5rem;
+        grid-template-columns: repeat(3, 1fr);
+        counter-reset: step;
       }
+      @media (max-width: 800px) { .process { grid-template-columns: 1fr; } }
       .step {
-        padding: 1.4rem; border-radius: 18px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-        border: 1px solid var(--line);
+        position: relative; padding: 1.8rem 1.5rem 1.6rem;
+        border: 1px solid var(--line); border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
       }
-      .step .num {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 2.4rem; font-weight: 900; line-height: 1; color: var(--green);
-        display: block; margin-bottom: 0.4rem;
+      .step::before {
+        counter-increment: step; content: counter(step, decimal-leading-zero);
+        font-family: 'Fraunces', serif; font-style: italic;
+        font-size: 2.8rem; font-weight: 400; color: var(--green);
+        line-height: 1; display: block; margin-bottom: 0.6rem;
       }
       .step h3 {
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.05rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
-        margin-bottom: 0.4rem;
+        font-size: 1.1rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;
       }
-      .step p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+      .step p { color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
 
-      /* DealBuddy band */
-      .dealbuddy {
-        margin: 4rem 0 0; padding: 2.2rem 1.6rem;
-        background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(152, 205, 2, 0.06));
-        border: 1px solid rgba(255, 215, 0, 0.18);
-        border-radius: 22px; text-align: center;
+      /* ===== DealBuddy band ===== */
+      .deal-band {
+        position: relative; overflow: hidden;
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background:
+          radial-gradient(80% 100% at 50% 0%, rgba(232, 180, 74, 0.22) 0%, transparent 60%),
+          linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+        border: 1px solid rgba(232,180,74,0.28);
       }
-      .dealbuddy .badge {
-        display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px;
-        background: rgba(255, 215, 0, 0.12); color: #f6d34a;
+      .deal-band .badge {
+        display: inline-block; padding: 0.35rem 0.85rem; border-radius: 999px;
+        background: rgba(232,180,74,0.14); color: var(--gold);
         font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;
+        font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase;
         margin-bottom: 1rem;
       }
-      .dealbuddy h2 {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: clamp(1.5rem, 3.5vw, 2.2rem);
-        font-weight: 900; letter-spacing: -0.01em; margin-bottom: 0.7rem;
-      }
-      .dealbuddy p { color: var(--muted); max-width: 38rem; margin: 0 auto 1.4rem; line-height: 1.55; }
-      .dealbuddy .row { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+      .deal-band h2 { max-width: 22ch; margin: 0 auto 0.8rem; }
+      .deal-band .lead { max-width: 40rem; margin: 0 auto 1.6rem; }
+      .deal-band .row { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
 
-      /* Platforms */
+      /* ===== Platforms ===== */
       .platforms {
         display: grid; gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        margin-top: 2rem;
+        grid-template-columns: repeat(3, 1fr);
       }
+      @media (max-width: 800px) { .platforms { grid-template-columns: 1fr; } }
       .plat {
-        padding: 1.5rem; border-radius: 18px;
-        background: rgba(255,255,255,0.025); border: 1px solid var(--line);
-        text-align: center;
+        padding: 1.8rem 1.6rem; border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+        border: 1px solid var(--line); text-align: left;
+        display: flex; flex-direction: column; gap: 0.4rem;
       }
-      .plat .label {
+      .plat .lbl {
         font-family: 'Barlow Condensed', sans-serif;
         font-size: 0.7rem; font-weight: 700;
         letter-spacing: 0.3em; text-transform: uppercase;
-        color: var(--green); margin-bottom: 0.5rem; display: block;
+        color: var(--green);
       }
       .plat h4 {
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.15rem; font-weight: 800; margin-bottom: 0.5rem;
+        font-size: 1.2rem; font-weight: 800;
       }
-      .plat p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+      .plat p { color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 
-      /* CTA bottom */
-      .cta-band {
-        margin: 4rem 0 5rem; padding: 3rem 1.6rem;
+      /* ===== Final CTA over image ===== */
+      .final {
+        position: relative; isolation: isolate; overflow: hidden;
+        border-radius: 28px;
+        padding: clamp(3.5rem, 8vw, 6rem) 1.6rem;
         text-align: center;
-        background: radial-gradient(60% 100% at 50% 0%, rgba(152,205,2,0.18) 0%, transparent 70%);
-        border: 1px solid var(--green-edge); border-radius: 24px;
+        border: 1px solid var(--line-strong);
       }
-      .cta-band h2 {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: clamp(1.75rem, 4vw, 2.6rem);
-        font-weight: 900; margin-bottom: 0.8rem; letter-spacing: -0.01em;
+      .final::before {
+        content: ''; position: absolute; inset: 0; z-index: -2;
+        background-image: url("img/fairway.webp"), url("img/fairway.jpg");
+        background-size: cover; background-position: center;
       }
-      .cta-band p { color: var(--muted); margin-bottom: 1.8rem; max-width: 32rem; margin-left: auto; margin-right: auto; }
+      .final::after {
+        content: ''; position: absolute; inset: 0; z-index: -1;
+        background: linear-gradient(180deg, rgba(6,20,14,0.4) 0%, rgba(6,20,14,0.85) 100%);
+      }
+      .final h2 { margin: 0 auto 0.8rem; max-width: 18ch; }
+      .final .lead { max-width: 36rem; margin: 0 auto 1.8rem; color: rgba(255,255,255,0.78); }
 
+      /* ===== Footer ===== */
       footer {
-        padding: 2rem 1.5rem 3rem; text-align: center;
-        font-size: 0.78rem; color: var(--dim); border-top: 1px solid var(--line);
+        border-top: 1px solid var(--line);
+        padding: 2.4rem 1.5rem 3rem;
+        text-align: center;
+        font-size: 0.78rem; color: var(--dim);
       }
-      footer a { color: rgba(255,255,255,0.7); }
-      footer a:hover { color: var(--green); }
-      footer .row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.7rem; }
+      footer .links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.8rem; }
+      footer .links a { color: rgba(255,255,255,0.66); transition: color 150ms ease; }
+      footer .links a:hover { color: var(--green); }
+      footer .meta { color: var(--dim); }
     </style>
   </head>
   <body>
-    <nav class="nav">
-      <a class="brand" href="/">
-        <img src="logo.png" alt="" />
-        <span>Swing &amp; Savor</span>
-      </a>
-      <div class="links">
-        <a href="#features">Features</a>
-        <a href="#wie">Wie es geht</a>
-        <a href="#plattform">Plattform</a>
+    <div class="grain"></div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-inner">
+        <a class="brand" href="/">
+          <img src="logo.png" alt="" />
+          <span>Swing &amp; Savor</span>
+        </a>
+        <div class="links">
+          <a href="#features">Features</a>
+          <a href="#how">Wie es geht</a>
+          <a href="#platforms">Plattform</a>
+        </div>
+        <a class="cta" href="https://app.swingandsavor.at/">Zur App</a>
       </div>
-      <a class="cta" href="https://app.swingandsavor.at/">Zur App</a>
     </nav>
 
-    <section class="hero">
-      <img src="logo.png" alt="Swing & Savor Wappen" class="logo" />
-      <div class="eyebrow">Match Play · Cup Bracket · Live-Scoring</div>
-      <h1>Golf-Turniere. Duelle. <span class="amp">&amp;</span> Live-Leaderboard.</h1>
-      <p class="lead">
-        Lege Ryder-Cup-Turniere an, fordere Freunde zu Match-Play-Duellen heraus
-        und verfolge jedes Loch live. 1.700+ Plätze weltweit, OSM-Daten direkt in der App.
-      </p>
-      <div class="ctas">
-        <a class="btn btn-primary" href="https://app.swingandsavor.at/">App öffnen</a>
-        <a class="btn btn-ghost" href="#features">Features ansehen</a>
-      </div>
-      <div class="hero-meta">
-        <span><strong>1.745</strong> Plätze</span>
-        <span><strong>Live</strong> Scoring</span>
-        <span><strong>PWA</strong> + Native iOS/Android</span>
-      </div>
-    </section>
-
-    <section id="features">
-      <div class="section-head">
-        <span class="kicker">Was drin steckt</span>
-        <h2>Alles für die Runde — vor, während und nach dem Match</h2>
-        <p>Von der Tee-Time bis zur Auswertung. Mobile-first, ohne Schnickschnack.</p>
-      </div>
-      <div class="features">
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>
-            </svg>
-          </div>
-          <h3>Match Play</h3>
-          <p>Singles &amp; Doubles 2v2 mit Handicap-Vorgabe. Loch-für-Loch-Scoring mit Auto-Stand &amp; Dormie-Logik.</p>
-        </article>
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 21h8M12 17v4M5 4h14l-1 9a6 6 0 01-12 0L5 4z"/>
-            </svg>
-          </div>
-          <h3>Cup Bracket</h3>
-          <p>Eigene Ryder-Cup-Turniere mit Team A/B, Bracket-Verfolgung und Live-Punktestand auf einem Blick.</p>
-        </article>
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 12h18M3 6h18M3 18h18"/>
-            </svg>
-          </div>
-          <h3>Live-Leaderboard</h3>
-          <p>Realtime über Supabase. Jeder Score-Eintrag taucht sofort beim ganzen Flight auf — auch ohne App.</p>
-        </article>
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="10" r="3"/><path d="M12 21s-7-7-7-12a7 7 0 0114 0c0 5-7 12-7 12z"/>
-            </svg>
-          </div>
-          <h3>1.700+ Plätze</h3>
-          <p>DE, AT, CH, ES (Mallorca, Costa del Sol), TR Belek, AE Dubai &amp; mehr — mit Par-/HCP-Daten pro Loch.</p>
-        </article>
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-            </svg>
-          </div>
-          <h3>Freunde &amp; Duelle</h3>
-          <p>Such Freunde per @handle, schick eine Anfrage und fordere sie zum Singles- oder Doubles-Duell.</p>
-        </article>
-        <article class="feat">
-          <div class="ico">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 9h6v6H9z"/>
-            </svg>
-          </div>
-          <h3>Match-Statistik</h3>
-          <p>Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="wie">
-      <div class="section-head">
-        <span class="kicker">Wie es geht</span>
-        <h2>In drei Schritten zum Live-Match</h2>
-      </div>
-      <div class="steps">
-        <div class="step">
-          <span class="num">01</span>
-          <h3>Anmelden</h3>
-          <p>8-stelliger Code per Email. Kein Passwort, kein Magic-Link. Profil mit Handle, HCP &amp; Heimatclub.</p>
-        </div>
-        <div class="step">
-          <span class="num">02</span>
-          <h3>Turnier oder Duell</h3>
-          <p>Eigenes Cup-Turnier mit Team A/B aufsetzen oder einen Freund direkt zum Match-Play herausfordern.</p>
-        </div>
-        <div class="step">
-          <span class="num">03</span>
-          <h3>Live spielen</h3>
-          <p>Loch für Loch eintippen. Stand, Lochgewinner und Restbahnen rechnen sich automatisch.</p>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="dealbuddy">
-        <span class="badge">Mit DealBuddy verknüpft</span>
-        <h2>Freunde direkt herausfordern — mit echtem Einsatz</h2>
-        <p>
-          Jedes Duell lässt sich in einem Tap auf <a href="https://deal-buddy.app/" style="color:var(--green); text-decoration:underline;">DealBuddy</a>
-          posten. Einsatz festlegen, Reliability-Score aufbauen, AI-Sammelkarten gewinnen.
-          Kein Glücksspiel — soziale Wetten zwischen Freunden.
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow reveal">Match Play · Cup Bracket · Live-Scoring</p>
+        <h1 class="reveal">Wo jeder Schlag <em>zählt</em>.</h1>
+        <p class="lead reveal">
+          Lege Ryder-Cup-Turniere an, fordere Freunde zu Match-Play-Duellen heraus und
+          verfolge jedes Loch live. 1.700+ Plätze weltweit, OSM-Daten direkt in der App.
         </p>
-        <div class="row">
-          <a class="btn btn-primary" href="https://app.swingandsavor.at/friends">Zu deinen Freunden</a>
-          <a class="btn btn-ghost" href="https://deal-buddy.app/">Was ist DealBuddy?</a>
+        <div class="ctas reveal">
+          <a class="btn btn-primary" href="https://app.swingandsavor.at/">
+            App öffnen
+            <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#features">Features ansehen</a>
+        </div>
+        <div class="hero-stats reveal">
+          <div><span class="v">1.745</span><span class="k">Plätze weltweit</span></div>
+          <div><span class="v">Live</span><span class="k">Realtime-Scoring</span></div>
+          <div><span class="v">iOS · Android · Web</span><span class="k">Überall verfügbar</span></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SPLIT 1 -->
+    <section class="band">
+      <div class="band-inner split">
+        <div class="text reveal">
+          <p class="kicker">Match Play, ernst gemeint</p>
+          <h2>Loch für Loch — der Stand <em>rechnet sich selbst</em>.</h2>
+          <p class="lead">
+            Singles oder Doubles 2 v 2. Handicap-Vorgabe automatisch, Dormie-Logik mitgerechnet,
+            Lochgewinner sichtbar bevor der nächste Tee steht. Du gibst nur die Schläge ein — die App
+            macht den Rest.
+          </p>
+          <p class="lead">
+            Jede Eingabe synchronisiert in Echtzeit mit allen Mitspielern. Kein Sammelblatt am Ende,
+            kein Streit über den Stand.
+          </p>
+        </div>
+        <div class="imgwrap reveal">
+          <picture>
+            <source srcset="img/detail-ball.webp" type="image/webp" />
+            <img src="img/detail-ball.jpg" alt="Golfball auf Tee im Morgentau" loading="lazy" />
+          </picture>
         </div>
       </div>
     </section>
 
-    <section id="plattform">
-      <div class="section-head">
-        <span class="kicker">Verfügbar</span>
-        <h2>Browser-PWA und Native-Apps</h2>
-        <p>Spiel direkt im Browser, installiere die App auf dem Home-Screen oder lade die Native-Version aus dem Store.</p>
-      </div>
-      <div class="platforms">
-        <div class="plat">
-          <span class="label">Web</span>
-          <h4>app.swingandsavor.at</h4>
-          <p>Lädt sofort, ohne Install. Optimiert für iOS- und Android-Browser.</p>
+    <!-- BENTO FEATURE GRID -->
+    <section class="band" id="features" style="padding-top:0;">
+      <div class="band-inner">
+        <div style="text-align:center; max-width:600px; margin:0 auto 3rem;" class="reveal">
+          <p class="kicker">Was drin steckt</p>
+          <h2>Alles für die Runde — <em>vor, während, danach</em>.</h2>
         </div>
-        <div class="plat">
-          <span class="label">iOS</span>
-          <h4>App Store</h4>
-          <p>Native Wrapper über Capacitor 7. Push-Benachrichtigungen für Duelle.</p>
-        </div>
-        <div class="plat">
-          <span class="label">Android</span>
-          <h4>Google Play</h4>
-          <p>Eigene App-ID <code style="font-family:monospace;font-size:0.75em;color:var(--green);">de.commsconnect.swingandsavor</code>.</p>
+
+        <div class="bento">
+          <article class="card big has-img reveal">
+            <div class="img" style="background-image: url('img/fairway.webp'), url('img/fairway.jpg');"></div>
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="10" r="3"/><path d="M12 21s-7-7-7-12a7 7 0 0114 0c0 5-7 12-7 12z"/>
+              </svg>
+            </div>
+            <h3>1.745 Plätze weltweit</h3>
+            <p>Von Mallorca bis Belek, DE/AT/CH komplett. Par- und HCP-Daten pro Loch. Community-gepflegt, OSM-fundiert.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>
+              </svg>
+            </div>
+            <h3>Match Play</h3>
+            <p>Singles &amp; Doubles 2v2 mit Handicap-Vorgabe und Dormie-Logik.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 21h8M12 17v4M5 4h14l-1 9a6 6 0 01-12 0L5 4z"/>
+              </svg>
+            </div>
+            <h3>Cup Bracket</h3>
+            <p>Eigene Ryder-Cup-Turniere mit Team A/B und Live-Bracket.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+              </svg>
+            </div>
+            <h3>Live-Leaderboard</h3>
+            <p>Realtime via Supabase. Jede Eingabe sofort beim ganzen Flight sichtbar.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <h3>Freunde &amp; Duelle</h3>
+            <p>Per @handle finden, anfragen, herausfordern — in der App oder via DealBuddy.</p>
+          </article>
+
+          <article class="card wide reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 9h6v6H9z"/>
+              </svg>
+            </div>
+            <h3>Match-Statistik</h3>
+            <p>Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section>
-      <div class="cta-band">
-        <h2>Bereit für die nächste Runde?</h2>
-        <p>Lade Freunde ein, leg ein Turnier an — und lass die App den Rest rechnen.</p>
-        <div class="ctas">
-          <a class="btn btn-primary" href="https://app.swingandsavor.at/">App öffnen</a>
-          <a class="btn btn-ghost" href="mailto:hi@swingandsavor.at">Kontakt aufnehmen</a>
+    <!-- HOW IT WORKS -->
+    <section class="band" id="how" style="padding-top:0;">
+      <div class="band-inner">
+        <div style="text-align:center; max-width:560px; margin:0 auto 3rem;" class="reveal">
+          <p class="kicker">Wie es geht</p>
+          <h2>In drei Schritten <em>zum Live-Match</em>.</h2>
+        </div>
+        <div class="process">
+          <div class="step reveal">
+            <h3>Anmelden</h3>
+            <p>8-stelliger Code per Email. Kein Passwort, kein Magic-Link. Profil mit Handle, HCP und Heimatclub.</p>
+          </div>
+          <div class="step reveal">
+            <h3>Turnier oder Duell</h3>
+            <p>Eigenes Cup-Turnier mit Team A/B aufsetzen oder einen Freund direkt zum Match-Play herausfordern.</p>
+          </div>
+          <div class="step reveal">
+            <h3>Live spielen</h3>
+            <p>Loch für Loch eintippen. Stand, Lochgewinner und Restbahnen rechnen sich automatisch.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEALBUDDY BAND -->
+    <section class="band" style="padding-top:0;">
+      <div class="band-inner">
+        <div class="deal-band reveal">
+          <span class="badge">Mit DealBuddy verknüpft</span>
+          <h2>Freunde herausfordern — <em>mit echtem Einsatz</em>.</h2>
+          <p class="lead">
+            Jedes Duell lässt sich in einem Tap auf <a href="https://deal-buddy.app/" style="color:var(--green); text-decoration:underline;">DealBuddy</a>
+            posten. Einsatz festlegen, Reliability-Score aufbauen, AI-Sammelkarten gewinnen.
+            Kein Glücksspiel — soziale Wetten zwischen Freunden.
+          </p>
+          <div class="row">
+            <a class="btn btn-primary" href="https://app.swingandsavor.at/friends">Zu deinen Freunden</a>
+            <a class="btn btn-ghost" href="https://deal-buddy.app/">Was ist DealBuddy?</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLATFORMS -->
+    <section class="band" id="platforms" style="padding-top:0;">
+      <div class="band-inner">
+        <div style="text-align:center; max-width:560px; margin:0 auto 3rem;" class="reveal">
+          <p class="kicker">Verfügbar</p>
+          <h2>Browser-PWA und <em>Native-Apps</em>.</h2>
+          <p class="lead" style="margin-top:0.8rem;">Spiel direkt im Browser, installiere die App auf dem Home-Screen oder lade die Native-Version aus dem Store.</p>
+        </div>
+        <div class="platforms">
+          <div class="plat reveal">
+            <span class="lbl">Web</span>
+            <h4>app.swingandsavor.at</h4>
+            <p>Lädt sofort, ohne Install. Optimiert für iOS- und Android-Browser.</p>
+          </div>
+          <div class="plat reveal">
+            <span class="lbl">iOS</span>
+            <h4>App Store</h4>
+            <p>Native Wrapper über Capacitor 7. Push-Benachrichtigungen für Duelle.</p>
+          </div>
+          <div class="plat reveal">
+            <span class="lbl">Android</span>
+            <h4>Google Play</h4>
+            <p>Eigene App-ID <code style="font-family:ui-monospace,monospace;font-size:0.78em;color:var(--green);">de.commsconnect.swingandsavor</code>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="band" style="padding-top:0;">
+      <div class="band-inner">
+        <div class="final reveal">
+          <p class="kicker">Letzter Tee</p>
+          <h2>Bereit für die <em>nächste Runde</em>?</h2>
+          <p class="lead">Lade Freunde ein, leg ein Turnier an — und lass die App den Rest rechnen.</p>
+          <div class="ctas" style="justify-content:center; display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a class="btn btn-primary" href="https://app.swingandsavor.at/">
+              App öffnen
+              <svg class="arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a class="btn btn-ghost" href="mailto:hi@swingandsavor.at">Kontakt aufnehmen</a>
+          </div>
         </div>
       </div>
     </section>
 
     <footer>
-      <div class="row">
+      <div class="links">
         <a href="https://app.swingandsavor.at/">App</a>
-        <a href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener">Discord</a>
         <a href="mailto:hi@swingandsavor.at">Support</a>
         <a href="/impressum">Impressum</a>
         <a href="/datenschutz">Datenschutz</a>
         <a href="/agb">AGB</a>
       </div>
-      <div>&copy; <span id="y"></span> Comms Connect GmbH &middot; Tal 30, 80331 München &middot; HRB 295951 AG München</div>
-      <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+      <div class="meta">
+        &copy; <span id="y"></span> Comms Connect GmbH &middot; Tal 30, 80331 München &middot; HRB 295951 AG München
+      </div>
     </footer>
+
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+
+      // Nav scroll-state
+      const nav = document.getElementById('nav');
+      const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 32);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      // Reveal on scroll
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        }
+      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+    </script>
   </body>
 </html>
