@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import BottomNav from './components/BottomNav'
 import BrandHeader from './components/BrandHeader'
 import LoadingSpinner from './components/LoadingSpinner'
 import { useAuth } from './lib/auth'
+import { captureReferralFromUrl } from './lib/referral'
 
 // Sign-in + Onboarding are eager: they appear before any other screen on first load.
 import SignInScreen from './screens/SignInScreen'
@@ -19,23 +21,26 @@ const FriendsScreen      = lazy(() => import('./screens/FriendsScreen'))
 const TeamsScreen        = lazy(() => import('./screens/TeamsScreen'))
 const CupScreen          = lazy(() => import('./screens/CupScreen'))
 const ProfileScreen      = lazy(() => import('./screens/ProfileScreen'))
+const PublicCupScreen    = lazy(() => import('./screens/PublicCupScreen'))
 
-const TITLES = {
-  '/board':      'Leaderboard',
-  '/discover':   'Entdecken',
-  '/challenges': 'Duelle',
-  '/matches':    'Matches',
-  '/friends':    'Freunde',
-  '/teams':      'Teams',
-  '/cup':        'Turniere',
-  '/me':         'Profil',
-  '/u/':         'Profil',
-}
+captureReferralFromUrl()
 
 function HeaderForRoute() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
-  const match = Object.keys(TITLES).find((p) => pathname.startsWith(p))
-  return <BrandHeader title={match ? TITLES[match] : null} />
+  const titles = {
+    '/board':      t('nav.board'),
+    '/discover':   t('nav.discover'),
+    '/challenges': t('nav.challenges'),
+    '/matches':    t('nav.matches'),
+    '/friends':    t('nav.friends'),
+    '/teams':      t('nav.teams'),
+    '/cup':        t('nav.cups'),
+    '/me':         t('nav.profile'),
+    '/u/':         t('nav.profile'),
+  }
+  const match = Object.keys(titles).find((p) => pathname.startsWith(p))
+  return <BrandHeader title={match ? titles[match] : null} />
 }
 
 function ScreenFallback() {
@@ -44,10 +49,25 @@ function ScreenFallback() {
 
 export default function App() {
   const { user, profile, loading } = useAuth()
+  const { pathname } = useLocation()
+  const isPublicCup = pathname.startsWith('/c/')
 
   if (loading) {
     return <div className="min-h-screen bg-bg flex items-center justify-center"><LoadingSpinner /></div>
   }
+
+  if (isPublicCup) {
+    return (
+      <div className="min-h-screen bg-bg text-ink">
+        <Suspense fallback={<ScreenFallback />}>
+          <Routes>
+            <Route path="/c/:inviteCode" element={<PublicCupScreen />} />
+          </Routes>
+        </Suspense>
+      </div>
+    )
+  }
+
   if (!user) return <SignInScreen />
   if (!profile) return <OnboardingScreen />
 

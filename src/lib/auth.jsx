@@ -1,5 +1,31 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
+import { getStoredReferralCode, clearStoredReferralCode } from './referral'
+
+async function claimReferralIfAny() {
+  const code = getStoredReferralCode()
+  if (!code) return
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) return
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claim-referral`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ ref_code: code }),
+    })
+    if (res.ok) {
+      clearStoredReferralCode()
+    }
+  } catch (e) {
+    console.warn('[auth] claim-referral failed (non-fatal)', e)
+  }
+}
 
 const AuthCtx = createContext({
   user: null,
@@ -125,6 +151,8 @@ export function AuthProvider({ children }) {
       } else {
         setProfileChecked(true)
       }
+      // Fire-and-forget: claim any stored ref-code captured before signup
+      if (event === 'SIGNED_IN') claimReferralIfAny()
     })
 
     return () => {

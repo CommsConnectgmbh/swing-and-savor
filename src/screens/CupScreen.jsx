@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
+import ShareSheet from '../components/ShareSheet'
 
 const emptyForm = {
   name: '', date: '',
@@ -49,7 +51,19 @@ function isUnlocked(t) {
   try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
 }
 
+function ShareIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+      <polyline points="16 6 12 2 8 6"/>
+      <line x1="12" y1="2" x2="12" y2="15"/>
+    </svg>
+  )
+}
+
 export default function CupScreen() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,6 +73,7 @@ export default function CupScreen() {
   const [form, setForm] = useState(emptyForm)
   const [showGate, setShowGate] = useState(false)
   const [gateTournament, setGateTournament] = useState(null)
+  const [shareCup, setShareCup] = useState(null)
   const pendingRef = useRef(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -141,7 +156,7 @@ export default function CupScreen() {
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-5">
-        <h1 className="font-condensed text-3xl font-bold tracking-wide text-ink">Turniere</h1>
+        <h1 className="font-condensed text-3xl font-bold tracking-wide text-ink">{t('nav.cups')}</h1>
         <button
           onClick={mode ? closeForm : openCreate}
           className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wide active:scale-[0.97] transition-all ${
@@ -150,7 +165,7 @@ export default function CupScreen() {
               : 'bg-accent text-brandDark'
           }`}
         >
-          {mode ? 'Schließen' : '+ Neu'}
+          {mode ? t('common.close') : `+ ${t('common.next').slice(0, 1) === t('common.next').slice(0, 1) ? t('cup.newCup') : t('cup.newCup')}`}
         </button>
       </div>
 
@@ -217,35 +232,35 @@ export default function CupScreen() {
       {/* List */}
       {loading ? <LoadingSpinner /> : (
         <div className="border-t border-lineSoft">
-          {tournaments.map((t, idx) => (
-            <div key={t.id}
+          {tournaments.map((cup, idx) => (
+            <div key={cup.id}
               className="flex items-center gap-3 px-4 py-4 border-b border-lineSoft"
               style={{ animationDelay: `${idx * 30}ms` }}>
               {/* Status dot */}
               <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                t.status === 'active' ? 'bg-accent shadow-glow' : 'bg-line'
+                cup.status === 'active' ? 'bg-accent shadow-glow' : 'bg-line'
               }`} />
 
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm leading-tight text-ink flex items-center gap-1.5">
-                  {t.name}
-                  {t.edit_password && <span className="text-lock"><LockIcon /></span>}
+                  {cup.name}
+                  {cup.edit_password && <span className="text-lock"><LockIcon /></span>}
                 </p>
                 <p className="text-xs mt-0.5 text-inkMuted flex items-center gap-1.5 flex-wrap">
-                  <span>{new Date(t.date + 'T12:00:00').toLocaleDateString('de-DE')}</span>
+                  <span>{new Date(cup.date + 'T12:00:00').toLocaleDateString()}</span>
                   <span className="text-inkDim">·</span>
-                  <span className="text-teamA">{t.team_a_name}</span>
+                  <span className="text-teamA">{cup.team_a_name}</span>
                   <span className="text-inkDim">vs</span>
-                  <span className="text-teamB">{t.team_b_name}</span>
-                  {t.visibility && t.invite_code && (
+                  <span className="text-teamB">{cup.team_b_name}</span>
+                  {cup.visibility && cup.invite_code && (
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation();
-                        navigator.clipboard?.writeText(t.invite_code) }}
+                        navigator.clipboard?.writeText(cup.invite_code) }}
                       className="text-[10px] font-bold tracking-[0.15em] uppercase text-inkDim hover:text-accent transition-colors tabular-nums"
-                      title="Code kopieren">
-                      #{t.invite_code}
+                      title={t('common.copy')}>
+                      #{cup.invite_code}
                     </button>
                   )}
                 </p>
@@ -254,20 +269,27 @@ export default function CupScreen() {
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                  onClick={() => toggleStatus(t)}
+                  onClick={() => toggleStatus(cup)}
                   className={`text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform ${
-                    t.status === 'active'
+                    cup.status === 'active'
                       ? 'bg-accent/12 text-accent border border-accent/30'
                       : 'bg-surface text-inkMuted border border-line'
                   }`}
                 >
-                  {t.status === 'active' ? 'Aktiv' : 'Beendet'}
+                  {cup.status === 'active' ? t('matches.live') : t('matches.finished')}
                 </button>
-                <button onClick={() => openEdit(t)}
+                {cup.invite_code && (
+                  <button onClick={() => setShareCup(cup)}
+                    className="p-2 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-ink"
+                    title={t('common.share')}>
+                    <ShareIcon />
+                  </button>
+                )}
+                <button onClick={() => openEdit(cup)}
                   className="p-2 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-ink">
                   <PencilIcon />
                 </button>
-                <button onClick={() => guarded(t, () => setDeleteId(t.id))}
+                <button onClick={() => guarded(cup, () => setDeleteId(cup.id))}
                   className="p-2 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-danger">
                   <TrashIcon />
                 </button>
@@ -277,8 +299,7 @@ export default function CupScreen() {
 
           {tournaments.length === 0 && !mode && (
             <div className="text-center py-16 px-6">
-              <p className="text-sm text-inkMuted">Noch keine Turniere</p>
-              <p className="text-xs mt-1 text-inkDim">Tippe <span className="text-accent font-semibold">+ Neu</span>, um anzufangen</p>
+              <p className="text-sm text-inkMuted">{t('cup.empty')}</p>
             </div>
           )}
         </div>
@@ -299,6 +320,16 @@ export default function CupScreen() {
           tournamentId={gateTournament.id}
           onSuccess={handleGateSuccess}
           onCancel={() => { setShowGate(false); pendingRef.current = null }}
+        />
+      )}
+
+      {shareCup && (
+        <ShareSheet
+          open={!!shareCup}
+          onClose={() => setShareCup(null)}
+          url={`https://swingandsavor.at/c/${shareCup.invite_code}`}
+          text={t('share.cupShareText', { url: `https://swingandsavor.at/c/${shareCup.invite_code}` })}
+          title={t('cup.shareInvite')}
         />
       )}
     </div>

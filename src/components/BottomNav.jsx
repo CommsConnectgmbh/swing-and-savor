@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const ChartIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -36,15 +37,15 @@ const UserIcon = () => (
   </svg>
 )
 
-const tabs = [
-  { to: '/board',      Icon: ChartIcon,   label: 'Board'    },
-  { to: '/discover',   Icon: CompassIcon, label: 'Entdecken' },
-  { to: '/challenges', Icon: FlagIcon,    label: 'Duelle'   },
-  { to: '/matches',    Icon: SwordsIcon,  label: 'Matches'  },
-  { to: '/me',         Icon: UserIcon,    label: 'Profil'   },
-]
-
 export default function BottomNav() {
+  const { t } = useTranslation()
+  const tabs = [
+    { to: '/board',      Icon: ChartIcon,   label: t('nav.board')      },
+    { to: '/discover',   Icon: CompassIcon, label: t('nav.discover')   },
+    { to: '/challenges', Icon: FlagIcon,    label: t('nav.challenges') },
+    { to: '/matches',    Icon: SwordsIcon,  label: t('nav.matches')    },
+    { to: '/me',         Icon: UserIcon,    label: t('nav.profile')    },
+  ]
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50"

@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy } from '../lib/dealbuddy'
+import { buildReferralLink } from '../lib/referral'
+import { SUPPORTED_LANGUAGES } from '../lib/i18n'
 import AvatarPicker from '../components/AvatarPicker'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
+import ShareSheet from '../components/ShareSheet'
 
 export default function ProfileScreen() {
+  const { t, i18n } = useTranslation()
   const { handle } = useParams()
   const navigate = useNavigate()
   const { profile: me, signOut, refreshProfile, setProfileDirect } = useAuth()
+  const [shareOpen, setShareOpen] = useState(false)
 
   const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState(null)
@@ -371,16 +377,36 @@ export default function ProfileScreen() {
       {/* Self-only quick links */}
       {isSelf && (
         <div className="mx-3 mt-2 rounded-card bg-surface border border-line overflow-hidden">
-          <ProfileLink to="/friends" label="Freunde" />
-          <ProfileLink to="/cup"     label="Turnier-Verwaltung" />
-          <ProfileLink to="/teams"   label="Spieler & Teams" last />
+          <ProfileLink to="/friends" label={t('nav.friends')} />
+          <ProfileLink to="/cup"     label={t('nav.cups')} />
+          <ProfileLink to="/teams"   label={t('nav.teams')} last />
+        </div>
+      )}
+
+      {/* Referral / Invite */}
+      {isSelf && target?.ref_code && (
+        <div className="mx-3 mt-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">{t('profile.referralHeading')}</p>
+          <div className="rounded-card bg-surface border border-line p-4">
+            <p className="text-xs text-inkMuted leading-relaxed">{t('referral.youGetBody')}</p>
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-bg border border-line px-3 py-2.5">
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkDim">{t('profile.yourCode')}</p>
+                <p className="font-condensed font-black text-xl text-accent tracking-[0.15em] mt-0.5">{target.ref_code}</p>
+              </div>
+              <button onClick={() => setShareOpen(true)}
+                className="px-3.5 py-2 rounded-xl text-[11px] font-bold tracking-wide bg-accent text-brandDark active:scale-95 transition-transform">
+                {t('common.share')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Community / Discord */}
       {isSelf && (
-        <div className="mx-3 mt-3">
-          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">Community</p>
+        <div className="mx-3 mt-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">{t('profile.communityHeading')}</p>
           <a href="https://discord.gg/jT2GpZqZVE" target="_blank" rel="noopener"
             className="flex items-center justify-between rounded-card bg-surface border border-line px-4 py-3.5 active:scale-[0.98] transition-transform">
             <div className="flex items-center gap-3">
@@ -390,8 +416,8 @@ export default function ProfileScreen() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-bold text-ink leading-tight">Discord-Community</p>
-                <p className="text-[11px] text-inkDim leading-tight mt-0.5">Cups, Leaderboards, 19th Hole</p>
+                <p className="text-sm font-bold text-ink leading-tight">{t('profile.discordCard')}</p>
+                <p className="text-[11px] text-inkDim leading-tight mt-0.5">{t('profile.discordSub')}</p>
               </div>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -402,38 +428,60 @@ export default function ProfileScreen() {
         </div>
       )}
 
+      {/* Language */}
+      {isSelf && (
+        <div className="mx-3 mt-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">{t('profile.languageLabel')}</p>
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
+            {SUPPORTED_LANGUAGES.map((l, idx) => {
+              const active = i18n.resolvedLanguage === l.code
+              return (
+                <button key={l.code}
+                  onClick={() => i18n.changeLanguage(l.code)}
+                  className={`w-full flex items-center justify-between px-4 py-3 active:bg-bg/40 transition-colors ${idx === SUPPORTED_LANGUAGES.length - 1 ? '' : 'border-b border-lineSoft'}`}>
+                  <span className="flex items-center gap-3">
+                    <span className="text-base">{l.flag}</span>
+                    <span className={`text-sm font-semibold ${active ? 'text-accent' : 'text-ink'}`}>{l.name}</span>
+                  </span>
+                  {active && <span className="text-accent text-xs font-bold">✓</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Sign out + Legal + Konto löschen */}
       {isSelf && (
-        <div className="px-3 mt-3 flex flex-col gap-2">
+        <div className="px-3 mt-4 flex flex-col gap-2">
           <button onClick={signOut}
             className="w-full py-3 rounded-xl text-sm font-semibold bg-surface text-inkMuted border border-line active:scale-[0.98] transition-transform">
-            Abmelden
+            {t('common.signOut')}
           </button>
 
           <div className="flex gap-2 text-[11px] text-inkDim justify-center pt-1">
-            <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">Impressum</a>
+            <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.impressum')}</a>
             <span>·</span>
-            <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener" className="hover:text-inkMuted">Datenschutz</a>
+            <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.datenschutz')}</a>
             <span>·</span>
-            <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className="hover:text-inkMuted">AGB</a>
+            <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.agb')}</a>
             <span>·</span>
-            <a href="mailto:hi@swingandsavor.at" className="hover:text-inkMuted">Support</a>
+            <a href="mailto:hi@swingandsavor.at" className="hover:text-inkMuted">{t('profile.support')}</a>
           </div>
 
           {!showDeleteConfirm ? (
             <button onClick={() => setShowDeleteConfirm(true)}
               className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold text-danger/80 hover:text-danger transition-colors">
-              Konto unwiderruflich löschen
+              {t('profile.deleteAccount')}
             </button>
           ) : (
             <div className="mt-2 rounded-card p-4 bg-surface border border-danger/30 flex flex-col gap-3 animate-fade-up">
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-danger">Konto löschen</p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-danger">{t('profile.deleteConfirmTitle')}</p>
               <p className="text-xs text-inkMuted leading-relaxed">
-                Profil, Freundschaften, deine Turniere und der Zugang werden endgültig entfernt.
-                Diese Aktion ist unwiderruflich.
+                {t('profile.deleteConfirmBody')}
               </p>
               <input type="text" autoCapitalize="characters" autoCorrect="off"
-                placeholder='Tippe LÖSCHEN'
+                placeholder={t('profile.deleteConfirmPrompt')}
                 className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-ink placeholder:text-inkDim text-sm focus:border-danger/60"
                 value={deleteText}
                 onChange={e => { setDeleteText(e.target.value); setDeleteError(null) }}
@@ -443,16 +491,25 @@ export default function ProfileScreen() {
                 <button type="button" onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); setDeleteError(null) }}
                   disabled={deleting}
                   className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-bg text-inkMuted border border-line active:scale-[0.98] transition-transform">
-                  Abbrechen
+                  {t('common.cancel')}
                 </button>
                 <button type="button" onClick={deleteAccount} disabled={deleting}
                   className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-danger text-white active:scale-[0.98] transition-transform disabled:opacity-60">
-                  {deleting ? 'Lösche…' : 'Endgültig löschen'}
+                  {deleting ? t('common.deleting') : t('profile.deleteFinal')}
                 </button>
               </div>
             </div>
           )}
         </div>
+      )}
+
+      {isSelf && target?.ref_code && (
+        <ShareSheet
+          open={shareOpen} onClose={() => setShareOpen(false)}
+          url={buildReferralLink(target.ref_code)}
+          text={t('share.inviteText', { url: buildReferralLink(target.ref_code) })}
+          title={t('profile.shareLink')}
+        />
       )}
 
       {showCoursePicker && (
