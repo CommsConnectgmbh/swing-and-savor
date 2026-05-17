@@ -50,15 +50,26 @@ export default function BoardScreen() {
   }
 
   async function loadMatchData(tournamentId) {
-    const { data: m } = await supabase.from('matches').select(`
-      *,
-      pa1:team_a_player1_id(name),
-      pa2:team_a_player2_id(name),
-      pb1:team_b_player1_id(name),
-      pb2:team_b_player2_id(name)
-    `).eq('tournament_id', tournamentId).order('created_at')
-
-    const matchList = m || []
+    const [{ data: m }, { data: pl }] = await Promise.all([
+      supabase.from('matches').select(`
+        *,
+        pa1:team_a_player1_id(name),
+        pa2:team_a_player2_id(name),
+        pb1:team_b_player1_id(name),
+        pb2:team_b_player2_id(name)
+      `).eq('tournament_id', tournamentId).order('created_at'),
+      supabase.from('players').select('id,name').eq('tournament_id', tournamentId),
+    ])
+    const nameById = Object.fromEntries((pl || []).map(p => [p.id, p.name]))
+    const matchList = (m || []).map(mm => ({
+      ...mm,
+      _namesA: (mm.team_a_player_ids?.length ? mm.team_a_player_ids
+                : [mm.team_a_player1_id, mm.team_a_player2_id].filter(Boolean))
+                .map(id => nameById[id]).filter(Boolean),
+      _namesB: (mm.team_b_player_ids?.length ? mm.team_b_player_ids
+                : [mm.team_b_player1_id, mm.team_b_player2_id].filter(Boolean))
+                .map(id => nameById[id]).filter(Boolean),
+    }))
     setMatches(matchList)
 
     if (matchList.length > 0) {
@@ -315,8 +326,12 @@ export default function BoardScreen() {
         {matches.map((m, idx) => {
           const holes    = holesByMatch[m.id] || []
           const standing = calcMatchStanding(holes)
-          const playersA = [m.pa1?.name, m.pa2?.name].filter(Boolean).join(' & ')
-          const playersB = [m.pb1?.name, m.pb2?.name].filter(Boolean).join(' & ')
+          const playersA = (m._namesA?.length ? m._namesA : [m.pa1?.name, m.pa2?.name].filter(Boolean)).join(' · ')
+          const playersB = (m._namesB?.length ? m._namesB : [m.pb1?.name, m.pb2?.name].filter(Boolean)).join(' · ')
+          const typeLbl  = m.type === 'singles' ? 'Singles'
+                          : m.type === 'doubles' ? 'Doubles'
+                          : `Flight ${m._namesA?.length ?? 0}v${m._namesB?.length ?? 0}`
+          const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
 
           let standColor = '#a8b5ad'
           let standBg = 'transparent'
@@ -355,8 +370,13 @@ export default function BoardScreen() {
               }}
             >
               <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-inkMuted">
-                  {m.type === 'singles' ? 'Singles' : 'Doubles'}
+                <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-inkMuted flex items-center gap-1.5">
+                  {typeLbl}
+                  {hasFactor && (
+                    <span className="text-[9px] font-bold uppercase text-accent bg-accent/10 border border-accent/25 px-1 py-0.5 rounded tabular-nums">
+                      ×{Number(m.team_a_factor).toFixed(2)}/{Number(m.team_b_factor).toFixed(2)}
+                    </span>
+                  )}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {m.status === 'active' && (

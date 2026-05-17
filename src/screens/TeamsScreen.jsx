@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -72,12 +73,22 @@ export default function TeamsScreen() {
   const [showGate, setShowGate] = useState(false)
   const [showViewGate, setShowViewGate] = useState(false)
   const pendingRef = useRef(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   useEffect(() => {
     supabase.from('tournaments').select('*').order('date', { ascending: false })
       .then(({ data }) => {
-        setTournaments(data || [])
-        if (data && data.length > 0) setSelectedTournament(data[0])
+        const list = data || []
+        setTournaments(list)
+        const tid = searchParams.get('tid')
+        const preselect = tid && list.find(t => t.id === tid)
+        if (preselect) {
+          setSelectedTournament(preselect)
+          setSearchParams({}, { replace: true })
+        } else if (list.length > 0) {
+          setSelectedTournament(list[0])
+        }
         setLoading(false)
       })
   }, [])
@@ -176,6 +187,21 @@ export default function TeamsScreen() {
             onChange={e => setSelectedTournament(tournaments.find(t => t.id === e.target.value))}>
             {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
+        </div>
+      )}
+
+      {/* No tournament — direct CTA */}
+      {!loading && tournaments.length === 0 && (
+        <div className="mx-4 mb-4 p-4 rounded-card bg-surface border border-line text-center">
+          <p className="text-sm font-bold text-ink">Erst ein Turnier anlegen</p>
+          <p className="text-xs text-inkMuted mt-1">
+            Spieler und Teams gehören immer zu einem Turnier.
+          </p>
+          <button
+            onClick={() => navigate('/cup?new=1')}
+            className="mt-3 w-full py-2.5 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform">
+            + Turnier anlegen
+          </button>
         </div>
       )}
 

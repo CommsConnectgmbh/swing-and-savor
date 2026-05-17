@@ -67,6 +67,7 @@ export default function MatchDetailScreen() {
   const [course, setCourse] = useState(null)
   const [showCourseEditor, setShowCourseEditor] = useState(false)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
+  const [flightNames, setFlightNames] = useState({ A: [], B: [] })
   const matchRef = useRef(null)
 
   useEffect(() => { loadAll() }, [matchId])
@@ -96,6 +97,24 @@ export default function MatchDetailScreen() {
     matchRef.current = m
     setMatch(m)
     setCourse(m?.course || null)
+
+    // Bei Flights/Doubles: alle Spielernamen anhand der Arrays nachladen
+    const aIds = m?.team_a_player_ids?.length ? m.team_a_player_ids
+                 : [m?.team_a_player1_id, m?.team_a_player2_id].filter(Boolean)
+    const bIds = m?.team_b_player_ids?.length ? m.team_b_player_ids
+                 : [m?.team_b_player1_id, m?.team_b_player2_id].filter(Boolean)
+    const allIds = [...aIds, ...bIds]
+    if (allIds.length > 0) {
+      const { data: pls } = await supabase.from('players')
+        .select('id,name,handicap').in('id', allIds)
+      const byId = Object.fromEntries((pls || []).map(p => [p.id, p]))
+      setFlightNames({
+        A: aIds.map(id => byId[id]?.name).filter(Boolean),
+        B: bIds.map(id => byId[id]?.name).filter(Boolean),
+      })
+    } else {
+      setFlightNames({ A: [], B: [] })
+    }
 
     // Priority: 1) match snapshot, 2) course defaults, 3) localStorage, 4) Par 4 fallback
     const localPars = getPars()
@@ -216,17 +235,30 @@ export default function MatchDetailScreen() {
 
   const tA   = match.tournament?.team_a_name || 'Team A'
   const tB   = match.tournament?.team_b_name || 'Team B'
-  const nameA = [match.pa1?.name, match.pa2?.name].filter(Boolean).join(' & ')
-  const nameB = [match.pb1?.name, match.pb2?.name].filter(Boolean).join(' & ')
+  const namesA = flightNames.A.length ? flightNames.A
+                : [match.pa1?.name, match.pa2?.name].filter(Boolean)
+  const namesB = flightNames.B.length ? flightNames.B
+                : [match.pb1?.name, match.pb2?.name].filter(Boolean)
+  const nameA  = namesA.join(' · ')
+  const nameB  = namesB.join(' · ')
+  const isFlight = match.type === 'flight'
+  const typeLbl  = match.type === 'singles' ? 'Singles'
+                  : match.type === 'doubles' ? 'Doubles'
+                  : `Flight ${namesA.length}v${namesB.length}`
+  const factorA = Number(match.team_a_factor ?? 1)
+  const factorB = Number(match.team_b_factor ?? 1)
+  const hasFactor = factorA !== 1 || factorB !== 1
   const done  = match.status === 'finished'
   const locked = !isUnlocked(match.tournament)
 
-  let ptsA = 0, ptsB = 0
+  let rawA = 0, rawB = 0
   holes.forEach(h => {
-    if (h.winner === 'A') ptsA++
-    else if (h.winner === 'B') ptsB++
-    else if (h.winner === 'halved') { ptsA += 0.5; ptsB += 0.5 }
+    if (h.winner === 'A') rawA++
+    else if (h.winner === 'B') rawB++
+    else if (h.winner === 'halved') { rawA += 0.5; rawB += 0.5 }
   })
+  const ptsA = Math.round(rawA * factorA * 100) / 100
+  const ptsB = Math.round(rawB * factorB * 100) / 100
 
   const played     = holes.filter(h => h.winner !== null)
   const totalPar   = holes.reduce((s, h) => s + h.par, 0)
@@ -253,13 +285,18 @@ export default function MatchDetailScreen() {
 
         <div className="flex-1 text-center">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-inkMuted">
-            {match.type === 'singles' ? 'Singles' : 'Doubles'}
+            {typeLbl}
           </p>
           <p className="font-condensed font-black text-4xl leading-tight mt-0.5 tabular-nums">
             <span style={{ color: ptsA >= ptsB ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
             <span className="mx-2 text-line">:</span>
             <span style={{ color: ptsB > ptsA ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
           </p>
+          {hasFactor && (
+            <p className="text-[10px] font-bold tracking-wide uppercase text-accent mt-1">
+              Faktor {factorA.toFixed(2)} / {factorB.toFixed(2)}
+            </p>
+          )}
         </div>
 
         {done

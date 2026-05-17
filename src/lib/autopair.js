@@ -28,3 +28,15 @@ export function suggestDoubles(teamA, teamB) {
   for (let i = 0; i < n; i++) out.push({ a: a[i], b: b[i], delta: Math.abs(a[i].avg - b[i].avg) })
   return out
 }
+
+// Flights: alle verfügbaren Spieler pro Team in einen Flight stecken (max 4 je Seite).
+// Verteilt nach Handicap-Balance — beide Seiten bekommen je den Top-Player, Mid-Player, etc.
+// Bei asymmetrischer Größe wird die kleinere Seite voll besetzt, die größere kappt bei 4.
+export function suggestFlight(teamA, teamB, { maxSize = 4 } = {}) {
+  const a = [...teamA].sort((x, y) => x.handicap - y.handicap).slice(0, maxSize)
+  const b = [...teamB].sort((x, y) => x.handicap - y.handicap).slice(0, maxSize)
+  if (a.length === 0 || b.length === 0) return null
+  const avgA = a.reduce((s, p) => s + p.handicap, 0) / a.length
+  const avgB = b.reduce((s, p) => s + p.handicap, 0) / b.length
+  return { a, b, sizeA: a.length, sizeB: b.length, delta: Math.abs(avgA - avgB) }
+}

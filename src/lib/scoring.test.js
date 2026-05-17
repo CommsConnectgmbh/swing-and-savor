@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcTeamPoints } from './scoring'
+import { calcMatchStanding, calcTeamPoints, suggestFactors } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -46,5 +46,35 @@ describe('calcTeamPoints', () => {
   it('ignores unfinished matches', () => {
     const matches = [{ winner: null, status: 'active' }]
     expect(calcTeamPoints(matches)).toEqual({ A: 0, B: 0 })
+  })
+
+  it('applies team factors on finished matches', () => {
+    const matches = [
+      { winner: 'A', status: 'finished', team_a_factor: 0.75, team_b_factor: 1 },
+      { winner: 'B', status: 'finished', team_a_factor: 0.75, team_b_factor: 1 },
+    ]
+    expect(calcTeamPoints(matches)).toEqual({ A: 0.75, B: 1 })
+  })
+
+  it('applies factors on halved matches', () => {
+    const matches = [{ winner: 'halved', status: 'finished', team_a_factor: 0.5, team_b_factor: 1 }]
+    expect(calcTeamPoints(matches)).toEqual({ A: 0.25, B: 0.5 })
+  })
+})
+
+describe('suggestFactors', () => {
+  it('returns 1.0 / 1.0 for equal team sizes', () => {
+    expect(suggestFactors(4, 4)).toEqual({ team_a_factor: 1, team_b_factor: 1 })
+    expect(suggestFactors(2, 2)).toEqual({ team_a_factor: 1, team_b_factor: 1 })
+  })
+
+  it('discounts the larger side', () => {
+    expect(suggestFactors(4, 3)).toEqual({ team_a_factor: 0.75, team_b_factor: 1 })
+    expect(suggestFactors(3, 4)).toEqual({ team_a_factor: 1, team_b_factor: 0.75 })
+    expect(suggestFactors(4, 2)).toEqual({ team_a_factor: 0.5, team_b_factor: 1 })
+  })
+
+  it('clamps inputs to 1..4', () => {
+    expect(suggestFactors(0, 5)).toEqual({ team_a_factor: 1, team_b_factor: 0.25 })
   })
 })

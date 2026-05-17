@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -65,6 +65,7 @@ function ShareIcon() {
 export default function CupScreen() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState(null)
@@ -165,7 +166,7 @@ export default function CupScreen() {
               : 'bg-accent text-brandDark'
           }`}
         >
-          {mode ? t('common.close') : `+ ${t('common.next').slice(0, 1) === t('common.next').slice(0, 1) ? t('cup.newCup') : t('cup.newCup')}`}
+          {mode ? t('common.close') : `+ ${t('cup.newCup')}`}
         </button>
       </div>
 
@@ -268,6 +269,13 @@ export default function CupScreen() {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => navigate(`/teams?tid=${cup.id}`)}
+                  className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform bg-surface text-inkMuted border border-line hover:text-accent hover:border-accent/40"
+                  title="Spieler & Teams"
+                >
+                  Teams
+                </button>
                 <button
                   onClick={() => toggleStatus(cup)}
                   className={`text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform ${
