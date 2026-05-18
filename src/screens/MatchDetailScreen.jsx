@@ -14,9 +14,10 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
+import WinnerCardSheet from '../components/WinnerCardSheet'
 
-const TEAM_A = '#60a5fa'
-const TEAM_B = '#fb7185'
+const TEAM_A = '#9BB5C9'
+const TEAM_B = '#D9A38E'
 
 function isUnlocked(t) {
   if (!t?.edit_password) return true
@@ -89,6 +90,7 @@ export default function MatchDetailScreen() {
   const [flightNames, setFlightNames] = useState({ A: [], B: [] })
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState(null)
+  const [storyOpen, setStoryOpen] = useState(false)
   const photoInputRef = useRef(null)
   const matchRef = useRef(null)
 
@@ -407,9 +409,9 @@ export default function MatchDetailScreen() {
             {typeLbl}
           </p>
           <p className="font-condensed font-black text-4xl leading-tight mt-0.5 tabular-nums">
-            <span style={{ color: ptsA >= ptsB ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
+            <span style={{ color: ptsA >= ptsB ? '#D9C9A8' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
             <span className="mx-2 text-line">:</span>
-            <span style={{ color: ptsB > ptsA ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
+            <span style={{ color: ptsB > ptsA ? '#D9C9A8' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
           </p>
           {hasFactor && (
             <p className="text-[10px] font-bold tracking-wide uppercase text-accent mt-1">
@@ -427,14 +429,14 @@ export default function MatchDetailScreen() {
       {/* ── team names ── */}
       <div className="grid mx-3 my-3 rounded-card overflow-hidden bg-surface border border-line"
         style={{ gridTemplateColumns: '1fr auto 1fr' }}>
-        <div className="px-4 py-3" style={{ background: 'rgba(96,165,250,0.08)' }}>
+        <div className="px-4 py-3" style={{ background: 'rgba(155,181,201,0.08)' }}>
           <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1 text-teamA">{tA}</p>
           <p className="font-semibold text-sm leading-tight text-ink truncate">{nameA || '—'}</p>
         </div>
         <div className="flex items-center justify-center px-4 border-l border-r border-lineSoft">
           <span className="text-xs font-bold tracking-widest text-line">VS</span>
         </div>
-        <div className="px-4 py-3 text-right" style={{ background: 'rgba(251,113,133,0.08)' }}>
+        <div className="px-4 py-3 text-right" style={{ background: 'rgba(217,163,142,0.08)' }}>
           <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-1 text-teamB">{tB}</p>
           <p className="font-semibold text-sm leading-tight text-ink truncate">{nameB || '—'}</p>
         </div>
@@ -453,10 +455,32 @@ export default function MatchDetailScreen() {
         />
       </div>
 
+      {/* ── Story Overlay CTA (Strava-style) ── */}
+      {done && (
+        <button
+          onClick={() => setStoryOpen(true)}
+          className="mx-3 mb-2 w-[calc(100%-1.5rem)] flex items-center justify-between px-4 py-3 hairline bg-bg active:scale-[0.99] transition-transform"
+        >
+          <div className="flex items-center gap-2.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9C9A8"
+                 strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M16 8h.01M3 16l5-5a2 2 0 012.83 0L21 19" />
+            </svg>
+            <span className="text-[12px] font-medium tracking-[0.22em] uppercase text-ink">
+              Story Overlay
+            </span>
+          </div>
+          <span className="text-[10px] tracking-[0.22em] uppercase text-inkDim">
+            Strava-Style
+          </span>
+        </button>
+      )}
+
       {/* ── course banner ── */}
       <div className="mx-3 mb-2 rounded-xl px-4 py-2.5 flex items-center justify-between bg-surface border border-line">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98cd02"
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D9C9A8"
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
             <path d="M2 22h20M5 22V11l5-3 5 3v11M9 22V14h2v8" />
           </svg>
@@ -568,12 +592,12 @@ export default function MatchDetailScreen() {
                 disabled={done || locked}
                 className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
                 style={{
-                  background: played && h.winner === 'A' ? 'rgba(96,165,250,0.18)'
-                    : played ? '#143024' : '#1a3a2c',
+                  background: played && h.winner === 'A' ? 'rgba(155,181,201,0.18)'
+                    : played ? '#102822' : '#16332B',
                   color: played && h.winner === 'A' ? TEAM_A
-                    : played ? '#6b7a72' : '#ffffff',
+                    : played ? '#5C5851' : '#ffffff',
                   border: played && h.winner === 'A'
-                    ? '1.5px solid rgba(96,165,250,0.45)'
+                    ? '1.5px solid rgba(155,181,201,0.45)'
                     : '1.5px solid transparent',
                 }}
               />
@@ -589,12 +613,12 @@ export default function MatchDetailScreen() {
                 disabled={done || locked}
                 className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
                 style={{
-                  background: played && h.winner === 'B' ? 'rgba(251,113,133,0.18)'
-                    : played ? '#143024' : '#1a3a2c',
+                  background: played && h.winner === 'B' ? 'rgba(217,163,142,0.18)'
+                    : played ? '#102822' : '#16332B',
                   color: played && h.winner === 'B' ? TEAM_B
-                    : played ? '#6b7a72' : '#ffffff',
+                    : played ? '#5C5851' : '#ffffff',
                   border: played && h.winner === 'B'
-                    ? '1.5px solid rgba(251,113,133,0.45)'
+                    ? '1.5px solid rgba(217,163,142,0.45)'
                     : '1.5px solid transparent',
                 }}
               />
@@ -641,7 +665,7 @@ export default function MatchDetailScreen() {
             <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totA || '—'}</p>
             {dA !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
-                style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#98cd02' : '#6b7a72' }}>
+                style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#D9C9A8' : '#5C5851' }}>
                 {fmtDelta(dA)}
               </p>
             )}
@@ -651,7 +675,7 @@ export default function MatchDetailScreen() {
             <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totB || '—'}</p>
             {dB !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
-                style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#98cd02' : '#6b7a72' }}>
+                style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#D9C9A8' : '#5C5851' }}>
                 {fmtDelta(dB)}
               </p>
             )}
@@ -659,9 +683,9 @@ export default function MatchDetailScreen() {
           <div className="text-center">
             <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-inkMuted">Pts</p>
             <p className="font-condensed font-black text-lg leading-none tabular-nums">
-              <span style={{ color: ptsA >= ptsB ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
+              <span style={{ color: ptsA >= ptsB ? '#D9C9A8' : '#9ca3af' }}>{fmtPts(ptsA)}</span>
               <span className="text-line">:</span>
-              <span style={{ color: ptsB > ptsA ? '#98cd02' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
+              <span style={{ color: ptsB > ptsA ? '#D9C9A8' : '#9ca3af' }}>{fmtPts(ptsB)}</span>
             </p>
           </div>
         </div>
@@ -711,6 +735,37 @@ export default function MatchDetailScreen() {
           onSaved={(updated) => setCourse(prev => ({ ...prev, ...updated }))}
         />
       )}
+
+      <WinnerCardSheet
+        open={storyOpen}
+        onClose={() => setStoryOpen(false)}
+        shareUrl={`https://app.swingandsavor.at/matches/${matchId}`}
+        payload={{
+          playerName:   match?.winner === 'A'
+                          ? (flightNames.A.join(' · ') || match?.tournament?.team_a_name || 'Team A')
+                          : match?.winner === 'B'
+                          ? (flightNames.B.join(' · ') || match?.tournament?.team_b_name || 'Team B')
+                          : 'Halved',
+          championName: match?.winner === 'A'
+                          ? (flightNames.A.join(' · ') || match?.tournament?.team_a_name || 'Team A')
+                          : match?.winner === 'B'
+                          ? (flightNames.B.join(' · ') || match?.tournament?.team_b_name || 'Team B')
+                          : 'Halved',
+          award:        match?.winner === 'halved' ? 'Tied' : 'Champion',
+          cupName:      match?.tournament?.name,
+          courseName:   course?.name,
+          dateLabel:    match?.tournament?.date
+                          ? new Date(match.tournament.date + 'T12:00:00').toLocaleDateString('de-DE',
+                              { day: '2-digit', month: 'short', year: 'numeric' })
+                          : null,
+          score:        `${fmtPts(ptsA)} – ${fmtPts(ptsB)}`,
+          scoreLabel:   'Final Score',
+          birdies:      null,
+          longestDrive: null,
+          closestToPin: null,
+          isChampion:   match?.winner !== 'halved',
+        }}
+      />
     </div>
   )
 }

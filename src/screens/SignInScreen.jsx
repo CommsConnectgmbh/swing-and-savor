@@ -39,9 +39,6 @@ export default function SignInScreen() {
     if (!code || code.length !== 8) { setError(t('signIn.errorGeneric')); return }
     setBusy(true); setError(null)
 
-    // Reviewer-Bypass für Apple + Google App-Review (statische Demo-Accounts).
-    // Der Bypass wird nur akzeptiert wenn die Edge-Function reviewer-bypass
-    // Email + Code matcht; sonst fällt der normale OTP-Flow durch.
     const lowered = email.toLowerCase().trim()
     if (lowered === 'apple-review@swingandsavor.at' ||
         lowered === 'play-review@swingandsavor.at') {
@@ -67,7 +64,6 @@ export default function SignInScreen() {
       } catch (err) {
         console.error('[auth] reviewer-bypass failed', err)
       }
-      // Reviewer-Bypass abgelehnt -> normaler OTP-Pfad fängt es ab
     }
 
     const { error } = await supabase.auth.verifyOtp({
@@ -78,50 +74,88 @@ export default function SignInScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 animate-fade-up bg-bg relative">
-      <div className="absolute top-4 right-4"><LanguageQuickSwitch /></div>
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center text-center mb-8">
-          <img src="/logo.png" alt="Swing & Savor" width="80" height="80" className="rounded-2xl mb-4" />
-          <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-accent">{t('app.name')}</p>
-          <p className="text-inkMuted text-sm mt-2 max-w-[260px]">
-            {step === 'email' ? t('signIn.subtitle') : t('signIn.codeSent')}
-          </p>
+    <div className="min-h-screen flex flex-col bg-bg relative overflow-hidden">
+      {/* Editorial backdrop: subtle vertical gradient */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(217,201,168,0.06), transparent 60%)',
+        }}
+      />
+      <div className="absolute top-4 right-4 z-10"><LanguageQuickSwitch /></div>
+
+      <div className="flex-1 flex flex-col justify-end px-7 pb-12 pt-24 relative">
+        {/* Logo + Editorial label */}
+        <div className="flex items-center gap-3 mb-6">
+          <img
+            src="/logo.png"
+            alt="Swing & Savor"
+            width="56"
+            height="56"
+            className="rounded-2xl flex-shrink-0"
+            style={{ boxShadow: '0 0 0 1px rgba(217,201,168,0.22), 0 8px 24px rgba(0,0,0,0.55)' }}
+          />
+          <div className="flex flex-col leading-none">
+            <span className="font-display text-ink text-[20px] tracking-tight" style={{ fontWeight: 600 }}>
+              Swing<span style={{ color: '#D9C9A8' }}> &amp; </span>Savor
+            </span>
+            <span className="text-[10px] text-accent uppercase tracking-[0.42em] mt-1.5">
+              The Clubhouse
+            </span>
+          </div>
         </div>
+
+        {/* Hero headline */}
+        <h1 className="font-display text-ink leading-[0.92] mb-4"
+            style={{ fontSize: 'clamp(40px, 9vw, 56px)', fontWeight: 500, letterSpacing: '-0.02em' }}>
+          {step === 'email'
+            ? t('signIn.title')
+            : t('signIn.enterCode')}
+        </h1>
+
+        <p className="font-sans text-inkMuted text-[15px] leading-relaxed max-w-[320px] mb-10">
+          {step === 'email' ? t('signIn.subtitle') : t('signIn.codeSent')}
+        </p>
 
         {step === 'email' ? (
           <form onSubmit={sendCode} className="flex flex-col gap-3">
             <input
               type="email" autoComplete="email" autoFocus inputMode="email"
               placeholder={t('signIn.emailPlaceholder')}
-              className="w-full bg-surface border border-line rounded-xl px-4 py-3.5 text-ink placeholder:text-inkDim text-sm focus:border-accent/60 transition-colors"
+              className="w-full bg-transparent hairline-b border-0 px-1 py-3 text-ink placeholder:text-inkDim text-[16px] focus:outline-none transition-colors"
+              style={{ borderRadius: 0 }}
               value={email}
               onChange={e => { setEmail(e.target.value); setError(null) }}
             />
-            {error && <p className="text-danger text-xs pl-1">{error}</p>}
+            {error && <p className="text-danger text-xs">{error}</p>}
             <button type="submit" disabled={busy}
-              className="py-3.5 rounded-xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-50">
+              className="mt-4 py-4 text-[13px] font-medium tracking-[0.24em] uppercase bg-accent text-bg active:scale-[0.98] transition-transform disabled:opacity-50">
               {busy ? t('signIn.sending') : t('signIn.sendCode')}
             </button>
+
+            <p className="text-[11px] text-inkDim text-center mt-3 leading-relaxed">
+              {t('signIn.legalPrefix')} <span className="underline-offset-2">{t('signIn.legalTerms')}</span> {t('signIn.legalAnd')} <span className="underline-offset-2">{t('signIn.legalPrivacy')}</span>.
+            </p>
           </form>
         ) : (
           <form onSubmit={verifyCode} className="flex flex-col gap-3">
-            <p className="text-xs text-inkMuted text-center">{t('signIn.enterCode')}</p>
             <input
               type="text" inputMode="numeric" pattern="[0-9]*" autoFocus
               maxLength={8}
               placeholder="– – – – – – – –"
-              className="w-full bg-surface border border-line rounded-xl px-4 py-4 text-ink placeholder:text-inkDim text-center font-condensed font-black text-2xl tracking-[0.4em] tabular-nums focus:border-accent/60 transition-colors"
+              className="w-full bg-transparent hairline-b border-0 px-1 py-4 text-ink placeholder:text-inkDim text-center font-display font-medium text-[28px] tracking-[0.32em] tabular-nums focus:outline-none transition-colors"
+              style={{ borderRadius: 0 }}
               value={code}
               onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null) }}
             />
-            {error && <p className="text-danger text-xs pl-1 text-center">{error}</p>}
+            {error && <p className="text-danger text-xs text-center">{error}</p>}
             <button type="submit" disabled={busy}
-              className="py-3.5 rounded-xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-50">
+              className="mt-4 py-4 text-[13px] font-medium tracking-[0.24em] uppercase bg-accent text-bg active:scale-[0.98] transition-transform disabled:opacity-50">
               {busy ? t('signIn.verifying') : t('signIn.verify')}
             </button>
             <button type="button" onClick={() => { setStep('email'); setCode(''); setError(null) }}
-              className="text-xs text-inkMuted py-2 hover:text-ink transition-colors">
+              className="text-[11px] text-inkMuted py-3 tracking-[0.24em] uppercase hover:text-accent transition-colors">
               ← {t('signIn.email')}
             </button>
           </form>

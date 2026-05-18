@@ -413,6 +413,25 @@ export default function ProfileScreen() {
         </div>
       )}
 
+      {/* Hall of Fame deeplink — public Editorial profile */}
+      {target?.handle && (
+        <Link to={`/hall/${target.handle}`}
+              className="mx-3 mt-2 flex items-center justify-between px-4 py-4 hairline bg-surface/40 active:scale-[0.99] transition-transform">
+          <div className="flex items-center gap-2.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9C9A8"
+                 strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 21h8M12 17v4M5 4h14v6a7 7 0 01-14 0V4zM3 4h2v3a3 3 0 01-3 3M21 4h-2v3a3 3 0 003 3"/>
+            </svg>
+            <span className="text-[12px] font-medium tracking-[0.22em] uppercase text-ink">
+              Hall of Fame
+            </span>
+          </div>
+          <span className="text-[10px] tracking-[0.22em] uppercase text-inkDim">
+            View public →
+          </span>
+        </Link>
+      )}
+
       {/* Self-only quick links */}
       {isSelf && (
         <div className="mx-3 mt-2 rounded-card bg-surface border border-line overflow-hidden">

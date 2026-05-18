@@ -4,51 +4,63 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        condensed: ['"Barlow Condensed"', 'sans-serif'],
-        sans: ['"Barlow"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        // Editorial display (Fraunces, variable serif)
+        serif:     ['"Fraunces"', 'Georgia', 'serif'],
+        // UI grotesk
+        sans:      ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        // Legacy alias (used in BrandHeader etc.) — kept so existing code renders
+        condensed: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        // Brand surfaces — dark to light, all green-tinted so the logo edge blends
-        bg:        '#0d271e',
-        surface:   '#143024',
-        surface2:  '#1a3a2c',
-        line:      '#244a37',
-        lineSoft:  '#19362a',
+        // ---- Forest Green base (Premium Golf Club) ----
+        bg:        '#0A1A12',  // deepest forest, almost black with green hue
+        surface:   '#102822',  // moss-on-shadow
+        surface2:  '#16332B',  // raised surface
+        line:      '#1F4537',  // hairline border tint
+        lineSoft:  '#15302A',
 
-        // Ink
-        ink:       '#ffffff',
-        inkMuted:  '#a8b5ad',
-        inkDim:    '#6b7a72',
+        // ---- Ink (Bone on Forest) ----
+        ink:       '#F4F1EA',  // bone
+        inkMuted:  '#9CAFA4',  // muted sage-tinted bone
+        inkDim:    '#5C7068',
 
-        // Brand accent
-        accent:    '#98cd02',
+        // ---- Brand accent: Champagne / Gold ----
+        accent:    '#D9C9A8',
+        accentDeep:'#A8956A',
 
-        // Semantic state
-        live:      '#98cd02',
-        win:       '#98cd02',
-        lock:      '#f5b94a',
-        danger:    '#ef4444',
-        warn:      '#f59e0b',
+        // ---- Course Green (semantic, sparingly) ----
+        course:    '#5C9A6E',  // sage / fairway green for "live" dots
 
-        // Match-play team identity (re-tuned for readability on dark green)
-        teamA:     '#60a5fa',
-        teamB:     '#fb7185',
+        // ---- Semantic ----
+        live:      '#D9C9A8',
+        win:       '#D9C9A8',
+        lock:      '#A8956A',
+        danger:    '#E07B5B',
+        warn:      '#D9B26A',
+
+        // Team identity (gedeckt, lifestyle-tauglich)
+        teamA:     '#9BB5C9',
+        teamB:     '#D9A38E',
 
         // Legacy aliases — keep so existing components render correctly
-        brand:      '#1f3f2c',
-        brandDark:  '#0d271e',
-        brandGreen: '#98cd02',
-        card:       '#143024',
-        border:     '#244a37',
-        muted:      '#6b7a72',
+        brand:      '#102822',
+        brandDark:  '#0A1A12',
+        brandGreen: '#D9C9A8',  // mapped to champagne, so old "brandGreen" CTAs still work
+        card:       '#102822',
+        border:     '#1F4537',
+        muted:      '#5C7068',
       },
       borderRadius: {
-        'card': '16px',
+        'card': '14px',
         'pill': '999px',
       },
       boxShadow: {
-        'lift': '0 6px 20px rgba(0,0,0,0.35)',
-        'glow': '0 0 24px rgba(152,205,2,0.35)',
+        'lift': '0 8px 24px rgba(0,0,0,0.55)',
+        'glow': '0 0 24px rgba(217,201,168,0.28)',
+        'hairline': 'inset 0 0 0 1px rgba(244,241,234,0.08)',
+      },
+      letterSpacing: {
+        'editorial': '0.18em',
       },
       keyframes: {
         'fade-up': {

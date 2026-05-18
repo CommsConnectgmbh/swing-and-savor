@@ -164,10 +164,15 @@ export default function OnboardingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-8 animate-fade-up bg-bg">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-6">
-          <img src="/logo.png" alt="" width="56" height="56" className="rounded-xl mx-auto mb-3" />
-          <h1 className="font-condensed text-2xl font-bold tracking-wide text-ink">Profil anlegen</h1>
-          <p className="text-inkMuted text-sm mt-1">Damit Freunde dich finden</p>
+        <div className="text-center mb-8">
+          <img src="/logo.png" alt="" width="64" height="64" className="rounded-2xl mx-auto mb-4"
+               style={{ boxShadow: '0 0 0 1px rgba(217,201,168,0.22), 0 8px 24px rgba(0,0,0,0.55)' }} />
+          <p className="text-[10px] tracking-[0.42em] uppercase text-accent mb-2">Welcome to the Clubhouse</p>
+          <h1 className="font-display text-ink leading-none"
+              style={{ fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 500, letterSpacing: '-0.015em' }}>
+            Set up your Golf Identity
+          </h1>
+          <p className="text-inkMuted text-[13px] mt-3 tracking-wide">Damit deine Crew dich findet.</p>
         </div>
 
         <form onSubmit={submit} className="flex flex-col gap-4">

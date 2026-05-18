@@ -8,13 +8,22 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import ShareSheet from '../components/ShareSheet'
+import CupExtrasSheet from '../components/CupExtrasSheet'
 
 const emptyForm = {
   name: '', date: '',
   team_a_name: 'Team A', team_b_name: 'Team B',
   edit_password: '',
   visibility: 'friends',
+  location_name: '',
+  format: '',
+  description: '',
+  cover_url: '',
 }
+
+const FORMAT_OPTIONS = [
+  'Match Play', 'Stableford', 'Best Ball', 'Scramble', 'Stroke Play', 'Texas Scramble',
+]
 
 function PencilIcon() {
   return (
@@ -77,6 +86,7 @@ export default function CupScreen() {
   const [gateTournament, setGateTournament] = useState(null)
   const [shareCup, setShareCup] = useState(null)
   const [coverBusy, setCoverBusy] = useState(false)
+  const [extrasCup, setExtrasCup] = useState(null)
   const pendingRef = useRef(null)
   const coverInputRef = useRef(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -88,7 +98,44 @@ export default function CupScreen() {
       setForm(emptyForm); setEditId(null); setMode('create')
       setSearchParams({}, { replace: true })
     }
+    if (searchParams.get('upgrade') === 'success') {
+      // refresh so the new package_type lands in UI
+      loadTournaments()
+      const next = new URLSearchParams(searchParams); next.delete('upgrade'); next.delete('cup')
+      setSearchParams(next, { replace: true })
+    }
   }, [searchParams])
+
+  const [upgrading, setUpgrading] = useState(null)
+  async function upgradeToPremium(cup) {
+    if (!user?.id) return
+    setUpgrading(cup.id)
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const jwt = sess?.session?.access_token
+      if (!jwt) throw new Error('no_session')
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-premium-checkout`, {
+        method: 'POST',
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium' }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok || !j.checkout_url) {
+        console.error('[upgrade] failed', j)
+        alert('Upgrade fehlgeschlagen. Bitte später erneut versuchen.')
+        return
+      }
+      window.location.href = j.checkout_url
+    } catch (e) {
+      console.error('[upgrade] err', e)
+    } finally {
+      setUpgrading(null)
+    }
+  }
 
   async function loadTournaments() {
     const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
@@ -115,6 +162,10 @@ export default function CupScreen() {
         team_a_name: t.team_a_name, team_b_name: t.team_b_name,
         edit_password: t.edit_password || '',
         visibility: t.visibility || 'friends',
+        location_name: t.location_name || '',
+        format: t.format || '',
+        description: t.description || '',
+        cover_url: t.cover_url || '',
       })
       setEditId(t.id); setMode('edit')
     })
@@ -130,6 +181,10 @@ export default function CupScreen() {
       team_a_name: form.team_a_name, team_b_name: form.team_b_name,
       edit_password: form.edit_password.trim() || null,
       visibility: form.visibility,
+      location_name: form.location_name.trim() || null,
+      format: form.format.trim() || null,
+      description: form.description.trim() || null,
+      cover_url: form.cover_url.trim() || null,
     }
     if (mode === 'create') {
       if (user) payload.owner_id = user.id
@@ -218,6 +273,53 @@ export default function CupScreen() {
             <input className={inputCls} placeholder="Team B"
               value={form.team_b_name} onChange={e => setForm(f => ({ ...f, team_b_name: e.target.value }))} />
           </div>
+
+          {/* Location (free-text course / venue) */}
+          <input className={inputCls} placeholder="Location · z.B. Pebble Beach"
+            value={form.location_name}
+            onChange={e => setForm(f => ({ ...f, location_name: e.target.value }))} />
+
+          {/* Format */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Format</p>
+            <div className="flex flex-wrap gap-1.5">
+              {FORMAT_OPTIONS.map((opt) => (
+                <button key={opt} type="button"
+                  onClick={() => setForm(f => ({ ...f, format: f.format === opt ? '' : opt }))}
+                  className={`px-3 py-1.5 rounded-pill text-[11px] tracking-wide transition-all ${
+                    form.format === opt
+                      ? 'bg-accent/15 text-accent border border-accent/40'
+                      : 'bg-bg text-inkMuted border border-line'
+                  }`}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <textarea className={inputCls} rows={3}
+            placeholder="Beschreibung · was macht dieses Invitational besonders?"
+            value={form.description}
+            onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+
+          {/* Cover URL (image URL — quick path; full upload kommt mit F2) */}
+          <input className={inputCls}
+            placeholder="Cover-Bild URL · https://… (optional)"
+            value={form.cover_url}
+            onChange={e => setForm(f => ({ ...f, cover_url: e.target.value }))} />
+          {form.cover_url && (
+            <div className="relative h-40 overflow-hidden rounded-card hairline">
+              <img src={form.cover_url} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0"
+                   style={{ background: 'linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85))' }} />
+              <p className="absolute bottom-2 left-3 right-3 font-display text-ink text-[18px] leading-tight"
+                 style={{ fontWeight: 500 }}>
+                {form.name || 'Cover Preview'}
+              </p>
+            </div>
+          )}
+
           {/* Visibility */}
           <div>
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Sichtbarkeit</p>
@@ -341,6 +443,21 @@ export default function CupScreen() {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
+                {cup.owner_id === user?.id && (cup.package_type || 'free') === 'free' && (
+                  <button
+                    onClick={() => upgradeToPremium(cup)}
+                    disabled={upgrading === cup.id}
+                    className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform bg-accent text-bg hover:bg-accentDeep disabled:opacity-50"
+                    title="Auf Premium upgraden"
+                  >
+                    {upgrading === cup.id ? '…' : 'Premium · 49 €'}
+                  </button>
+                )}
+                {(cup.package_type && cup.package_type !== 'free') && (
+                  <span className="text-[10px] font-bold tracking-[0.16em] uppercase px-2.5 py-1 rounded-md bg-accent/10 text-accent border border-accent/30">
+                    {cup.package_type === 'premium' ? 'Premium' : cup.package_type === 'club' ? 'Club' : 'League'}
+                  </span>
+                )}
                 <button
                   onClick={() => navigate(`/teams?tid=${cup.id}`)}
                   className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform bg-surface text-inkMuted border border-line hover:text-accent hover:border-accent/40"
@@ -363,6 +480,17 @@ export default function CupScreen() {
                     className="p-2 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-ink"
                     title={t('common.share')}>
                     <ShareIcon />
+                  </button>
+                )}
+                {cup.owner_id === user?.id && (
+                  <button onClick={() => setExtrasCup(cup)}
+                    className="p-2 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-accent"
+                    title="Cover · Awards · Sponsor">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
                   </button>
                 )}
                 <button onClick={() => openEdit(cup)}
@@ -407,9 +535,17 @@ export default function CupScreen() {
         <ShareSheet
           open={!!shareCup}
           onClose={() => setShareCup(null)}
-          url={`https://swingandsavor.at/c/${shareCup.invite_code}`}
-          text={t('share.cupShareText', { url: `https://swingandsavor.at/c/${shareCup.invite_code}` })}
+          url={`https://swingandsavor.at/i/${shareCup.invite_code}`}
+          text={t('share.cupShareText', { cup: shareCup.name, url: `https://swingandsavor.at/i/${shareCup.invite_code}` })}
           title={t('cup.shareInvite')}
+        />
+      )}
+
+      {extrasCup && (
+        <CupExtrasSheet
+          cup={extrasCup}
+          onClose={() => setExtrasCup(null)}
+          onChanged={loadTournaments}
         />
       )}
     </div>

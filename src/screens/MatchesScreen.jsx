@@ -399,7 +399,7 @@ export default function MatchesScreen() {
   const inputCls = 'w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink text-sm focus:border-accent/60'
   const locked = !isUnlocked(selected)
 
-  const statusDot  = { pending: '#244a37', active: '#98cd02', finished: 'rgba(168,181,173,0.5)' }
+  const statusDot  = { pending: '#1F4537', active: '#D9C9A8', finished: 'rgba(168,181,173,0.5)' }
   const statusLbl  = { pending: 'Offen', active: 'Live', finished: 'Beendet' }
   const statusCls  = { pending: 'text-inkMuted', active: 'text-accent', finished: 'text-inkMuted' }
 

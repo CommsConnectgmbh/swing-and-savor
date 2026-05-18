@@ -7,7 +7,7 @@ import PasswordGate from '../components/PasswordGate'
 
 const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
-const LIVE   = '#98cd02'
+const LIVE   = '#D9C9A8'
 
 function fmtPts(v) { return v % 1 === 0 ? String(v) : v.toFixed(1) }
 
@@ -130,7 +130,7 @@ export default function BoardScreen() {
   if (!tournament) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 animate-fade-up">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 bg-surface border border-line">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#98cd02" strokeWidth="1.5"
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D9C9A8" strokeWidth="1.5"
           strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 3h12v6a6 6 0 01-12 0V3z"/>
           <path d="M6 9H4a2 2 0 000 4h2M18 9h2a2 2 0 010 4h-2"/>
@@ -242,7 +242,7 @@ export default function BoardScreen() {
 
           {/* Team A */}
           <div className="flex-1 text-center py-5 px-3"
-            style={{ background: 'rgba(96,165,250,0.07)', borderRight: '1px solid #19362a' }}>
+            style={{ background: 'rgba(155,181,201,0.07)', borderRight: '1px solid #15302A' }}>
             <p className="text-[9px] font-bold tracking-[0.22em] uppercase mb-3 truncate" style={{ color: TEAM_A }}>
               {tournament.team_a_name}
             </p>
@@ -251,7 +251,7 @@ export default function BoardScreen() {
               style={{
                 fontSize: '4.5rem',
                 color: leaderA ? TEAM_A : '#e5e7eb',
-                filter: leaderA ? `drop-shadow(0 0 20px rgba(96,165,250,0.5))` : 'none',
+                filter: leaderA ? `drop-shadow(0 0 20px rgba(155,181,201,0.5))` : 'none',
               }}
             >
               {fmtPts(points.A)}
@@ -265,7 +265,7 @@ export default function BoardScreen() {
 
           {/* Team B */}
           <div className="flex-1 text-center py-5 px-3"
-            style={{ background: 'rgba(251,113,133,0.07)', borderLeft: '1px solid #19362a' }}>
+            style={{ background: 'rgba(217,163,142,0.07)', borderLeft: '1px solid #15302A' }}>
             <p className="text-[9px] font-bold tracking-[0.22em] uppercase mb-3 truncate" style={{ color: TEAM_B }}>
               {tournament.team_b_name}
             </p>
@@ -274,7 +274,7 @@ export default function BoardScreen() {
               style={{
                 fontSize: '4.5rem',
                 color: leaderB ? TEAM_B : '#e5e7eb',
-                filter: leaderB ? `drop-shadow(0 0 20px rgba(251,113,133,0.5))` : 'none',
+                filter: leaderB ? `drop-shadow(0 0 20px rgba(217,163,142,0.5))` : 'none',
               }}
             >
               {fmtPts(points.B)}
@@ -333,17 +333,17 @@ export default function BoardScreen() {
                           : `Flight ${m._namesA?.length ?? 0}v${m._namesB?.length ?? 0}`
           const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
 
-          let standColor = '#a8b5ad'
+          let standColor = '#9C968C'
           let standBg = 'transparent'
 
           if (m.status === 'finished') {
-            if (m.winner === 'A')      { standColor = TEAM_A; standBg = 'rgba(96,165,250,0.12)' }
-            else if (m.winner === 'B') { standColor = TEAM_B; standBg = 'rgba(251,113,133,0.12)' }
-            else                       { standColor = '#a8b5ad'; standBg = 'rgba(168,181,173,0.08)' }
+            if (m.winner === 'A')      { standColor = TEAM_A; standBg = 'rgba(155,181,201,0.12)' }
+            else if (m.winner === 'B') { standColor = TEAM_B; standBg = 'rgba(217,163,142,0.12)' }
+            else                       { standColor = '#9C968C'; standBg = 'rgba(168,181,173,0.08)' }
           } else if (m.status === 'active' && holes.length > 0) {
-            if (standing.leader === 'A')      { standColor = TEAM_A; standBg = 'rgba(96,165,250,0.10)' }
-            else if (standing.leader === 'B') { standColor = TEAM_B; standBg = 'rgba(251,113,133,0.10)' }
-            else                              { standColor = LIVE;   standBg = 'rgba(152,205,2,0.10)' }
+            if (standing.leader === 'A')      { standColor = TEAM_A; standBg = 'rgba(155,181,201,0.10)' }
+            else if (standing.leader === 'B') { standColor = TEAM_B; standBg = 'rgba(217,163,142,0.10)' }
+            else                              { standColor = LIVE;   standBg = 'rgba(217,201,168,0.10)' }
           }
 
           let displayLabel
@@ -365,7 +365,7 @@ export default function BoardScreen() {
               onClick={() => navigate(`/matches/${m.id}`)}
               className="w-full text-left active:scale-[0.99] transition-transform"
               style={{
-                borderBottom: idx < matches.length - 1 ? '1px solid #19362a' : 'none',
+                borderBottom: idx < matches.length - 1 ? '1px solid #15302A' : 'none',
                 animationDelay: `${idx * 35}ms`,
               }}
             >
@@ -395,7 +395,7 @@ export default function BoardScreen() {
                   <p className="font-semibold text-sm truncate" style={{ color: TEAM_A }}>
                     {playersA || '—'}
                   </p>
-                  <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(96,165,250,0.55)' }}>
+                  <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(155,181,201,0.55)' }}>
                     {tournament.team_a_name}
                   </p>
                 </div>
@@ -413,7 +413,7 @@ export default function BoardScreen() {
                   <p className="font-semibold text-sm truncate" style={{ color: TEAM_B }}>
                     {playersB || '—'}
                   </p>
-                  <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(251,113,133,0.55)' }}>
+                  <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(217,163,142,0.55)' }}>
                     {tournament.team_b_name}
                   </p>
                 </div>

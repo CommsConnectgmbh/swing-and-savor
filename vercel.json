@@ -3,7 +3,32 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!assets|icons|favicon|.*\\.[a-z0-9]{2,5}$).*)", "destination": "/index.html" }
+    {
+      "source": "/i/:slug*",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
+      "destination": "/api/og?p=/i/:slug*"
+    },
+    {
+      "source": "/recap/:slug*",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
+      "destination": "/api/og?p=/recap/:slug*"
+    },
+    {
+      "source": "/hall/:slug*",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
+      "destination": "/api/og?p=/hall/:slug*"
+    },
+    {
+      "source": "/crew/:slug*",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
+      "destination": "/api/og?p=/crew/:slug*"
+    },
+    {
+      "source": "/season/:slug*",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
+      "destination": "/api/og?p=/season/:slug*"
+    },
+    { "source": "/((?!assets|icons|favicon|api|.*\\.[a-z0-9]{2,5}$).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

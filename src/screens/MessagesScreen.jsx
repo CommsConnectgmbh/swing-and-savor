@@ -100,7 +100,7 @@ export default function MessagesScreen() {
             <button key={it.id}
               onClick={() => navigate(`/messages/${it.id}`)}
               className="w-full text-left px-4 py-3.5 flex items-center gap-3 active:bg-bg/40 transition-colors"
-              style={{ borderBottom: idx < items.length - 1 ? '1px solid #19362a' : 'none' }}>
+              style={{ borderBottom: idx < items.length - 1 ? '1px solid #15302A' : 'none' }}>
               <Avatar profile={it.other} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

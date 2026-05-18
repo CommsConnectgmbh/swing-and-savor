@@ -8,12 +8,12 @@ import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 
-const TEAM_A = '#60a5fa'
-const TEAM_B = '#fb7185'
-const LIVE   = '#98cd02'
+const TEAM_A = '#9BB5C9'
+const TEAM_B = '#D9A38E'
+const LIVE   = '#D9C9A8'
 
-// Deterministische Akzent-Farbe pro Turnier, damit Cups visuell unterscheidbar bleiben.
-const CUP_HUES = ['#98cd02', '#f5b94a', '#a78bfa', '#34d399', '#f472b6', '#22d3ee', '#fb923c', '#e879f9']
+// Deterministische Akzent-Farbe pro Cup, gedeckt-elegant statt bunt.
+const CUP_HUES = ['#D9C9A8', '#5C9A6E', '#9BB5C9', '#A8956A', '#7B9E89', '#C8A5BE', '#E5B86A', '#B58A6A']
 function cupColor(id) {
   if (!id) return CUP_HUES[0]
   let h = 0
@@ -225,34 +225,41 @@ export default function HomeScreen() {
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
 
-      {/* Meta-Zeile (Titel kommt aus BrandHeader) */}
-      <div className="px-4 pt-4 pb-3">
-        <p className="text-xs text-inkMuted">
+      {/* Editorial Header */}
+      <div className="px-5 pt-8 pb-5">
+        <p className="text-[10px] tracking-[0.42em] uppercase text-accent mb-3">The Clubhouse</p>
+        <h1 className="font-display text-ink leading-none"
+            style={{ fontSize: 'clamp(36px, 8vw, 52px)', fontWeight: 500, letterSpacing: '-0.02em' }}>
+          {liveCount > 0 ? 'Live Feed' : 'On the Tee'}
+        </h1>
+        <p className="text-[12px] text-inkMuted mt-3 tracking-[0.16em] uppercase">
           {liveCount > 0
-            ? <><span className="text-accent font-bold">{liveCount} Match{liveCount === 1 ? '' : 'es'}</span> gerade live{friendsLive > 0 && <> · {friendsLive} bei Freunden</>}</>
-            : 'Was deine Freunde gerade spielen.'}
+            ? <><span className="text-accent">{liveCount} live</span>{friendsLive > 0 && <> · {friendsLive} crew</>}</>
+            : 'Was deine Crew gerade spielt.'}
         </p>
       </div>
 
-      {/* Filter-Chips + Tour-Pill */}
-      <div className="px-3 mb-4 flex gap-1.5 items-center">
+      <div className="hairline-b" />
+
+      {/* Filter pills — editorial hairline */}
+      <div className="px-5 py-4 flex gap-2 items-center">
         {FILTERS.map(f => (
           <button key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide active:scale-95 transition-all ${
+            className={`px-3 py-1.5 text-[10px] tracking-[0.24em] uppercase transition-all ${
               filter === f.key
-                ? 'bg-accent text-brandDark'
-                : 'bg-surface text-inkMuted border border-line'
+                ? 'bg-accent text-bg'
+                : 'hairline text-inkMuted'
             }`}>
             {f.label}
             {f.key === 'friends' && friendsLive > 0 && (
-              <span className={`ml-1.5 tabular-nums ${filter === f.key ? 'text-brandDark/70' : 'text-accent'}`}>{friendsLive}</span>
+              <span className={`ml-1.5 tabular-nums ${filter === f.key ? 'text-bg/70' : 'text-accent'}`}>{friendsLive}</span>
             )}
           </button>
         ))}
         <button onClick={() => navigate('/tour')}
-          className="ml-auto px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide bg-surface text-inkMuted border border-line active:scale-95 transition-transform hover:text-accent">
-          Tour ⛳
+          className="ml-auto px-3 py-1.5 text-[10px] tracking-[0.24em] uppercase hairline text-inkMuted active:scale-95 transition-transform hover:text-accent">
+          Tour
         </button>
       </div>
 
@@ -342,27 +349,27 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
   const namesB = m._namesB.join(' · ') || '—'
 
   let scoreLabel = '—'
-  let scoreColor = '#a8b5ad'
+  let scoreColor = '#9C968C'
   let scoreBg = 'transparent'
 
   if (isFinished) {
-    if (m.winner === 'A')      { scoreLabel = m.tournament?.team_a_name ? `${m.tournament.team_a_name}` : 'A'; scoreColor = TEAM_A; scoreBg = 'rgba(96,165,250,0.12)' }
-    else if (m.winner === 'B') { scoreLabel = m.tournament?.team_b_name ? `${m.tournament.team_b_name}` : 'B'; scoreColor = TEAM_B; scoreBg = 'rgba(251,113,133,0.12)' }
-    else                       { scoreLabel = 'A/S'; scoreColor = '#a8b5ad'; scoreBg = 'rgba(168,181,173,0.08)' }
+    if (m.winner === 'A')      { scoreLabel = m.tournament?.team_a_name ? `${m.tournament.team_a_name}` : 'A'; scoreColor = TEAM_A; scoreBg = 'rgba(155,181,201,0.12)' }
+    else if (m.winner === 'B') { scoreLabel = m.tournament?.team_b_name ? `${m.tournament.team_b_name}` : 'B'; scoreColor = TEAM_B; scoreBg = 'rgba(217,163,142,0.12)' }
+    else                       { scoreLabel = 'A/S'; scoreColor = '#9C968C'; scoreBg = 'rgba(168,181,173,0.08)' }
   } else if (isActive) {
     if (isStableford) {
       const t = calcStablefordTotals(holes)
       const leader = t.a > t.b ? 'A' : t.b > t.a ? 'B' : 'none'
       scoreLabel = `${t.a}:${t.b}`
       scoreColor = leader === 'A' ? TEAM_A : leader === 'B' ? TEAM_B : LIVE
-      scoreBg    = leader === 'A' ? 'rgba(96,165,250,0.10)'
-                  : leader === 'B' ? 'rgba(251,113,133,0.10)'
-                                   : 'rgba(152,205,2,0.10)'
+      scoreBg    = leader === 'A' ? 'rgba(155,181,201,0.10)'
+                  : leader === 'B' ? 'rgba(217,163,142,0.10)'
+                                   : 'rgba(217,201,168,0.10)'
     } else {
       const standing = calcMatchStanding(holes)
-      if (standing.leader === 'A')      { scoreLabel = standing.label; scoreColor = TEAM_A; scoreBg = 'rgba(96,165,250,0.10)' }
-      else if (standing.leader === 'B') { scoreLabel = standing.label; scoreColor = TEAM_B; scoreBg = 'rgba(251,113,133,0.10)' }
-      else                              { scoreLabel = 'A/S'; scoreColor = LIVE; scoreBg = 'rgba(152,205,2,0.10)' }
+      if (standing.leader === 'A')      { scoreLabel = standing.label; scoreColor = TEAM_A; scoreBg = 'rgba(155,181,201,0.10)' }
+      else if (standing.leader === 'B') { scoreLabel = standing.label; scoreColor = TEAM_B; scoreBg = 'rgba(217,163,142,0.10)' }
+      else                              { scoreLabel = 'A/S'; scoreColor = LIVE; scoreBg = 'rgba(217,201,168,0.10)' }
     }
   }
 
@@ -375,9 +382,9 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
       : courseLine
 
   return (
-    <div className="w-full relative">
-      {/* Cup-Akzent links (dezent, da der Section-Header die Cup-Identität schon trägt) */}
-      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.7 }} />
+    <div className="w-full relative" style={{ borderBottom: divider ? '1px solid #15302A' : 'none' }}>
+      {/* Cup-Akzent links — gedeckter Streifen pro Cup-ID */}
+      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.85 }} />
       <button onClick={onOpen}
         className="w-full text-left active:scale-[0.99] transition-transform block">
 
@@ -416,7 +423,7 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
       <div className="flex items-center gap-3 px-4 pb-2">
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate" style={{ color: TEAM_A }}>{namesA}</p>
-          <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(96,165,250,0.55)' }}>
+          <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(155,181,201,0.55)' }}>
             {m.tournament?.team_a_name || 'Team A'}
           </p>
         </div>
@@ -428,7 +435,7 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="font-semibold text-sm truncate" style={{ color: TEAM_B }}>{namesB}</p>
-          <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(251,113,133,0.55)' }}>
+          <p className="text-[10px] font-semibold tracking-wider uppercase mt-0.5 truncate" style={{ color: 'rgba(217,163,142,0.55)' }}>
             {m.tournament?.team_b_name || 'Team B'}
           </p>
         </div>

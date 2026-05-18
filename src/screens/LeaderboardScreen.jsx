@@ -50,72 +50,82 @@ export default function LeaderboardScreen() {
 
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
-      <div className="px-4 pt-6 pb-3">
-        <h1 className="font-condensed text-3xl font-bold tracking-wide text-ink">Rangliste</h1>
-        <p className="text-xs text-inkMuted mt-0.5">
-          ELO nach Match Play Duellen — höher = besser.
+      {/* Editorial Header */}
+      <div className="px-5 pt-8 pb-5">
+        <p className="text-[10px] tracking-[0.42em] uppercase text-accent mb-3">The Order</p>
+        <h1 className="font-display text-ink leading-none"
+            style={{ fontSize: 'clamp(36px, 8vw, 52px)', fontWeight: 500, letterSpacing: '-0.02em' }}>
+          Leaderboard
+        </h1>
+        <p className="text-[12px] text-inkMuted mt-3 tracking-[0.16em] uppercase">
+          ELO · Match Play · Higher = better
         </p>
       </div>
 
+      <div className="hairline-b" />
+
       {/* Filter */}
-      <div className="px-3 mb-3 flex gap-1.5">
+      <div className="px-5 py-4 flex gap-2">
         {FILTERS.map(f => (
           <button key={f.key} onClick={() => setFilter(f.key)}
-            className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide active:scale-95 transition-all ${
+            className={`px-3 py-1.5 text-[10px] tracking-[0.24em] uppercase transition-all ${
               filter === f.key
-                ? 'bg-accent text-brandDark'
-                : 'bg-surface text-inkMuted border border-line'
+                ? 'bg-accent text-bg'
+                : 'hairline text-inkMuted'
             }`}>{f.label}</button>
         ))}
       </div>
 
-      {/* Mein Stand */}
+      {/* My standing — editorial hairline */}
       {me && (
-        <div className="mx-3 mb-3 rounded-card p-3 bg-surface border border-line flex items-center gap-3">
+        <div className="mx-5 mb-5 hairline p-4 bg-surface/40 flex items-center gap-3">
           <div className="text-center min-w-[44px]">
-            <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-inkDim">Rang</p>
-            <p className="font-condensed font-black text-2xl text-accent tabular-nums leading-none">
+            <p className="text-[9px] tracking-[0.32em] uppercase text-inkDim">Rank</p>
+            <p className="font-display text-accent tabular-nums leading-none mt-1"
+               style={{ fontSize: 28, fontWeight: 500 }}>
               {myRank > 0 ? myRank : '—'}
             </p>
           </div>
           <RankAvatar profile={me} />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-ink truncate">{me.display_name}</p>
-            <p className="text-[11px] text-inkMuted truncate">
-              {me.games_played} {me.games_played === 1 ? 'Match' : 'Matches'} · {me.wins} Siege
+            <p className="text-ink text-[15px] truncate">{me.display_name}</p>
+            <p className="text-[11px] text-inkDim truncate tracking-wide">
+              {me.games_played} · {me.wins} wins
             </p>
           </div>
-          <p className="font-condensed font-black text-2xl text-ink tabular-nums">{me.elo_rating}</p>
+          <p className="font-display text-ink tabular-nums" style={{ fontSize: 26, fontWeight: 500 }}>{me.elo_rating}</p>
         </div>
       )}
 
       {/* Liste */}
       {loading ? <LoadingSpinner /> : rows.length === 0 ? (
-        <div className="mx-3 rounded-card bg-surface border border-line text-center py-14 px-6">
-          <p className="font-bold text-sm text-ink">Noch keine Rangliste</p>
-          <p className="text-xs text-inkMuted mt-1">
-            Spiele ein Duell mit Freunden — sobald es beendet ist, kommen ELO-Punkte rein.
+        <div className="mx-5 hairline bg-surface/40 text-center py-14 px-6">
+          <p className="font-display text-ink text-[22px]" style={{ fontWeight: 500, letterSpacing: '-0.01em' }}>
+            No order yet.
+          </p>
+          <p className="text-[12px] text-inkMuted mt-2 tracking-wide">
+            Spiele ein Match — sobald es beendet ist, kommen ELO-Punkte rein.
           </p>
         </div>
       ) : (
-        <div className="mx-3 rounded-card overflow-hidden bg-surface border border-line">
+        <div className="mx-5 hairline bg-surface/40 overflow-hidden">
           {rows.map((r, idx) => {
             const rank = idx + 1
             const isMe = r.id === user?.id
-            const rankColor = rank === 1 ? '#FFD24D' : rank === 2 ? '#C7CDD3' : rank === 3 ? '#CD7F32' : '#a8b5ad'
+            const rankColor = rank === 1 ? '#D9C9A8' : rank === 2 ? '#C7C0B5' : rank === 3 ? '#A8956A' : '#5C5851'
             return (
               <Link key={r.id} to={`/u/${r.handle}`}
-                className="flex items-center gap-3 px-4 py-3 active:bg-bg/40 transition-colors"
-                style={{ borderBottom: idx < rows.length - 1 ? '1px solid #19362a' : 'none',
-                         background: isMe ? 'rgba(152,205,2,0.06)' : 'transparent' }}>
-                <span className="font-condensed font-black text-lg tabular-nums leading-none min-w-[26px] text-center"
-                  style={{ color: rankColor }}>{rank}</span>
+                className="flex items-center gap-3 px-4 py-3.5 active:bg-bg/40 transition-colors"
+                style={{ borderBottom: idx < rows.length - 1 ? '1px solid rgba(244,241,234,0.06)' : 'none',
+                         background: isMe ? 'rgba(217,201,168,0.06)' : 'transparent' }}>
+                <span className="font-display tabular-nums leading-none min-w-[28px] text-center"
+                  style={{ color: rankColor, fontSize: 20, fontWeight: 500 }}>{rank}</span>
                 <RankAvatar profile={r} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-ink truncate">{r.display_name}</p>
-                  <p className="text-[11px] text-inkDim truncate">@{r.handle} · {r.games_played} M · {r.wins} S</p>
+                  <p className="text-ink text-[14px] truncate">{r.display_name}</p>
+                  <p className="text-[11px] text-inkDim truncate tracking-wide">@{r.handle} · {r.games_played} · {r.wins} wins</p>
                 </div>
-                <p className="font-condensed font-black text-xl text-ink tabular-nums">{r.elo_rating}</p>
+                <p className="font-display text-ink tabular-nums" style={{ fontSize: 20, fontWeight: 500 }}>{r.elo_rating}</p>
               </Link>
             )
           })}
@@ -128,12 +138,14 @@ export default function LeaderboardScreen() {
 
 function RankAvatar({ profile }) {
   if (profile?.avatar_url) {
-    return <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover bg-bg flex-shrink-0" />
+    return <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover bg-bg flex-shrink-0"
+                style={{ border: '1px solid rgba(244,241,234,0.12)' }} />
   }
   const letter = (profile?.display_name || profile?.handle || '?')[0]?.toUpperCase() || '?'
   return (
-    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-accent/15 border border-accent/40 flex-shrink-0">
-      <span className="font-condensed font-black text-sm text-accent">{letter}</span>
+    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-surface flex-shrink-0"
+         style={{ border: '1px solid rgba(217,201,168,0.32)' }}>
+      <span className="font-display text-accent" style={{ fontSize: 13, fontWeight: 500 }}>{letter}</span>
     </div>
   )
 }

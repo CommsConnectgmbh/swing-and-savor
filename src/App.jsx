@@ -29,6 +29,12 @@ const TeamsScreen        = lazy(() => import('./screens/TeamsScreen'))
 const CupScreen          = lazy(() => import('./screens/CupScreen'))
 const ProfileScreen      = lazy(() => import('./screens/ProfileScreen'))
 const PublicCupScreen    = lazy(() => import('./screens/PublicCupScreen'))
+const InvitationalScreen = lazy(() => import('./screens/InvitationalScreen'))
+const RecapScreen        = lazy(() => import('./screens/RecapScreen'))
+const HallOfFameScreen   = lazy(() => import('./screens/HallOfFameScreen'))
+const AdminScreen        = lazy(() => import('./screens/AdminScreen'))
+const CrewScreen         = lazy(() => import('./screens/CrewScreen'))
+const SeasonScreen       = lazy(() => import('./screens/SeasonScreen'))
 
 captureReferralFromUrl()
 
@@ -61,7 +67,7 @@ function ScreenFallback() {
 export default function App() {
   const { user, profile, loading } = useAuth()
   const { pathname } = useLocation()
-  const isPublicCup = pathname.startsWith('/c/')
+  const isPublicCup = pathname.startsWith('/c/') || pathname.startsWith('/i/') || pathname.startsWith('/recap/') || pathname.startsWith('/hall/') || pathname.startsWith('/crew/') || pathname.startsWith('/season/')
 
   // Globale Realtime-Bridge für Toasts (DM, Like, Comment, Match-Status)
   useEffect(() => {
@@ -79,7 +85,12 @@ export default function App() {
       <div className="min-h-screen bg-bg text-ink">
         <Suspense fallback={<ScreenFallback />}>
           <Routes>
-            <Route path="/c/:inviteCode" element={<PublicCupScreen />} />
+            <Route path="/c/:inviteCode"     element={<PublicCupScreen />} />
+            <Route path="/i/:inviteCode"     element={<InvitationalScreen />} />
+            <Route path="/recap/:inviteCode" element={<RecapScreen />} />
+            <Route path="/hall/:handle"      element={<HallOfFameScreen />} />
+            <Route path="/crew/:slug"        element={<CrewScreen />} />
+            <Route path="/season/:slug"      element={<SeasonScreen />} />
           </Routes>
         </Suspense>
       </div>
@@ -112,6 +123,7 @@ export default function App() {
             <Route path="/tour"              element={<TourScreen />} />
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
+            <Route path="/admin"             element={<AdminScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>

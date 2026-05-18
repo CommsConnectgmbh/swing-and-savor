@@ -3,14 +3,14 @@
  * Format 1080x1080 (Instagram-/WhatsApp-tauglich). Nutzt nur Canvas-Primitives,
  * keine externen Libraries → null Bundle-Overhead.
  */
-const BG    = '#0d271e'
-const SURF  = '#143024'
-const EDGE  = '#1f3f2c'
-const ACC   = '#98cd02'
-const TEAMA = '#60a5fa'
-const TEAMB = '#fb7185'
-const INK   = '#ffffff'
-const MUTED = '#a8b5ad'
+const BG    = '#0A1A12'
+const SURF  = '#102822'
+const EDGE  = '#1F4537'
+const ACC   = '#D9C9A8'
+const TEAMA = '#9BB5C9'
+const TEAMB = '#D9A38E'
+const INK   = '#F4F1EA'
+const MUTED = '#9C968C'
 
 function rounded(ctx, x, y, w, h, r) {
   const rad = Math.min(r, w / 2, h / 2)
@@ -44,9 +44,9 @@ export async function renderMatchShareCard({
 
   // Top accent bar
   const grad = ctx.createLinearGradient(0, 0, SIZE, 0)
-  grad.addColorStop(0, 'rgba(152,205,2,0.0)')
-  grad.addColorStop(0.5, 'rgba(152,205,2,0.6)')
-  grad.addColorStop(1, 'rgba(152,205,2,0.0)')
+  grad.addColorStop(0, 'rgba(217,201,168,0.0)')
+  grad.addColorStop(0.5, 'rgba(217,201,168,0.6)')
+  grad.addColorStop(1, 'rgba(217,201,168,0.0)')
   ctx.fillStyle = grad
   ctx.fillRect(0, 60, SIZE, 4)
 
@@ -97,7 +97,7 @@ export async function renderMatchShareCard({
 
   // Score-Box
   rounded(ctx, SIZE / 2 - 220, 640, 440, 130, 24)
-  ctx.fillStyle = '#0d271e'; ctx.fill()
+  ctx.fillStyle = '#0A1A12'; ctx.fill()
   ctx.strokeStyle = ACC; ctx.lineWidth = 2; ctx.stroke()
   ctx.fillStyle = ACC
   ctx.textAlign = 'center'

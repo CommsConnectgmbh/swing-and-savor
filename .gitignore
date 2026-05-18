@@ -24,3 +24,13 @@ discord/.env
 # Screenshot pipeline node_modules
 scripts/asc-screenshots/node_modules/
 scripts/asc-screenshots/package-lock.json
+
+# OS / temp
+.DS_Store
+
+# Scrape logs (local only)
+.local-scrape-logs/
+
+# Native build outputs that should regenerate
+native/www/
+

@@ -60,13 +60,10 @@ export default function BottomNav() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50"
+        className="fixed bottom-0 left-0 right-0 z-50 hairline-t"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
-          background: 'rgba(13, 39, 30, 0.92)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(152,205,2,0.14)',
+          background: '#0A1A12',
         }}
       >
         <div className="flex max-w-lg mx-auto">
@@ -79,9 +76,9 @@ export default function BottomNav() {
                     aria-label={tab.label}
                     className="w-14 h-14 rounded-full flex items-center justify-center active:scale-95 transition-transform"
                     style={{
-                      background: '#98cd02',
-                      color: '#0d271e',
-                      boxShadow: '0 8px 20px rgba(152,205,2,0.35), 0 0 0 4px rgba(13,39,30,0.92)',
+                      background: '#D9C9A8',
+                      color: '#0A1A12',
+                      boxShadow: '0 8px 20px rgba(217,201,168,0.32), 0 0 0 4px #0A1A12',
                     }}
                   >
                     <PlusIcon />
