@@ -32,7 +32,12 @@
     "playwright": "^1.60.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
-    "vite": "^5.0.0",
-    "vitest": "^1.6.1"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.6"
+  },
+  "overrides": {
+    "esbuild": ">=0.25.0",
+    "picomatch": ">=4.0.4",
+    "ws": ">=8.20.1"
   }
 }

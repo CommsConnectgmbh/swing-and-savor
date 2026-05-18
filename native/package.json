@@ -25,5 +25,9 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.0.1"
+  },
+  "overrides": {
+    "tar": ">=7.5.11",
+    "minimatch": ">=3.1.3"
   }
 }
