@@ -84,18 +84,8 @@
     position: relative;
   }
 
-  /* Status bar */
-  .status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--status-pad) var(--inner-pad);
-    font-size: var(--status-size);
-    font-weight: 600;
-    color: var(--surface-ink);
-  }
-  .status-dots { display: flex; gap: 6px; align-items: center; }
-  .status-dots span { font-size: calc(var(--status-size) * 0.85); }
+  /* Top spacer (replaces fake status bar — Apple 2.3.10) */
+  .top-spacer { height: var(--status-pad); }
 
   /* App content */
   .app {
@@ -348,10 +338,10 @@
   const stage = document.getElementById("stage");
 
   function statusBar() {
-    return `<div class="status">
-      <div>9:41</div>
-      <div class="status-dots"><span>● ● ●</span></div>
-    </div>`;
+    // Status-Bar bewusst leer gehalten — Apple lehnt Mock-Status-Bars als
+    // "non-iOS status bar" ab (Guideline 2.3.10). Wir schaffen nur den
+    // visuellen Abstand, kein Fake-Inhalt.
+    return `<div class="top-spacer"></div>`;
   }
 
   const slides = {

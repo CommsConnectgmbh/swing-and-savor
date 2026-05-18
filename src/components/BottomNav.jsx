@@ -37,12 +37,35 @@ const PlusIcon = () => (
   </svg>
 )
 
+const FlagIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 22V4"/><path d="M4 4l13 2-2 5 2 5-13-2"/>
+  </svg>
+)
+const SparkleIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>
+  </svg>
+)
+const CompassIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9"/><polygon points="16 8 12 14 8 16 12 10 16 8"/>
+  </svg>
+)
+const BagIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/>
+  </svg>
+)
+
 export default function BottomNav() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const tabs = [
+  const isSavorMode = pathname === '/savor' || pathname.startsWith('/savor/')
+
+  const swingTabs = [
     { to: '/home',       Icon: HomeIcon,   label: t('nav.home',       'Home')    },
     { to: '/challenges', Icon: SwordsIcon, label: t('nav.challenges', 'Duelle')  },
     { fab: true,         label: t('nav.create',     'Neu')     },
@@ -50,10 +73,25 @@ export default function BottomNav() {
     { to: '/me',         Icon: UserIcon,   label: t('nav.profile',    'Profil')  },
   ]
 
+  const savorTabs = [
+    { to: '/savor',                Icon: CompassIcon, label: 'Discover' },
+    { to: '/savor/c/tee_times',    Icon: FlagIcon,    label: 'Tee Times' },
+    { to: '/savor/c/experiences',  Icon: SparkleIcon, label: 'Erlebnisse' },
+    { to: '/savor/c/apparel',      Icon: BagIcon,     label: 'Shop' },
+    { to: '/me',                   Icon: UserIcon,    label: t('nav.profile', 'Profil') },
+  ]
+
+  const tabs = isSavorMode ? savorTabs : swingTabs
+
   // Aktive Match-/Profile-Routes mitfärben
   const isActive = (to) => {
     if (to === '/me') return pathname.startsWith('/me') || pathname.startsWith('/u/')
     if (to === '/matches') return pathname.startsWith('/matches')
+    if (to === '/savor') return pathname === '/savor'
+    if (to.startsWith('/savor/c/')) {
+      const cat = to.split('/').pop()
+      return pathname.startsWith(`/savor/c/${cat}`)
+    }
     return pathname.startsWith(to)
   }
 

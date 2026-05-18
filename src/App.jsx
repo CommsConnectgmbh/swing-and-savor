@@ -35,6 +35,9 @@ const HallOfFameScreen   = lazy(() => import('./screens/HallOfFameScreen'))
 const AdminScreen        = lazy(() => import('./screens/AdminScreen'))
 const CrewScreen         = lazy(() => import('./screens/CrewScreen'))
 const SeasonScreen       = lazy(() => import('./screens/SeasonScreen'))
+const SavorScreen        = lazy(() => import('./screens/SavorScreen'))
+const SavorCategoryScreen= lazy(() => import('./screens/SavorCategoryScreen'))
+const SavorOfferScreen   = lazy(() => import('./screens/SavorOfferScreen'))
 
 captureReferralFromUrl()
 
@@ -124,6 +127,9 @@ export default function App() {
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
             <Route path="/admin"             element={<AdminScreen />} />
+            <Route path="/savor"             element={<SavorScreen />} />
+            <Route path="/savor/c/:category"  element={<SavorCategoryScreen />} />
+            <Route path="/savor/o/:slug"      element={<SavorOfferScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>

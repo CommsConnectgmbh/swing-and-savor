@@ -7,9 +7,11 @@
 // Jeder andere Zugriffsversuch endet in 403.
 //
 // Der Reviewer-Account wird beim ersten Login serverseitig per
-// admin.generateLink('magiclink') angelegt — kein geteilter Account, kein
-// gemeinsamer Datenraum. Das Frontend kann dem Reviewer entweder den
-// Magic-Link öffnen oder direkt mit den Tokens eine Session herstellen.
+// admin.generateLink('magiclink') angelegt. WICHTIG: Wir geben NICHT den
+// action_link zurück (würde auf supabase.co umleiten und in der iOS-
+// Capacitor-WebView den externen Safari öffnen — Apple 2.1a Reject). Statt
+// dessen geben wir token_hash zurück, das Frontend ruft verifyOtp() und
+// bleibt damit komplett in der App.
 //
 // verify_jwt:false damit Reviewer ohne JWT zugreifen können.
 
@@ -59,19 +61,23 @@ Deno.serve(async (req: Request) => {
   })
 
   // generateLink legt den User on-the-fly an (falls noch nicht vorhanden)
-  // und gibt einen action_link zurück. Frontend folgt dem Link in der
-  // gleichen origin — der Hash setzt dann die Session.
+  // und gibt zusätzlich zum action_link das hashed_token zurück. Das
+  // Frontend nutzt token_hash + email für supabase.auth.verifyOtp und
+  // erstellt damit eine Session, ohne dass der Browser navigiert.
   const { data, error } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email,
   })
-  if (error || !data?.properties?.action_link) {
+  if (error || !data?.properties?.hashed_token) {
     return new Response(JSON.stringify({ error: error?.message ?? "no_link" }), {
       status: 500, headers: { ...CORS, "Content-Type": "application/json" },
     })
   }
 
-  return new Response(JSON.stringify({ redirect: data.properties.action_link }), {
+  return new Response(JSON.stringify({
+    email,
+    token_hash: data.properties.hashed_token,
+  }), {
     status: 200, headers: { ...CORS, "Content-Type": "application/json" },
   })
 })

@@ -55,15 +55,30 @@ export default function SignInScreen() {
           },
         )
         if (res.ok) {
-          const { redirect } = await res.json()
-          if (redirect) {
-            window.location.href = redirect
+          const { token_hash } = await res.json()
+          if (token_hash) {
+            const { error: verifyErr } = await supabase.auth.verifyOtp({
+              type: 'magiclink',
+              token_hash,
+            })
+            setBusy(false)
+            if (verifyErr) { setError(t('signIn.errorGeneric')); return }
             return
           }
+        } else {
+          setBusy(false)
+          setError(t('signIn.errorGeneric'))
+          return
         }
       } catch (err) {
         console.error('[auth] reviewer-bypass failed', err)
+        setBusy(false)
+        setError(t('signIn.errorGeneric'))
+        return
       }
+      setBusy(false)
+      setError(t('signIn.errorGeneric'))
+      return
     }
 
     const { error } = await supabase.auth.verifyOtp({

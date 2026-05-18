@@ -131,6 +131,23 @@ export default async function handler(req) {
           type: 'article',
         }
       }
+    } else if (p.startsWith('/savor/o/')) {
+      const slug = p.slice(9).replace(/\/+$/, '')
+      const data = await sb('public-savor', { mode: 'offer', slug })
+      if (data?.offer) {
+        const o = data.offer
+        const price = o.price_label
+                      || (o.price_eur_cents ? `${(o.price_eur_cents/100).toFixed(0)} €` : 'Auf Anfrage')
+        payload = {
+          title: `${o.title} · Savor`,
+          description: o.subtitle
+                       || [price, o.partner?.name, o.city].filter(Boolean).join(' · ')
+                       || 'Swing & Savor Marketplace',
+          image: o.image_url || null,
+          url: fullUrl,
+          type: 'product',
+        }
+      }
     }
   } catch (err) {
     console.error('[og] err', err)

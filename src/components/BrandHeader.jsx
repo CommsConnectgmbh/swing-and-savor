@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import ModeSwitch from './ModeSwitch'
 
 function MessageIcon() {
   return (
@@ -88,15 +89,8 @@ export default function BrandHeader({ title }) {
       }}
     >
       <Wordmark />
-      {title ? (
-        <>
-          <span className="h-3 w-px bg-[rgba(244,241,234,0.18)]" aria-hidden="true" />
-          <span className="font-sans font-medium text-[12px] text-inkMuted tracking-[0.22em] uppercase">
-            {title}
-          </span>
-        </>
-      ) : null}
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-2">
+        <ModeSwitch />
         <Link to="/leaderboard" aria-label="Leaderboard"
           className="p-2 rounded-xl text-inkMuted hover:text-accent active:scale-95 transition">
           <LeaderboardIcon />
