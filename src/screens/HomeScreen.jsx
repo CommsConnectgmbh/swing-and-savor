@@ -73,7 +73,7 @@ export default function HomeScreen() {
         team_a_player1_id, team_a_player2_id, team_b_player1_id, team_b_player2_id,
         team_a_factor, team_b_factor,
         tournament:tournament_id (
-          id, name, date, owner_id, visibility, team_a_name, team_b_name
+          id, name, date, owner_id, visibility, team_a_name, team_b_name, cover_url
         ),
         course:course_id (name, city)
       `)
@@ -208,13 +208,26 @@ export default function HomeScreen() {
   const liveCount   = matches.filter(m => m.status === 'active').length
   const friendsLive = matches.filter(m => m.status === 'active' && friendOwnerIds.has(m.tournament?.owner_id)).length
 
+  // Matches nach Turnier gruppieren, damit Cup-Header nicht 1× pro Karte wiederholt wird
+  const groups = []
+  const groupIdx = new Map()
+  for (const m of filtered) {
+    const tid = m.tournament?.id || `_orphan_${m.id}`
+    let g = groupIdx.get(tid)
+    if (!g) {
+      g = { tid, tournament: m.tournament, matches: [] }
+      groupIdx.set(tid, g)
+      groups.push(g)
+    }
+    g.matches.push(m)
+  }
+
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
 
-      {/* Header */}
-      <div className="px-4 pt-6 pb-3">
-        <h1 className="font-condensed text-3xl font-bold tracking-wide text-ink">Home</h1>
-        <p className="text-xs text-inkMuted mt-0.5">
+      {/* Meta-Zeile (Titel kommt aus BrandHeader) */}
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-xs text-inkMuted">
           {liveCount > 0
             ? <><span className="text-accent font-bold">{liveCount} Match{liveCount === 1 ? '' : 'es'}</span> gerade live{friendsLive > 0 && <> · {friendsLive} bei Freunden</>}</>
             : 'Was deine Freunde gerade spielen.'}
@@ -222,7 +235,7 @@ export default function HomeScreen() {
       </div>
 
       {/* Filter-Chips + Tour-Pill */}
-      <div className="px-3 mb-3 flex gap-1.5 items-center">
+      <div className="px-3 mb-4 flex gap-1.5 items-center">
         {FILTERS.map(f => (
           <button key={f.key}
             onClick={() => setFilter(f.key)}
@@ -243,23 +256,26 @@ export default function HomeScreen() {
         </button>
       </div>
 
-      {/* Feed */}
-      <div className="mx-3 rounded-card overflow-hidden bg-surface border border-line">
-        {filtered.map((m, idx) => (
-          <FeedCard key={m.id} match={m} holes={holesByMatch[m.id] || []}
-            social={social[m.id] || { likes: 0, comments: 0 }}
-            liked={myLikes.has(m.id)}
-            onOpen={() => navigate(`/matches/${m.id}`)}
-            onCommentClick={() => navigate(`/matches/${m.id}#comments`)}
-            onShareClick={() => handleShare(m)}
-            divider={idx < filtered.length - 1} />
+      {/* Feed: pro Turnier eine Section mit Header + freistehenden Match-Karten */}
+      <div className="flex flex-col gap-5 px-3">
+        {groups.map(g => (
+          <CupGroup key={g.tid} tournament={g.tournament}
+            matches={g.matches}
+            holesByMatch={holesByMatch}
+            social={social}
+            myLikes={myLikes}
+            onOpen={(m) => navigate(`/matches/${m.id}`)}
+            onCommentClick={(m) => navigate(`/matches/${m.id}#comments`)}
+            onShareClick={(m) => handleShare(m)} />
         ))}
 
         {filtered.length === 0 && (
-          <EmptyState
-            filter={filter}
-            onCta={() => navigate(filter === 'mine' ? '/cup?new=1' : '/discover')}
-          />
+          <div className="rounded-card bg-surface border border-line">
+            <EmptyState
+              filter={filter}
+              onCta={() => navigate(filter === 'mine' ? '/cup?new=1' : '/discover')}
+            />
+          </div>
         )}
       </div>
 
@@ -268,7 +284,51 @@ export default function HomeScreen() {
   )
 }
 
-function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onShareClick, divider }) {
+function CupGroup({ tournament, matches, holesByMatch, social, myLikes, onOpen, onCommentClick, onShareClick }) {
+  const cupName  = tournament?.name || ''
+  const cupDate  = fmtCupDate(tournament?.date)
+  const cupAccent = cupColor(tournament?.id)
+  const cover    = tournament?.cover_url
+
+  return (
+    <section className="flex flex-col gap-2">
+      {/* Cup-Section-Header: einmal pro Gruppe, mit optionalem Cover */}
+      {cupName && (
+        <div className="flex items-center gap-3 px-1">
+          {cover ? (
+            <img src={cover} alt="" loading="lazy"
+              className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-line" />
+          ) : (
+            <span aria-hidden className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: cupAccent }} />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-condensed font-bold text-base tracking-wide text-ink truncate">{cupName}</p>
+            {cupDate && (
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-inkDim tabular-nums">{cupDate}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Match-Karten — jede als eigenes Surface mit Abstand */}
+      <div className="flex flex-col gap-2">
+        {matches.map(m => (
+          <div key={m.id} className="rounded-card overflow-hidden bg-surface border border-line">
+            <FeedCard match={m} holes={holesByMatch[m.id] || []}
+              social={social[m.id] || { likes: 0, comments: 0 }}
+              liked={myLikes.has(m.id)}
+              cupAccent={cupAccent}
+              onOpen={() => onOpen(m)}
+              onCommentClick={() => onCommentClick(m)}
+              onShareClick={() => onShareClick(m)} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onCommentClick, onShareClick }) {
   const isActive     = m.status === 'active'
   const isFinished   = m.status === 'finished'
   const isStableford = m.format === 'stableford'
@@ -314,14 +374,10 @@ function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onSh
       ? `Beendet${courseLine ? ' · ' + courseLine : ''}`
       : courseLine
 
-  const cupName  = m.tournament?.name || ''
-  const cupDate  = fmtCupDate(m.tournament?.date)
-  const cupAccent = cupColor(m.tournament?.id)
-
   return (
-    <div className="w-full relative" style={{ borderBottom: divider ? '1px solid #19362a' : 'none' }}>
-      {/* Turnier-Farbstreifen links, damit Karten verschiedener Cups visuell distinct sind */}
-      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.85 }} />
+    <div className="w-full relative">
+      {/* Cup-Akzent links (dezent, da der Section-Header die Cup-Identität schon trägt) */}
+      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.7 }} />
       <button onClick={onOpen}
         className="w-full text-left active:scale-[0.99] transition-transform block">
 
@@ -336,23 +392,8 @@ function FeedCard({ match: m, holes, social, liked, onOpen, onCommentClick, onSh
         </div>
       )}
 
-      {/* Turnier-Zeile: Name + Datum prominent, damit Cups klar identifizierbar */}
-      {cupName && (
-        <div className="flex items-center justify-between px-4 pt-3 pb-1.5 gap-2">
-          <span className="flex items-center gap-2 min-w-0 flex-1">
-            <span aria-hidden className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cupAccent }} />
-            <span className="font-bold text-[13px] truncate text-ink">{cupName}</span>
-          </span>
-          {cupDate && (
-            <span className="text-[10px] font-semibold tracking-wider uppercase text-inkDim tabular-nums flex-shrink-0">
-              {cupDate}
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Type meta */}
-      <div className="flex items-center justify-between px-4 pb-1">
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-inkMuted flex items-center gap-1.5">
           {typeLbl}
           {m._owner && (

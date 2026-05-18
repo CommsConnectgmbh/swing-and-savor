@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { uploadCupCover, clearCupCover } from '../lib/photo'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -75,7 +76,9 @@ export default function CupScreen() {
   const [showGate, setShowGate] = useState(false)
   const [gateTournament, setGateTournament] = useState(null)
   const [shareCup, setShareCup] = useState(null)
+  const [coverBusy, setCoverBusy] = useState(false)
   const pendingRef = useRef(null)
+  const coverInputRef = useRef(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => { loadTournaments() }, [])
@@ -142,6 +145,32 @@ export default function CupScreen() {
     setDeleteId(null); loadTournaments()
   }
 
+  async function handleCoverPick(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !editId) return
+    setCoverBusy(true)
+    try {
+      await uploadCupCover(editId, file)
+      await loadTournaments()
+    } catch (err) {
+      console.error('[cover upload]', err)
+    } finally {
+      setCoverBusy(false)
+    }
+  }
+
+  async function handleCoverClear() {
+    if (!editId) return
+    setCoverBusy(true)
+    try {
+      await clearCupCover(editId)
+      await loadTournaments()
+    } finally {
+      setCoverBusy(false)
+    }
+  }
+
   async function toggleStatus(t) {
     guarded(t, async () => {
       const next = t.status === 'active' ? 'finished' : 'active'
@@ -151,6 +180,8 @@ export default function CupScreen() {
   }
 
   const inputCls = 'w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink placeholder:text-inkDim text-sm transition-colors focus:border-accent/60'
+  const editingCup = editId ? tournaments.find(c => c.id === editId) : null
+  const cover = editingCup?.cover_url
 
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
@@ -210,6 +241,42 @@ export default function CupScreen() {
             </div>
           </div>
 
+          {/* Cover-Foto (nur im Edit-Modus — Turnier muss eine ID haben) */}
+          {mode === 'create' && (
+            <p className="text-[10px] pl-1 text-inkDim">
+              Cover-Bild kannst du nach dem Anlegen über „Bearbeiten" hochladen.
+            </p>
+          )}
+          {mode === 'edit' && (
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Cover-Bild</p>
+              {cover ? (
+                <div className="relative rounded-xl overflow-hidden border border-line" style={{ aspectRatio: '16/9' }}>
+                  <img src={cover} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 flex gap-2 p-2 bg-gradient-to-t from-black/70 to-transparent">
+                    <button type="button" disabled={coverBusy}
+                      onClick={() => coverInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wide bg-bg/80 text-ink border border-line active:scale-95 transition-transform disabled:opacity-50">
+                      Ersetzen
+                    </button>
+                    <button type="button" disabled={coverBusy}
+                      onClick={handleCoverClear}
+                      className="ml-auto px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wide bg-bg/80 text-danger border border-line active:scale-95 transition-transform disabled:opacity-50">
+                      Entfernen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" disabled={coverBusy}
+                  onClick={() => coverInputRef.current?.click()}
+                  className="w-full py-6 rounded-xl border border-dashed border-line text-inkMuted text-xs font-semibold tracking-wide active:scale-[0.99] transition-transform hover:text-accent hover:border-accent/40 disabled:opacity-50">
+                  {coverBusy ? 'Lade hoch …' : '+ Cover-Bild hochladen'}
+                </button>
+              )}
+              <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverPick} />
+            </div>
+          )}
+
           {/* Legacy password (optional) */}
           <div>
             <input
@@ -237,10 +304,15 @@ export default function CupScreen() {
             <div key={cup.id}
               className="flex items-center gap-3 px-4 py-4 border-b border-lineSoft"
               style={{ animationDelay: `${idx * 30}ms` }}>
-              {/* Status dot */}
-              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                cup.status === 'active' ? 'bg-accent shadow-glow' : 'bg-line'
-              }`} />
+              {/* Cover oder Status-Dot */}
+              {cup.cover_url ? (
+                <img src={cup.cover_url} alt="" loading="lazy"
+                  className="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-line" />
+              ) : (
+                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                  cup.status === 'active' ? 'bg-accent shadow-glow' : 'bg-line'
+                }`} />
+              )}
 
               {/* Info */}
               <div className="flex-1 min-w-0">
