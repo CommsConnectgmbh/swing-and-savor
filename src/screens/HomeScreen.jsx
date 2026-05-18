@@ -264,13 +264,14 @@ export default function HomeScreen() {
       </div>
 
       {/* Feed: pro Turnier eine Section mit Header + freistehenden Match-Karten */}
-      <div className="flex flex-col gap-5 px-3">
-        {groups.map(g => (
+      <div className="flex flex-col gap-10 px-3 pt-4">
+        {groups.map((g, gi) => (
           <CupGroup key={g.tid} tournament={g.tournament}
             matches={g.matches}
             holesByMatch={holesByMatch}
             social={social}
             myLikes={myLikes}
+            isFirst={gi === 0}
             onOpen={(m) => navigate(`/matches/${m.id}`)}
             onCommentClick={(m) => navigate(`/matches/${m.id}#comments`)}
             onShareClick={(m) => handleShare(m)} />
@@ -291,30 +292,47 @@ export default function HomeScreen() {
   )
 }
 
-function CupGroup({ tournament, matches, holesByMatch, social, myLikes, onOpen, onCommentClick, onShareClick }) {
+function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst, onOpen, onCommentClick, onShareClick }) {
   const cupName  = tournament?.name || ''
   const cupDate  = fmtCupDate(tournament?.date)
   const cupAccent = cupColor(tournament?.id)
   const cover    = tournament?.cover_url
+  const matchCount = matches.length
+  const liveCount  = matches.filter(m => m.status === 'active').length
 
   return (
-    <section className="flex flex-col gap-2">
-      {/* Cup-Section-Header: einmal pro Gruppe, mit optionalem Cover */}
+    <section className="flex flex-col gap-3">
+      {/* Editorial Cup-Separator: hairline + Akzent + großer Cup-Name */}
       {cupName && (
-        <div className="flex items-center gap-3 px-1">
-          {cover ? (
-            <img src={cover} alt="" loading="lazy"
-              className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-line" />
-          ) : (
-            <span aria-hidden className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: cupAccent }} />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="font-condensed font-bold text-base tracking-wide text-ink truncate">{cupName}</p>
-            {cupDate && (
-              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-inkDim tabular-nums">{cupDate}</p>
+        <>
+          {!isFirst && <div className="hairline-b mb-1 -mx-3" />}
+          <div className="flex items-end gap-3 px-1 pt-1">
+            {/* Akzent + Cover */}
+            {cover ? (
+              <img src={cover} alt="" loading="lazy"
+                className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-line" />
+            ) : (
+              <span aria-hidden
+                className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center font-display text-xl text-bg"
+                style={{ background: cupAccent, opacity: 0.9 }}>
+                {cupName.charAt(0).toUpperCase()}
+              </span>
             )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase mb-1" style={{ color: cupAccent }}>
+                {cupDate || 'Turnier'}
+                <span className="text-inkDim normal-case tracking-normal font-normal">
+                  {` · ${matchCount} ${matchCount === 1 ? 'Match' : 'Matches'}`}
+                  {liveCount > 0 && <span className="text-accent"> · {liveCount} live</span>}
+                </span>
+              </p>
+              <h2 className="font-display text-ink leading-none truncate"
+                style={{ fontSize: 'clamp(20px, 5vw, 26px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
+                {cupName}
+              </h2>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Match-Karten — jede als eigenes Surface mit Abstand */}
@@ -382,7 +400,7 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
       : courseLine
 
   return (
-    <div className="w-full relative" style={{ borderBottom: divider ? '1px solid #15302A' : 'none' }}>
+    <div className="w-full relative">
       {/* Cup-Akzent links — gedeckter Streifen pro Cup-ID */}
       <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: cupAccent, opacity: 0.85 }} />
       <button onClick={onOpen}
