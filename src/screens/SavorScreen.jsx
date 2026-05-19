@@ -4,13 +4,79 @@ import LoadingSpinner from '../components/LoadingSpinner'
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
 
+const DISCORD_INVITE = 'https://discord.gg/jT2GpZqZVE'
+
+const ICON_STROKE = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}
+
+function CategoryIcon({ kind }) {
+  const common = { width: 22, height: 22, viewBox: '0 0 24 24', ...ICON_STROKE, 'aria-hidden': true }
+  switch (kind) {
+    case 'tee_times':
+      return (
+        <svg {...common}>
+          <path d="M6 21V4" />
+          <path d="M6 4l11 3-5 3 5 3-11 2" />
+        </svg>
+      )
+    case 'experiences':
+      return (
+        <svg {...common}>
+          <path d="M12 3l1.8 4.6L18.5 9l-4 3.2L15.8 17 12 14.4 8.2 17l1.3-4.8L5.5 9l4.7-1.4z" />
+        </svg>
+      )
+    case 'dining':
+      return (
+        <svg {...common}>
+          <path d="M7 3v8a2 2 0 002 2v8" />
+          <path d="M5 3v6" />
+          <path d="M9 3v6" />
+          <path d="M16 3c-1.5 0-3 2-3 5s1 4 3 4v9" />
+        </svg>
+      )
+    case 'travel':
+      return (
+        <svg {...common}>
+          <path d="M2.5 12l19-7-3 9 3 9-19-7 7-2z" />
+        </svg>
+      )
+    case 'apparel':
+      return (
+        <svg {...common}>
+          <path d="M4 7l4-3 2 2a2 2 0 004 0l2-2 4 3-2 4-2-1v10H8V10L6 11z" />
+        </svg>
+      )
+    case 'equipment':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="18" r="2" />
+          <path d="M7.5 16.5l11-13a2 2 0 113 3l-13 11" />
+          <path d="M14 8l3 3" />
+        </svg>
+      )
+    case 'discord':
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418Z" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
 const CATEGORIES = [
-  { key: 'tee_times',   label: 'Tee Times',   blurb: 'Greenfees auf kuratierten Plätzen.',          icon: '⛳' },
-  { key: 'experiences', label: 'Experiences', blurb: 'Pro-Lessons, Clinics & Member-Events.',       icon: '◌' },
-  { key: 'dining',      label: 'Dining',      blurb: '19th-Hole-Reservierungen & Clubhaus-Tische.', icon: '〇' },
-  { key: 'travel',      label: 'Travel',      blurb: 'Golfreisen, Luxus-Resorts & Trip Cups.',      icon: '✈' },
-  { key: 'apparel',     label: 'Apparel',     blurb: 'Polos, Caps, Knit & Outerwear.',              icon: '◇' },
-  { key: 'equipment',   label: 'Equipment',   blurb: 'Schläger, Bags, Bälle & Pro-Shop-Picks.',     icon: '◆' },
+  { key: 'tee_times',   label: 'Tee Times',   blurb: 'Greenfees auf kuratierten Plätzen.' },
+  { key: 'experiences', label: 'Experiences', blurb: 'Pro-Lessons, Clinics & Member-Events.' },
+  { key: 'dining',      label: 'Dining',      blurb: '19th-Hole-Reservierungen & Clubhaus-Tische.' },
+  { key: 'travel',      label: 'Travel',      blurb: 'Golfreisen, Luxus-Resorts & Trip Cups.' },
+  { key: 'apparel',     label: 'Apparel',     blurb: 'Polos, Caps, Knit & Outerwear.' },
+  { key: 'equipment',   label: 'Equipment',   blurb: 'Schläger, Bags, Bälle & Pro-Shop-Picks.' },
 ]
 
 function priceLabel(o) {
@@ -145,8 +211,8 @@ export default function SavorScreen() {
                 <Link to={`/savor/c/${c.key}`}
                       className="flex items-center justify-between gap-3 hairline px-4 py-4 bg-surface/40 active:scale-[0.995] transition-transform">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <span className="font-display text-accent text-[22px] leading-none w-7 text-center" aria-hidden="true">
-                      {c.icon}
+                    <span className="text-accent w-7 flex items-center justify-center" aria-hidden="true">
+                      <CategoryIcon kind={c.key} />
                     </span>
                     <div className="min-w-0">
                       <p className="font-display text-ink text-[18px] leading-tight" style={{ fontWeight: 500 }}>
@@ -162,6 +228,25 @@ export default function SavorScreen() {
               </li>
             )
           })}
+          <li>
+            <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer"
+               className="flex items-center justify-between gap-3 hairline px-4 py-4 bg-surface/40 active:scale-[0.995] transition-transform">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <span className="w-7 flex items-center justify-center" style={{ color: '#5865F2' }} aria-hidden="true">
+                  <CategoryIcon kind="discord" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-ink text-[18px] leading-tight" style={{ fontWeight: 500 }}>
+                    Community
+                  </p>
+                  <p className="text-[11px] text-inkDim tracking-wide truncate">Discord — Cups, 19th Hole & Drops zuerst.</p>
+                </div>
+              </div>
+              <span className="text-[10px] tracking-[0.28em] uppercase text-accent">
+                Join →
+              </span>
+            </a>
+          </li>
         </ul>
       </section>
 
