@@ -617,6 +617,94 @@
       .mobile-cta .label .t { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--ink); letter-spacing: 0.02em; }
       .mobile-cta .label .s { font-size: 0.7rem; color: var(--muted); }
       .mobile-cta .btn { padding: 0.7rem 1rem; font-size: 0.78rem; }
+
+      /* ===== Live Now Strip ===== */
+      .livenow { padding: 3.5rem 1.5rem 0; }
+      .livenow-inner { max-width: 1200px; margin: 0 auto; }
+      .livenow-head {
+        display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;
+        margin-bottom: 1.5rem; flex-wrap: wrap;
+      }
+      .livenow-head h2 {
+        font-family: 'Fraunces', serif; font-weight: 500;
+        font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -0.01em; line-height: 1.05;
+        margin-top: 0.3rem;
+      }
+      .livenow-head em { color: var(--green); font-style: italic; }
+      .livenow-sub { color: var(--muted); font-size: 0.9rem; max-width: 22rem; }
+      .live-cards {
+        display: grid; gap: 0.9rem;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      }
+      .live-card {
+        position: relative; overflow: hidden; border-radius: 18px;
+        border: 1px solid var(--line-strong); background: rgba(255,255,255,0.03);
+        padding: 1.1rem 1.1rem 1rem; min-height: 180px;
+        display: flex; flex-direction: column; gap: 0.45rem;
+        text-align: left; color: var(--ink);
+        transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+      }
+      .live-card:hover { transform: translateY(-2px); border-color: var(--green-edge); background: rgba(255,255,255,0.06); }
+      .live-card .cover {
+        position: absolute; inset: 0;
+        background-size: cover; background-position: center;
+        opacity: 0.35; filter: saturate(1.1) contrast(1.05);
+      }
+      .live-card .cover::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(6,20,14,0.55) 0%, rgba(6,20,14,0.92) 70%, rgba(6,20,14,1) 100%);
+      }
+      .live-card > .row, .live-card > .name, .live-card > .meta, .live-card > .watch { position: relative; z-index: 1; }
+      .live-card .row {
+        display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+        font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+        font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      }
+      .live-card .pill { color: var(--green); display: inline-flex; align-items: center; gap: 0.35rem; }
+      .live-card .pill::before {
+        content: ''; width: 6px; height: 6px; border-radius: 999px;
+        background: var(--green); box-shadow: 0 0 6px var(--green);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      .live-card .date { color: var(--dim); }
+      .live-card .name {
+        font-family: 'Fraunces', serif; font-size: 1.35rem; line-height: 1.15;
+        color: var(--ink); letter-spacing: -0.01em; margin-top: 0.2rem;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .live-card .meta { color: var(--muted); font-size: 0.84rem; margin-top: auto; }
+      .live-card .meta b { color: var(--green); font-weight: 700; }
+      .live-card .watch {
+        margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 0.4rem;
+        font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+        font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--green);
+      }
+      .live-card .watch svg { width: 14px; height: 14px; transition: transform 200ms ease; }
+      .live-card:hover .watch svg { transform: translateX(3px); }
+
+      .livenow-empty {
+        border: 1px dashed var(--line-strong); border-radius: 18px; padding: 2rem 1.5rem;
+        text-align: center; color: var(--muted);
+      }
+      .livenow-empty .em {
+        color: var(--ink); font-family: 'Fraunces', serif; font-size: 1.1rem;
+        margin-bottom: 0.3rem; font-weight: 500;
+      }
+      .livenow-empty .btn { margin-top: 1rem; }
+
+      .live-skeleton {
+        position: relative; overflow: hidden; border-radius: 18px;
+        border: 1px solid var(--line); background: rgba(255,255,255,0.025);
+        min-height: 180px;
+      }
+      .live-skeleton::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+        animation: shimmer 1.6s linear infinite;
+      }
+      @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+      @media (prefers-reduced-motion: reduce) { .live-skeleton::after, .live-card .pill::before { animation: none; } }
     </style>
   </head>
   <body>
@@ -669,8 +757,9 @@
             <span class="k" data-i18n="hero.statCourses">Courses worldwide</span>
           </div>
           <div>
-            <span class="v"><span id="stat-countries">13</span></span>
-            <span class="k" data-i18n="hero.statCountries">Countries</span>
+            <span class="live-pulse" data-i18n="hero.statLiveLabel">Live now</span>
+            <span class="v"><span id="stat-livecups">0</span></span>
+            <span class="k" data-i18n="hero.statLive">Cups in play</span>
           </div>
           <div>
             <span class="v">iOS · Android · Web</span>
@@ -679,6 +768,24 @@
         </div>
       </div>
     </header>
+
+    <!-- LIVE NOW -->
+    <section class="livenow" id="livenow">
+      <div class="livenow-inner reveal">
+        <div class="livenow-head">
+          <div>
+            <span class="live-pulse" data-i18n="livenow.label">Right now on the course</span>
+            <h2 data-i18n-html="livenow.title">Live cups — <em>tap in</em>.</h2>
+          </div>
+          <p class="livenow-sub" data-i18n="livenow.sub">No login. Open a cup, watch every hole come in.</p>
+        </div>
+        <div class="live-cards" id="liveCards" aria-live="polite">
+          <div class="live-skeleton"></div>
+          <div class="live-skeleton"></div>
+          <div class="live-skeleton"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- SPLIT 1 -->
     <section class="band">
@@ -764,7 +871,7 @@
             <p data-i18n="features.friendsB">Find players by @handle, send a friend request, challenge them on the spot.</p>
           </article>
 
-          <article class="card wide reveal">
+          <article class="card cell reveal">
             <div class="ico">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 9h6v6H9z"/>
@@ -772,6 +879,36 @@
             </div>
             <h3 data-i18n="features.statsT">Player stats</h3>
             <p data-i18n="features.statsB">Win rate, halved/won/lost, holes-won percentage — per profile and across every match.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/>
+              </svg>
+            </div>
+            <h3 data-i18n="features.awardsT">Awards &amp; honours</h3>
+            <p data-i18n="features.awardsB">Champion, MVP, Longest Drive, Closest to the Pin — pin every honour to the cup recap, for ever.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
+            <h3 data-i18n="features.coverT">Covers &amp; sponsors</h3>
+            <p data-i18n="features.coverB">Brand every cup with a cover photo, attach a "Powered by" sponsor and let your tournament look like a real one.</p>
+          </article>
+
+          <article class="card cell reveal">
+            <div class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <h3 data-i18n="features.recapT">Shareable recaps</h3>
+            <p data-i18n="features.recapB">Auto-generated recap pages with score grid, hero shot and awards — share to WhatsApp, Insta or paste into the group chat.</p>
           </article>
         </div>
       </div>
@@ -1004,8 +1141,19 @@
           "hero.ctaSecondary": "See features",
           "hero.live": "Live",
           "hero.statCourses": "Courses worldwide",
-          "hero.statCountries": "Countries",
+          "hero.statLiveLabel": "Live now",
+          "hero.statLive": "Cups in play",
           "hero.statPlatforms": "Available everywhere",
+          "livenow.label": "Right now on the course",
+          "livenow.title": "Live cups — <em>tap in</em>.",
+          "livenow.sub": "No login. Open a cup, watch every hole come in.",
+          "livenow.pill": "{n} live",
+          "livenow.watch": "Watch live",
+          "livenow.open": "Open cup",
+          "livenow.upcoming": "Coming up",
+          "livenow.emptyT": "No live cups right now.",
+          "livenow.emptyB": "Be the first — spin up a cup and your buddies can follow every hole live.",
+          "livenow.emptyCta": "Start a cup",
           "split1.kicker": "Match Play, done right",
           "split1.title": "Hole by hole — the score <em>tracks itself</em>.",
           "split1.lead1": "Singles or 2 v 2 Doubles. Handicap strokes computed automatically, dormie logic baked in, hole winners locked before the next tee box. You enter the strokes — the app does the rest.",
@@ -1024,6 +1172,12 @@
           "features.friendsB": "Find players by @handle, send a friend request, challenge them on the spot.",
           "features.statsT": "Player stats",
           "features.statsB": "Win rate, halved/won/lost, holes-won percentage — per profile and across every match.",
+          "features.awardsT": "Awards & honours",
+          "features.awardsB": "Champion, MVP, Longest Drive, Closest to the Pin — pin every honour to the cup recap, for ever.",
+          "features.coverT": "Covers & sponsors",
+          "features.coverB": "Brand every cup with a cover photo, attach a \"Powered by\" sponsor and let your tournament look like a real one.",
+          "features.recapT": "Shareable recaps",
+          "features.recapB": "Auto-generated recap pages with score grid, hero shot and awards — share to WhatsApp, Insta or paste into the group chat.",
           "phones.kicker": "A glimpse inside",
           "phones.title": "Built for the <em>round itself</em>.",
           "phones.cap1": "Leaderboard", "phones.cap2": "Live matches", "phones.cap3": "Profile",
@@ -1080,8 +1234,19 @@
           "hero.ctaSecondary": "Features ansehen",
           "hero.live": "Live",
           "hero.statCourses": "Plätze weltweit",
-          "hero.statCountries": "Länder",
+          "hero.statLiveLabel": "Jetzt live",
+          "hero.statLive": "Cups gerade aktiv",
           "hero.statPlatforms": "Überall verfügbar",
+          "livenow.label": "Gerade auf dem Platz",
+          "livenow.title": "Live-Cups — <em>einsteigen</em>.",
+          "livenow.sub": "Kein Login. Cup öffnen, jedes Loch live mitfiebern.",
+          "livenow.pill": "{n} live",
+          "livenow.watch": "Live mitfiebern",
+          "livenow.open": "Cup öffnen",
+          "livenow.upcoming": "Demnächst",
+          "livenow.emptyT": "Aktuell keine Live-Cups.",
+          "livenow.emptyB": "Sei der Erste — leg einen Cup an und deine Crew kann jedes Loch mitverfolgen.",
+          "livenow.emptyCta": "Cup starten",
           "split1.kicker": "Match Play, ernst gemeint",
           "split1.title": "Loch für Loch — der Stand <em>rechnet sich selbst</em>.",
           "split1.lead1": "Singles oder Doubles 2 v 2. Handicap-Vorgabe automatisch, Dormie-Logik mitgerechnet, Lochgewinner sichtbar bevor der nächste Tee steht. Du gibst nur die Schläge ein — die App macht den Rest.",
@@ -1100,6 +1265,12 @@
           "features.friendsB": "Per @handle finden, anfragen, herausfordern — direkt aus der App.",
           "features.statsT": "Match-Statistik",
           "features.statsB": "Win-Rate, Halved/Gewonnen/Verloren, Lochgewinn-Quote — je Profil und über alle Matches hinweg.",
+          "features.awardsT": "Awards & Ehrungen",
+          "features.awardsB": "Champion, MVP, Longest Drive, Closest to the Pin — jede Ehrung wandert dauerhaft in den Cup-Recap.",
+          "features.coverT": "Cover & Sponsoren",
+          "features.coverB": "Jedem Cup ein eigenes Coverbild geben, „Powered by"-Sponsor andocken — sieht aus wie ein richtiges Turnier.",
+          "features.recapT": "Teilbare Recaps",
+          "features.recapB": "Auto-Recap-Seiten mit Scoreboard, Hero-Foto und Awards — WhatsApp-, Insta- oder gruppenchat-fertig.",
           "phones.kicker": "Ein Blick rein",
           "phones.title": "Gebaut für die <em>Runde selbst</em>.",
           "phones.cap1": "Leaderboard", "phones.cap2": "Live-Matches", "phones.cap3": "Profil",
@@ -1470,7 +1641,7 @@
       }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
       document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-      // Live stats fetch
+      // Live stats fetch (courses + countries)
       const localeMap = { en: 'en-US', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', ja: 'ja-JP' };
       const numFmt = (n) => new Intl.NumberFormat(localeMap[currentLang] || 'en-US').format(n);
       fetch(`${SUPABASE_URL}/functions/v1/public-stats`, { headers: { apikey: ANON_KEY } })
@@ -1478,11 +1649,109 @@
         .then((s) => {
           if (!s) return;
           const c = document.getElementById('stat-courses');
-          const cc = document.getElementById('stat-countries');
           if (c && s.courses) c.textContent = numFmt(s.courses);
-          if (cc && s.countries) cc.textContent = numFmt(s.countries);
         })
         .catch(() => {});
+
+      // ===== Live-Now: public cups + active matches → render strip =====
+      const liveCardsEl = document.getElementById('liveCards');
+      const heroLiveEl  = document.getElementById('stat-livecups');
+
+      function cupDateLabel(d) {
+        if (!d) return '';
+        try {
+          return new Date(d + 'T12:00:00')
+            .toLocaleDateString(localeMap[currentLang] || 'en-US',
+              { day: '2-digit', month: 'short' });
+        } catch { return ''; }
+      }
+
+      function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, (c) => ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[c]));
+      }
+
+      function liveCardHtml(c, liveCount, isLive) {
+        const dict   = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+        const date   = cupDateLabel(c.date);
+        const name   = escapeHtml(c.name || 'Cup');
+        const teamA  = escapeHtml(c.team_a_name || 'Team A');
+        const teamB  = escapeHtml(c.team_b_name || 'Team B');
+        const cover  = c.cover_url
+          ? `<div class="cover" style="background-image:url('${escapeHtml(c.cover_url)}')"></div>`
+          : '';
+        const link   = c.invite_code
+          ? `https://swingandsavor.at/i/${encodeURIComponent(c.invite_code)}`
+          : 'https://app.swingandsavor.at/';
+        const lblLive    = (dict['livenow.pill']   || '{n} live').replace('{n}', liveCount);
+        const lblWatch   = dict['livenow.watch']   || 'Watch live';
+        const lblOpen    = dict['livenow.open']    || 'Open cup';
+        const lblUpcoming= dict['livenow.upcoming']|| 'Coming up';
+        const row = isLive
+          ? `<span class="pill">${lblLive}</span>${date ? `<span class="date">${date}</span>` : ''}`
+          : `<span class="date">${date || lblUpcoming}</span>`;
+        const meta = isLive
+          ? `<span>${teamA} <span style="color:var(--dim)">vs</span> ${teamB}</span>`
+          : `<span>${teamA} <span style="color:var(--dim)">vs</span> ${teamB}</span>`;
+        const cta = isLive ? lblWatch : lblOpen;
+        return `<a class="live-card" href="${link}" rel="noopener">
+          ${cover}
+          <div class="row">${row}</div>
+          <p class="name">${name}</p>
+          <p class="meta">${meta}</p>
+          <span class="watch">${cta}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </span>
+        </a>`;
+      }
+
+      function renderLive(liveCups, recentCups) {
+        if (!liveCardsEl) return;
+        const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+        if (liveCups.length === 0 && recentCups.length === 0) {
+          liveCardsEl.innerHTML = `
+            <div class="livenow-empty" style="grid-column: 1 / -1;">
+              <p class="em">${dict['livenow.emptyT'] || 'No live cups right now.'}</p>
+              <p>${dict['livenow.emptyB'] || 'Be the first — spin up a cup and your buddies can follow every hole live.'}</p>
+              <a class="btn btn-primary" href="https://app.swingandsavor.at/cup">${dict['livenow.emptyCta'] || 'Start a cup'}</a>
+            </div>`;
+          return;
+        }
+        const live = liveCups.slice(0, 6).map(c => liveCardHtml(c, c._live, true));
+        const remain = Math.max(0, 3 - live.length);
+        const fallback = remain > 0 ? recentCups.slice(0, remain).map(c => liveCardHtml(c, 0, false)) : [];
+        liveCardsEl.innerHTML = [...live, ...fallback].join('');
+      }
+
+      async function refreshLiveNow() {
+        try {
+          const headers = { apikey: ANON_KEY };
+          const [cupsRes, matchesRes] = await Promise.all([
+            fetch(`${SUPABASE_URL}/rest/v1/tournaments?visibility=eq.public&select=id,name,cover_url,invite_code,date,team_a_name,team_b_name&order=date.desc&limit=20`, { headers }),
+            fetch(`${SUPABASE_URL}/rest/v1/matches?status=eq.active&select=id,tournament_id&limit=200`, { headers }),
+          ]);
+          const cups    = cupsRes.ok    ? await cupsRes.json()    : [];
+          const matches = matchesRes.ok ? await matchesRes.json() : [];
+          const liveBy = {};
+          for (const m of matches) liveBy[m.tournament_id] = (liveBy[m.tournament_id] || 0) + 1;
+          const liveCups = cups
+            .filter(c => (liveBy[c.id] || 0) > 0)
+            .map(c => ({ ...c, _live: liveBy[c.id] }));
+          renderLive(liveCups, cups);
+          if (heroLiveEl) heroLiveEl.textContent = String(liveCups.length);
+        } catch (err) {
+          console.warn('[live-now]', err);
+          if (liveCardsEl) renderLive([], []);
+        }
+      }
+
+      refreshLiveNow();
+      // Poll every 45s, but only when tab is visible
+      setInterval(() => { if (!document.hidden) refreshLiveNow(); }, 45000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshLiveNow(); });
     </script>
   </body>
 </html>
