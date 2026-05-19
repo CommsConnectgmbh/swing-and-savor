@@ -205,7 +205,6 @@ export default function HomeScreen() {
     return true
   })
 
-  const liveCount   = matches.filter(m => m.status === 'active').length
   const friendsLive = matches.filter(m => m.status === 'active' && friendOwnerIds.has(m.tournament?.owner_id)).length
 
   // Matches nach Turnier gruppieren, damit Cup-Header nicht 1× pro Karte wiederholt wird
@@ -225,24 +224,8 @@ export default function HomeScreen() {
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
 
-      {/* Editorial Header */}
-      <div className="px-5 pt-8 pb-5">
-        <p className="text-[10px] tracking-[0.42em] uppercase text-accent mb-3">The Clubhouse</p>
-        <h1 className="font-display text-ink leading-none"
-            style={{ fontSize: 'clamp(36px, 8vw, 52px)', fontWeight: 500, letterSpacing: '-0.02em' }}>
-          {liveCount > 0 ? 'Live Feed' : 'On the Tee'}
-        </h1>
-        <p className="text-[12px] text-inkMuted mt-3 tracking-[0.16em] uppercase">
-          {liveCount > 0
-            ? <><span className="text-accent">{liveCount} live</span>{friendsLive > 0 && <> · {friendsLive} crew</>}</>
-            : 'Was deine Crew gerade spielt.'}
-        </p>
-      </div>
-
-      <div className="hairline-b" />
-
       {/* Filter pills — editorial hairline */}
-      <div className="px-5 py-4 flex gap-2 items-center">
+      <div className="px-5 pt-6 pb-4 flex gap-2 items-center">
         {FILTERS.map(f => (
           <button key={f.key}
             onClick={() => setFilter(f.key)}
@@ -263,8 +246,10 @@ export default function HomeScreen() {
         </button>
       </div>
 
-      {/* Feed: pro Turnier eine Section mit Header + freistehenden Match-Karten */}
-      <div className="flex flex-col gap-10 px-3 pt-4">
+      <div className="hairline-b" />
+
+      {/* Feed: pro Turnier eine collapsible Section */}
+      <div className="flex flex-col px-3 pt-2">
         {groups.map((g, gi) => (
           <CupGroup key={g.tid} tournament={g.tournament}
             matches={g.matches}
@@ -293,62 +278,77 @@ export default function HomeScreen() {
 }
 
 function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst, onOpen, onCommentClick, onShareClick }) {
-  const cupName  = tournament?.name || ''
+  const cupName  = tournament?.name || 'Lose Matches'
   const cupDate  = fmtCupDate(tournament?.date)
   const cupAccent = cupColor(tournament?.id)
   const cover    = tournament?.cover_url
   const matchCount = matches.length
-  const liveCount  = matches.filter(m => m.status === 'active').length
+  const cupLive  = matches.filter(m => m.status === 'active').length
+
+  // Live-Cups default offen, Rest zu — so ist der Feed scanbar.
+  const [open, setOpen] = useState(cupLive > 0)
 
   return (
-    <section className="flex flex-col gap-3">
-      {/* Editorial Cup-Separator: hairline + Akzent + großer Cup-Name */}
-      {cupName && (
-        <>
-          {!isFirst && <div className="hairline-b mb-1 -mx-3" />}
-          <div className="flex items-end gap-3 px-1 pt-1">
-            {/* Akzent + Cover */}
-            {cover ? (
-              <img src={cover} alt="" loading="lazy"
-                className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-line" />
-            ) : (
-              <span aria-hidden
-                className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center font-display text-xl text-bg"
-                style={{ background: cupAccent, opacity: 0.9 }}>
-                {cupName.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase mb-1" style={{ color: cupAccent }}>
-                {cupDate || 'Turnier'}
-                <span className="text-inkDim normal-case tracking-normal font-normal">
-                  {` · ${matchCount} ${matchCount === 1 ? 'Match' : 'Matches'}`}
-                  {liveCount > 0 && <span className="text-accent"> · {liveCount} live</span>}
+    <section className="border-b border-lineSoft last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-3 px-1 py-4 text-left active:opacity-80 transition-opacity"
+        aria-expanded={open}>
+        {cover ? (
+          <img src={cover} alt="" loading="lazy"
+            className="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-line" />
+        ) : (
+          <span aria-hidden
+            className="w-11 h-11 rounded-lg flex-shrink-0 flex items-center justify-center font-display text-lg text-bg"
+            style={{ background: cupAccent, opacity: 0.9 }}>
+            {cupName.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-display text-ink leading-tight truncate"
+            style={{ fontSize: 'clamp(17px, 4.4vw, 21px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
+            {cupName}
+          </h2>
+          <p className="text-[10px] tracking-[0.22em] uppercase mt-0.5 text-inkDim">
+            {cupDate && <span style={{ color: cupAccent }}>{cupDate}</span>}
+            {cupDate && ' · '}
+            <span>{matchCount} {matchCount === 1 ? 'Match' : 'Matches'}</span>
+            {cupLive > 0 && (
+              <>
+                {' · '}
+                <span className="text-accent inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  {cupLive} live
                 </span>
-              </p>
-              <h2 className="font-display text-ink leading-none truncate"
-                style={{ fontSize: 'clamp(20px, 5vw, 26px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
-                {cupName}
-              </h2>
-            </div>
-          </div>
-        </>
-      )}
+              </>
+            )}
+          </p>
+        </div>
+        <span aria-hidden
+          className="flex-shrink-0 text-inkMuted transition-transform duration-200"
+          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </span>
+      </button>
 
-      {/* Match-Karten — jede als eigenes Surface mit Abstand */}
-      <div className="flex flex-col gap-2">
-        {matches.map(m => (
-          <div key={m.id} className="rounded-card overflow-hidden bg-surface border border-line">
-            <FeedCard match={m} holes={holesByMatch[m.id] || []}
-              social={social[m.id] || { likes: 0, comments: 0 }}
-              liked={myLikes.has(m.id)}
-              cupAccent={cupAccent}
-              onOpen={() => onOpen(m)}
-              onCommentClick={() => onCommentClick(m)}
-              onShareClick={() => onShareClick(m)} />
-          </div>
-        ))}
-      </div>
+      {open && (
+        <div className="flex flex-col gap-2 pb-4">
+          {matches.map(m => (
+            <div key={m.id} className="rounded-card overflow-hidden bg-surface border border-line">
+              <FeedCard match={m} holes={holesByMatch[m.id] || []}
+                social={social[m.id] || { likes: 0, comments: 0 }}
+                liked={myLikes.has(m.id)}
+                cupAccent={cupAccent}
+                onOpen={() => onOpen(m)}
+                onCommentClick={() => onCommentClick(m)}
+                onShareClick={() => onShareClick(m)} />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
