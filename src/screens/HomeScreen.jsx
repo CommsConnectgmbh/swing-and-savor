@@ -41,6 +41,8 @@ export default function HomeScreen() {
   const [friendOwnerIds, setFriendOwnerIds] = useState(new Set())
   const [social, setSocial] = useState({})    // matchId → {likes, comments}
   const [myLikes, setMyLikes] = useState(new Set())
+  const [sponsorByCup, setSponsorByCup] = useState({}) // cupId → { name, logo_url, website_url }
+  const [coverOverrides, setCoverOverrides] = useState({}) // cupId → fresh cover_url (optimistic)
   const channelRef = useRef(null)
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function HomeScreen() {
         team_a_player1_id, team_a_player2_id, team_b_player1_id, team_b_player2_id,
         team_a_factor, team_b_factor,
         tournament:tournament_id (
-          id, name, date, owner_id, visibility, team_a_name, team_b_name, cover_url
+          id, name, date, owner_id, visibility, team_a_name, team_b_name, cover_url, invite_code
         ),
         course:course_id (name, city)
       `)
@@ -139,6 +141,23 @@ export default function HomeScreen() {
 
     setMatches(enriched)
 
+    // Sponsor-Placements pro Cup batch laden (nur aktive "powered_by")
+    const cupIds = [...new Set(enriched.map(m => m.tournament?.id).filter(Boolean))]
+    if (cupIds.length > 0) {
+      const { data: sps } = await supabase.from('sponsor_placements')
+        .select('tournament_id, sponsor:sponsor_id(name, logo_url, website_url)')
+        .in('tournament_id', cupIds)
+        .eq('status', 'active')
+        .eq('placement_type', 'powered_by')
+      const map = {}
+      for (const sp of (sps || [])) {
+        if (sp.sponsor && !map[sp.tournament_id]) map[sp.tournament_id] = sp.sponsor
+      }
+      setSponsorByCup(map)
+    } else {
+      setSponsorByCup({})
+    }
+
     // Social-Counts batch laden
     const matchIds = enriched.map(m => m.id)
     const [counts, mine] = await Promise.all([
@@ -149,6 +168,41 @@ export default function HomeScreen() {
     setMyLikes(mine)
 
     setLoading(false)
+  }
+
+  async function uploadCupCover(cupId, file) {
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const path = `${cupId}/cover-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
+      if (upErr) throw upErr
+      const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
+      await supabase.from('tournaments').update({ cover_url: pub.publicUrl }).eq('id', cupId)
+      setCoverOverrides(o => ({ ...o, [cupId]: pub.publicUrl }))
+    } catch (err) {
+      console.error('[cup-cover-upload]', err)
+      alert('Cover-Upload fehlgeschlagen.')
+    }
+  }
+
+  async function handleCupShare(tournament) {
+    if (!tournament?.invite_code) {
+      alert('Dieser Cup hat noch keinen Invite-Code.')
+      return
+    }
+    const url  = `https://swingandsavor.at/i/${tournament.invite_code}`
+    const text = `${tournament.name} — schau live mit auf Swing & Savor`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: tournament.name, text, url })
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        alert('Link kopiert: ' + url)
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') console.error('[cup-share]', err)
+    }
   }
 
   function subscribe() {
@@ -257,6 +311,11 @@ export default function HomeScreen() {
             social={social}
             myLikes={myLikes}
             isFirst={gi === 0}
+            isOwner={!!g.tournament?.owner_id && g.tournament.owner_id === user?.id}
+            sponsor={sponsorByCup[g.tournament?.id]}
+            coverOverride={coverOverrides[g.tournament?.id]}
+            onCoverFile={(file) => uploadCupCover(g.tournament.id, file)}
+            onCupShare={() => handleCupShare(g.tournament)}
             onOpen={(m) => navigate(`/matches/${m.id}`)}
             onCommentClick={(m) => navigate(`/matches/${m.id}#comments`)}
             onShareClick={(m) => handleShare(m)} />
@@ -277,35 +336,81 @@ export default function HomeScreen() {
   )
 }
 
-function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst, onOpen, onCommentClick, onShareClick }) {
+function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst, isOwner, sponsor, coverOverride, onCoverFile, onCupShare, onOpen, onCommentClick, onShareClick }) {
   const cupName  = tournament?.name || 'Lose Matches'
   const cupDate  = fmtCupDate(tournament?.date)
   const cupAccent = cupColor(tournament?.id)
-  const cover    = tournament?.cover_url
+  const cover    = coverOverride || tournament?.cover_url
   const matchCount = matches.length
   const cupLive  = matches.filter(m => m.status === 'active').length
+  const shareable = !!tournament?.invite_code
 
   // Live-Cups default offen, Rest zu — so ist der Feed scanbar.
   const [open, setOpen] = useState(cupLive > 0)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef(null)
+
+  async function handleCoverPick(e) {
+    const file = e.target.files?.[0]
+    if (!file || !onCoverFile) return
+    setUploading(true)
+    try { await onCoverFile(file) } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  function pickCover(e) {
+    e.stopPropagation()
+    if (!isOwner) return
+    fileRef.current?.click()
+  }
 
   return (
     <section className="border-b border-lineSoft last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-1 py-4 text-left active:opacity-80 transition-opacity"
-        aria-expanded={open}>
-        {cover ? (
-          <img src={cover} alt="" loading="lazy"
-            className="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-line" />
-        ) : (
-          <span aria-hidden
-            className="w-11 h-11 rounded-lg flex-shrink-0 flex items-center justify-center font-display text-lg text-bg"
-            style={{ background: cupAccent, opacity: 0.9 }}>
-            {cupName.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div className="flex-1 min-w-0">
+      <div className="w-full flex items-center gap-3 px-1 py-4">
+
+        {/* Cover-Tile — klickbar für Owner */}
+        <div className="relative flex-shrink-0">
+          {cover ? (
+            <button type="button" onClick={pickCover}
+              disabled={!isOwner || uploading}
+              className={`block ${isOwner ? 'active:scale-95 transition-transform' : 'cursor-default'}`}
+              aria-label={isOwner ? 'Cover ändern' : undefined}>
+              <img src={cover} alt="" loading="lazy"
+                className="w-11 h-11 rounded-lg object-cover border border-line" />
+            </button>
+          ) : (
+            <button type="button" onClick={pickCover}
+              disabled={!isOwner || uploading}
+              className={`w-11 h-11 rounded-lg flex items-center justify-center font-display text-lg text-bg ${isOwner ? 'active:scale-95 transition-transform' : ''}`}
+              style={{ background: cupAccent, opacity: 0.9 }}
+              aria-label={isOwner ? 'Cover hochladen' : undefined}>
+              {uploading
+                ? <span className="text-bg text-xs">…</span>
+                : cupName.charAt(0).toUpperCase()}
+            </button>
+          )}
+          {isOwner && cover && !uploading && (
+            <span aria-hidden
+              className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-bg border border-line flex items-center justify-center text-inkMuted">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4z"/>
+              </svg>
+            </span>
+          )}
+          {isOwner && (
+            <input ref={fileRef} type="file" accept="image/*" className="hidden"
+              onChange={handleCoverPick} />
+          )}
+        </div>
+
+        {/* Name + Meta — klickbar zum Auf-/Zuklappen */}
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className="flex-1 min-w-0 text-left active:opacity-80 transition-opacity"
+          aria-expanded={open}>
           <h2 className="font-display text-ink leading-tight truncate"
             style={{ fontSize: 'clamp(17px, 4.4vw, 21px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
             {cupName}
@@ -324,18 +429,48 @@ function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst,
               </>
             )}
           </p>
-        </div>
-        <span aria-hidden
-          className="flex-shrink-0 text-inkMuted transition-transform duration-200"
+        </button>
+
+        {/* Cup-Share — der virale Hebel */}
+        {shareable && (
+          <button type="button" onClick={onCupShare}
+            className="flex-shrink-0 p-2 -mr-1 text-inkMuted hover:text-accent active:scale-90 transition-all"
+            aria-label="Cup teilen">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Chevron */}
+        <button type="button" onClick={() => setOpen(o => !o)}
+          aria-label={open ? 'Zuklappen' : 'Aufklappen'}
+          className="flex-shrink-0 p-1 text-inkMuted transition-transform duration-200"
           style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-        </span>
-      </button>
+        </button>
+      </div>
 
       {open && (
         <div className="flex flex-col gap-2 pb-4">
+          {/* Powered-by Sponsor — nur wenn vorhanden, dezent */}
+          {sponsor && (
+            <a href={sponsor.website_url || '#'}
+              target={sponsor.website_url ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              onClick={(e) => { if (!sponsor.website_url) e.preventDefault() }}
+              className="flex items-center gap-2 px-2 py-1 -mt-1 mb-1 text-inkDim hover:text-ink transition-colors">
+              <span className="text-[9px] tracking-[0.32em] uppercase">Powered by</span>
+              {sponsor.logo_url
+                ? <img src={sponsor.logo_url} alt={sponsor.name} className="h-4 max-w-[120px] object-contain opacity-80" />
+                : <span className="text-[10px] tracking-wider">{sponsor.name}</span>}
+            </a>
+          )}
+
           {matches.map(m => (
             <div key={m.id} className="rounded-card overflow-hidden bg-surface border border-line">
               <FeedCard match={m} holes={holesByMatch[m.id] || []}
@@ -347,6 +482,14 @@ function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst,
                 onShareClick={() => onShareClick(m)} />
             </div>
           ))}
+
+          {/* Owner-Hint wenn noch kein Cover gesetzt */}
+          {isOwner && !cover && (
+            <button type="button" onClick={pickCover}
+              className="mt-1 mx-1 py-2 hairline text-inkMuted text-[10px] tracking-[0.24em] uppercase active:scale-[0.99] transition-transform">
+              + Cover-Bild hochladen
+            </button>
+          )}
         </div>
       )}
     </section>
