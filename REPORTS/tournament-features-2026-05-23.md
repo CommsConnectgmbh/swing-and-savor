@@ -124,14 +124,12 @@
 - `create-boost-checkout` deployed ✓
 - `stripe-webhook` v2 deployed (handhabt boost + premium) ✓
 
-### Was noch fehlt — **MANUELLER STEP für Rainer**
-- `STRIPE_WEBHOOK_SECRET` ist noch NICHT in Supabase-Secrets, weil der zentrale `STRIPE_WEBHOOK_SECRET` für andere Apps (Belegify/Obacht) ist. Webhook-Signing-Secrets sind pro Endpoint.
-- **TODO:** In Stripe Dashboard → Developers → Webhooks → Add endpoint
+### Was zusätzlich erledigt
+- **Stripe-LIVE-Webhook-Endpoint angelegt** via Stripe-API: `we_1TaKEmBsPi2wDzPVJbXQMYtR`
   - URL: `https://rcqichlyllhwougopfkg.supabase.co/functions/v1/stripe-webhook`
-  - Events: `checkout.session.completed`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`
-  - Signing-Secret kopieren → in Supabase Project-Secrets als `STRIPE_WEBHOOK_SECRET_SNS` setzen (Funktion fällt zurück auf `STRIPE_WEBHOOK_SECRET` wenn `_SNS` nicht da ist, aber `_SNS` ist sauberer Namespace)
-
-Ohne dies: Boost-Checkout-Session wird erstellt + bezahlt, aber `promoted_until` wird nicht gesetzt → Boost nicht aktiv. UI zeigt aber bereits den Stripe-Success-Redirect.
+  - Events: `checkout.session.completed/.async_payment_failed/.expired`, `charge.refunded`
+- **Signing-Secret als `STRIPE_WEBHOOK_SECRET_SNS` in Supabase-Secrets** gesetzt ✓
+- Smoke-Tests: Webhook 400 (bad-sig wie erwartet), Boost-Checkout 401 (no-JWT wie erwartet), OCR 401 (no-JWT wie erwartet) — Stack vollständig verdrahtet.
 
 ---
 
@@ -172,7 +170,6 @@ Ohne dies: Boost-Checkout-Session wird erstellt + bezahlt, aber `promoted_until`
 
 ## Offene Punkte (manuell)
 
-1. **Stripe-Webhook-Endpoint anlegen** (siehe oben) — ohne läuft Boost nur halb durch
-2. **OCR-Feldtest** — Vision-Quality variiert nach Foto-Qualität (Beleuchtung, Schrift). gpt-4o-mini liefert solide JSON, aber bei sehr schlechten Karten lieber gpt-4o nehmen (model-Switch in `scorecard-ocr/index.ts`)
+1. **OCR-Feldtest** — Vision-Quality variiert nach Foto-Qualität (Beleuchtung, Schrift). gpt-4o-mini liefert solide JSON, aber bei sehr schlechten Karten lieber gpt-4o nehmen (model-Switch in `scorecard-ocr/index.ts`)
 3. **i18n** — die neuen Sheets sind deutsch hartkodiert (nicht via `t()`). Falls EN gebraucht, in `i18n/de.json` + `en.json` keys nachziehen
 4. **PublicCupScreen UI** — der Edge-Function-Output enthält jetzt `rules_md` etc., der Frontend-Render der Public-Page wurde noch nicht erweitert (zeigt diese Felder noch nicht an). Beitritts-Button von außen funktioniert über Discover-Feed in der App
