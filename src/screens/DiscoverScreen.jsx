@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
+import JoinTournamentSheet from '../components/JoinTournamentSheet'
 
 export default function DiscoverScreen() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ export default function DiscoverScreen() {
   const [feed, setFeed] = useState([])
   const [joinCode, setJoinCode] = useState('')
   const [joinError, setJoinError] = useState(null)
+  const [joinSheetCup, setJoinSheetCup] = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -18,17 +20,22 @@ export default function DiscoverScreen() {
     setLoading(true)
     const { data } = await supabase
       .from('tournaments')
-      .select('id, name, date, status, team_a_name, team_b_name, visibility, owner_id, invite_code')
+      .select('id, name, date, status, team_a_name, team_b_name, visibility, owner_id, invite_code, cover_url, location_name, format, promoted_until, promo_tier, join_mode, max_participants, entry_conditions')
       .order('date', { ascending: false })
-      .limit(30)
-    // Visibility filter happens via RLS; here we sort active first
+      .limit(60)
     const list = data ?? []
+    const now = Date.now()
     list.sort((a, b) => {
+      const aPromo = a.promoted_until && new Date(a.promoted_until).getTime() > now
+                     && (a.promo_tier === 'top' || a.promo_tier === 'both')
+      const bPromo = b.promoted_until && new Date(b.promoted_until).getTime() > now
+                     && (b.promo_tier === 'top' || b.promo_tier === 'both')
+      if (aPromo && !bPromo) return -1
+      if (bPromo && !aPromo) return 1
       if (a.status === 'active' && b.status !== 'active') return -1
       if (b.status === 'active' && a.status !== 'active') return 1
       return new Date(b.date) - new Date(a.date)
     })
-    // Enrich with owner profile (single batched lookup)
     const ownerIds = [...new Set(list.map(t => t.owner_id).filter(Boolean))]
     let byOwner = {}
     if (ownerIds.length) {
@@ -48,7 +55,6 @@ export default function DiscoverScreen() {
     const { data, error } = await supabase
       .from('tournaments').select('id').eq('invite_code', code).maybeSingle()
     if (error || !data) { setJoinError('Code unbekannt'); return }
-    // Add invite for current user (idempotent)
     if (user) {
       await supabase.from('tournament_invites').upsert({
         tournament_id: data.id, profile_id: user.id, invited_by: user.id,
@@ -66,7 +72,6 @@ export default function DiscoverScreen() {
         <p className="text-xs text-inkMuted mt-0.5">Öffentliche Turniere & Freunde-Spiele</p>
       </div>
 
-      {/* Join by code */}
       <form onSubmit={joinByCode} className="mx-3 mb-4 p-3 rounded-card bg-surface border border-line flex gap-2">
         <input
           type="text" autoCapitalize="none" autoCorrect="off"
@@ -83,34 +88,10 @@ export default function DiscoverScreen() {
       </form>
       {joinError && <p className="px-4 -mt-2 mb-3 text-xs text-danger">{joinError}</p>}
 
-      {/* Feed */}
       <div className="border-t border-lineSoft">
-        {feed.map((t, idx) => (
-          <button key={t.id}
-            onClick={() => navigate('/board')}
-            className="w-full text-left px-4 py-4 border-b border-lineSoft active:bg-surface/50 transition-colors flex items-center gap-3"
-            style={{ animationDelay: `${idx * 25}ms` }}>
-            <div className="flex-shrink-0">
-              <div className={`w-2.5 h-2.5 rounded-full ${
-                t.status === 'active' ? 'bg-accent animate-pulse' : 'bg-line'
-              }`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="font-semibold text-sm text-ink truncate">{t.name}</p>
-                <VisibilityBadge v={t.visibility} />
-              </div>
-              <p className="text-xs text-inkMuted mt-0.5 truncate">
-                {new Date(t.date + 'T12:00:00').toLocaleDateString('de-DE')}
-                {' · '}
-                <span className="text-teamA">{t.team_a_name}</span>
-                {' vs '}
-                <span className="text-teamB">{t.team_b_name}</span>
-                {t.owner && <span className="text-inkDim"> · von @{t.owner.handle}</span>}
-              </p>
-            </div>
-          </button>
-        ))}
+        {feed.map((t, idx) => <FeedRow key={t.id} t={t} idx={idx}
+          onOpen={() => navigate('/board')}
+          onJoin={() => setJoinSheetCup(t)} />)}
         {feed.length === 0 && (
           <div className="text-center py-16 px-6">
             <p className="text-sm text-inkMuted">Noch keine sichtbaren Turniere</p>
@@ -121,8 +102,83 @@ export default function DiscoverScreen() {
         )}
       </div>
       <div className="h-6" />
+
+      {joinSheetCup && (
+        <JoinTournamentSheet
+          tournament={joinSheetCup}
+          onClose={() => setJoinSheetCup(null)}
+          onJoined={() => { setJoinSheetCup(null); load() }}
+        />
+      )}
     </div>
   )
+}
+
+function FeedRow({ t, idx, onOpen, onJoin }) {
+  const now = Date.now()
+  const promoActive = t.promoted_until && new Date(t.promoted_until).getTime() > now
+  const isTop       = promoActive && (t.promo_tier === 'top' || t.promo_tier === 'both')
+  const isHighlight = promoActive && (t.promo_tier === 'highlight' || t.promo_tier === 'both')
+
+  return (
+    <div
+      className={`border-b border-lineSoft transition-colors ${
+        isHighlight ? 'bg-accent/8' : ''
+      }`}
+      style={{ animationDelay: `${idx * 25}ms`,
+        boxShadow: isHighlight ? 'inset 3px 0 0 var(--tw-accent, #98cd02)' : undefined }}
+    >
+      <button onClick={onOpen}
+        className="w-full text-left px-4 py-4 active:bg-surface/50 transition-colors flex items-center gap-3">
+        <div className="flex-shrink-0">
+          {t.cover_url
+            ? <img src={t.cover_url} alt="" loading="lazy" className="w-11 h-11 rounded-lg object-cover border border-line" />
+            : <div className={`w-2.5 h-2.5 rounded-full ${t.status === 'active' ? 'bg-accent animate-pulse' : 'bg-line'}`} />
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isTop && <PromoPin />}
+            <p className="font-semibold text-sm text-ink truncate">{t.name}</p>
+            <VisibilityBadge v={t.visibility} />
+            {isHighlight && <HighlightBadge />}
+            {t.join_mode === 'open' && <OpenJoinBadge />}
+          </div>
+          <p className="text-xs text-inkMuted mt-0.5 truncate">
+            {new Date(t.date + 'T12:00:00').toLocaleDateString('de-DE')}
+            {t.location_name && <> · <span className="text-inkDim">{t.location_name}</span></>}
+            {t.format && <> · {t.format}</>}
+            {t.owner && <span className="text-inkDim"> · @{t.owner.handle}</span>}
+          </p>
+        </div>
+      </button>
+      {(t.join_mode === 'open' || t.join_mode === 'request') && (
+        <div className="px-4 pb-3 -mt-1 flex justify-end">
+          <button onClick={onJoin}
+            className="text-[10px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-lg bg-accent text-brandDark active:scale-95 transition-transform">
+            {t.join_mode === 'open' ? 'Mitspielen' : 'Beitritt anfragen'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PromoPin() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded text-brandDark bg-accent border border-accent">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+      Top
+    </span>
+  )
+}
+
+function HighlightBadge() {
+  return <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded text-accent bg-accent/15 border border-accent/40">Highlight</span>
+}
+
+function OpenJoinBadge() {
+  return <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded text-teamA bg-teamA/12 border border-teamA/30">Offen</span>
 }
 
 function VisibilityBadge({ v }) {

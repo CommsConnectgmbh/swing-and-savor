@@ -15,6 +15,7 @@ import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import WinnerCardSheet from '../components/WinnerCardSheet'
+import ScorecardSheet from '../components/ScorecardSheet'
 
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
@@ -88,6 +89,8 @@ export default function MatchDetailScreen() {
   const [showCourseEditor, setShowCourseEditor] = useState(false)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
   const [flightNames, setFlightNames] = useState({ A: [], B: [] })
+  const [flightPlayers, setFlightPlayers] = useState([])
+  const [scorecardOpen, setScorecardOpen] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState(null)
   const [storyOpen, setStoryOpen] = useState(false)
@@ -130,14 +133,17 @@ export default function MatchDetailScreen() {
     const allIds = [...aIds, ...bIds]
     if (allIds.length > 0) {
       const { data: pls } = await supabase.from('players')
-        .select('id,name,handicap').in('id', allIds)
+        .select('id,name,handicap,profile_id,team').in('id', allIds)
       const byId = Object.fromEntries((pls || []).map(p => [p.id, p]))
       setFlightNames({
         A: aIds.map(id => byId[id]?.name).filter(Boolean),
         B: bIds.map(id => byId[id]?.name).filter(Boolean),
       })
+      const ordered = [...aIds, ...bIds].map(id => byId[id]).filter(Boolean)
+      setFlightPlayers(ordered)
     } else {
       setFlightNames({ A: [], B: [] })
+      setFlightPlayers([])
     }
 
     // Priority: 1) match snapshot, 2) course defaults, 3) localStorage, 4) Par 4 fallback
@@ -507,7 +513,13 @@ export default function MatchDetailScreen() {
           {course && !locked && !done && (
             <button onClick={() => setShowCourseEditor(true)}
               className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-accent/15 text-accent border border-accent/30 active:scale-95 transition-transform">
-              Scorekarte
+              Par-Editor
+            </button>
+          )}
+          {flightPlayers.length > 0 && (
+            <button onClick={() => setScorecardOpen(true)}
+              className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-accent text-brandDark active:scale-95 transition-transform">
+              Karten
             </button>
           )}
           {!locked && !done && !match.photo_url && (
@@ -733,6 +745,15 @@ export default function MatchDetailScreen() {
           sourceMatchId={matchId}
           onClose={() => setShowCourseEditor(false)}
           onSaved={(updated) => setCourse(prev => ({ ...prev, ...updated }))}
+        />
+      )}
+
+      {scorecardOpen && (
+        <ScorecardSheet
+          match={match}
+          players={flightPlayers}
+          holes={holes}
+          onClose={() => setScorecardOpen(false)}
         />
       )}
 

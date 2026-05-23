@@ -9,6 +9,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import ShareSheet from '../components/ShareSheet'
 import CupExtrasSheet from '../components/CupExtrasSheet'
+import BoostSheet from '../components/BoostSheet'
+import JoinRequestsSheet from '../components/JoinRequestsSheet'
 
 const emptyForm = {
   name: '', date: '',
@@ -19,6 +21,15 @@ const emptyForm = {
   format: '',
   description: '',
   cover_url: '',
+  rules_md: '',
+  join_mode: 'invite_only',
+  max_participants: '',
+  ec_handicap_max: '',
+  ec_handicap_min: '',
+  ec_age_min: '',
+  ec_dress_code: '',
+  ec_entry_fee_eur: '',
+  ec_payout: '',
 }
 
 const FORMAT_OPTIONS = [
@@ -87,6 +98,9 @@ export default function CupScreen() {
   const [shareCup, setShareCup] = useState(null)
   const [coverBusy, setCoverBusy] = useState(false)
   const [extrasCup, setExtrasCup] = useState(null)
+  const [boostCup, setBoostCup] = useState(null)
+  const [joinReqCup, setJoinReqCup] = useState(null)
+  const [pendingCounts, setPendingCounts] = useState({})
   const pendingRef = useRef(null)
   const coverInputRef = useRef(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -141,6 +155,17 @@ export default function CupScreen() {
     const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
     setTournaments(data || [])
     setLoading(false)
+    // pending Join-Requests pro Owner-Cup zählen
+    if (user?.id) {
+      const mine = (data || []).filter(c => c.owner_id === user.id).map(c => c.id)
+      if (mine.length) {
+        const { data: jr } = await supabase.from('tournament_join_requests')
+          .select('tournament_id').in('tournament_id', mine).eq('status', 'pending')
+        const counts = {}
+        ;(jr || []).forEach(r => { counts[r.tournament_id] = (counts[r.tournament_id] || 0) + 1 })
+        setPendingCounts(counts)
+      }
+    }
   }
 
   function guarded(t, action) {
@@ -157,6 +182,7 @@ export default function CupScreen() {
 
   function openEdit(t) {
     guarded(t, () => {
+      const ec = t.entry_conditions || {}
       setForm({
         name: t.name, date: t.date,
         team_a_name: t.team_a_name, team_b_name: t.team_b_name,
@@ -166,6 +192,15 @@ export default function CupScreen() {
         format: t.format || '',
         description: t.description || '',
         cover_url: t.cover_url || '',
+        rules_md: t.rules_md || '',
+        join_mode: t.join_mode || 'invite_only',
+        max_participants: t.max_participants != null ? String(t.max_participants) : '',
+        ec_handicap_max: ec.handicap_max != null ? String(ec.handicap_max) : '',
+        ec_handicap_min: ec.handicap_min != null ? String(ec.handicap_min) : '',
+        ec_age_min:      ec.age_min      != null ? String(ec.age_min)      : '',
+        ec_dress_code:   ec.dress_code || '',
+        ec_entry_fee_eur: ec.entry_fee_cents != null ? String((ec.entry_fee_cents/100).toFixed(2)) : '',
+        ec_payout:       ec.payout || '',
       })
       setEditId(t.id); setMode('edit')
     })
@@ -176,6 +211,14 @@ export default function CupScreen() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.name || !form.date) return
+    const entry_conditions = {}
+    if (form.ec_handicap_max !== '') entry_conditions.handicap_max = Number(form.ec_handicap_max)
+    if (form.ec_handicap_min !== '') entry_conditions.handicap_min = Number(form.ec_handicap_min)
+    if (form.ec_age_min      !== '') entry_conditions.age_min      = Number(form.ec_age_min)
+    if (form.ec_dress_code.trim())   entry_conditions.dress_code   = form.ec_dress_code.trim()
+    if (form.ec_entry_fee_eur !== '') entry_conditions.entry_fee_cents = Math.round(Number(form.ec_entry_fee_eur) * 100)
+    if (form.ec_payout.trim())       entry_conditions.payout       = form.ec_payout.trim()
+
     const payload = {
       name: form.name, date: form.date,
       team_a_name: form.team_a_name, team_b_name: form.team_b_name,
@@ -185,6 +228,10 @@ export default function CupScreen() {
       format: form.format.trim() || null,
       description: form.description.trim() || null,
       cover_url: form.cover_url.trim() || null,
+      rules_md: form.rules_md.trim() || null,
+      join_mode: form.join_mode,
+      max_participants: form.max_participants ? parseInt(form.max_participants, 10) : null,
+      entry_conditions,
     }
     if (mode === 'create') {
       if (user) payload.owner_id = user.id
@@ -320,6 +367,67 @@ export default function CupScreen() {
             </div>
           )}
 
+          {/* Regeln (Markdown / Freitext) */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Regeln & Hinweise</p>
+            <textarea className={inputCls} rows={5}
+              placeholder={"Format-Details, Tee-Times, Etikette, Mitbringen ...\nBspw.: Texas Scramble, weiße Tees, Start 09:00, Preisgeld 1./2./3.\nBlue-Card Pflicht, Cap empfohlen."}
+              value={form.rules_md}
+              onChange={e => setForm(f => ({ ...f, rules_md: e.target.value }))} />
+          </div>
+
+          {/* Teilnahme-Bedingungen */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Teilnahme-Bedingungen</p>
+            <div className="grid grid-cols-2 gap-3">
+              <input className={inputCls} placeholder="HC max" type="number" step="0.1"
+                value={form.ec_handicap_max}
+                onChange={e => setForm(f => ({ ...f, ec_handicap_max: e.target.value }))} />
+              <input className={inputCls} placeholder="HC min" type="number" step="0.1"
+                value={form.ec_handicap_min}
+                onChange={e => setForm(f => ({ ...f, ec_handicap_min: e.target.value }))} />
+              <input className={inputCls} placeholder="Alter ab" type="number"
+                value={form.ec_age_min}
+                onChange={e => setForm(f => ({ ...f, ec_age_min: e.target.value }))} />
+              <input className={inputCls} placeholder="Startgeld €" type="number" step="0.01"
+                value={form.ec_entry_fee_eur}
+                onChange={e => setForm(f => ({ ...f, ec_entry_fee_eur: e.target.value }))} />
+              <input className={inputCls} placeholder="Dresscode" type="text"
+                value={form.ec_dress_code}
+                onChange={e => setForm(f => ({ ...f, ec_dress_code: e.target.value }))} />
+              <input className={inputCls} placeholder="Preise / Payout" type="text"
+                value={form.ec_payout}
+                onChange={e => setForm(f => ({ ...f, ec_payout: e.target.value }))} />
+            </div>
+          </div>
+
+          {/* Join-Modus */}
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Beitritt</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ['invite_only', 'Nur Einladung', 'Code/Liste'],
+                ['request',     'Auf Anfrage',   'Du genehmigst'],
+                ['open',        'Offen',         'Jeder kann rein'],
+              ].map(([val, label, hint]) => (
+                <button key={val} type="button"
+                  onClick={() => setForm(f => ({ ...f, join_mode: val }))}
+                  className={`flex flex-col items-center gap-0.5 py-2.5 rounded-xl active:scale-[0.97] transition-all ${
+                    form.join_mode === val
+                      ? 'bg-accent/15 text-accent border border-accent/40'
+                      : 'bg-bg text-inkMuted border border-line'
+                  }`}>
+                  <span className="text-xs font-bold">{label}</span>
+                  <span className="text-[9px] tracking-wide opacity-75">{hint}</span>
+                </button>
+              ))}
+            </div>
+            <input className={`${inputCls} mt-2`} placeholder="Max. Teilnehmer (optional)"
+              type="number" min="2"
+              value={form.max_participants}
+              onChange={e => setForm(f => ({ ...f, max_participants: e.target.value }))} />
+          </div>
+
           {/* Visibility */}
           <div>
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted pl-1 mb-1.5">Sichtbarkeit</p>
@@ -443,6 +551,28 @@ export default function CupScreen() {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
+                {cup.owner_id === user?.id && (
+                  <button
+                    onClick={() => setBoostCup(cup)}
+                    className={`text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform border ${
+                      cup.promoted_until && new Date(cup.promoted_until) > new Date()
+                        ? 'bg-accent text-brandDark border-accent'
+                        : 'bg-surface text-inkMuted border-line hover:text-accent hover:border-accent/40'
+                    }`}
+                    title="Nach oben schieben / Highlight"
+                  >
+                    {cup.promoted_until && new Date(cup.promoted_until) > new Date() ? 'Boost ●' : 'Boost'}
+                  </button>
+                )}
+                {cup.owner_id === user?.id && pendingCounts[cup.id] > 0 && (
+                  <button
+                    onClick={() => setJoinReqCup(cup)}
+                    className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md bg-warn/15 text-warn border border-warn/40 active:scale-95 transition-transform"
+                    title="Beitritts-Anfragen prüfen"
+                  >
+                    {pendingCounts[cup.id]} Anfragen
+                  </button>
+                )}
                 {cup.owner_id === user?.id && (cup.package_type || 'free') === 'free' && (
                   <button
                     onClick={() => upgradeToPremium(cup)}
@@ -545,6 +675,21 @@ export default function CupScreen() {
         <CupExtrasSheet
           cup={extrasCup}
           onClose={() => setExtrasCup(null)}
+          onChanged={loadTournaments}
+        />
+      )}
+
+      {boostCup && (
+        <BoostSheet
+          cup={boostCup}
+          onClose={() => setBoostCup(null)}
+        />
+      )}
+
+      {joinReqCup && (
+        <JoinRequestsSheet
+          cup={joinReqCup}
+          onClose={() => setJoinReqCup(null)}
           onChanged={loadTournaments}
         />
       )}
