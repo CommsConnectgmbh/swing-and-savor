@@ -59,6 +59,33 @@ export default function PublicCupScreen() {
     ? t('share.cupResultText', { winner, cup: cup.name, url: shareUrl })
     : t('share.cupShareText', { url: shareUrl })
 
+  const ec = cup.entry_conditions && typeof cup.entry_conditions === 'object' ? cup.entry_conditions : null
+  const ecEntries = []
+  if (ec) {
+    if (ec.handicap_min != null && ec.handicap_max != null) {
+      ecEntries.push([null, t('cup.entry.handicapRange', { min: ec.handicap_min, max: ec.handicap_max })])
+    } else if (ec.handicap_max != null) {
+      ecEntries.push([t('cup.entry.handicapMax'), String(ec.handicap_max)])
+    } else if (ec.handicap_min != null) {
+      ecEntries.push([t('cup.entry.handicapMin'), String(ec.handicap_min)])
+    }
+    if (ec.age_min != null)    ecEntries.push([t('cup.entry.ageMin'),    `${ec.age_min}+`])
+    if (ec.gender)             ecEntries.push([t('cup.entry.gender'),    String(ec.gender)])
+    if (ec.dress_code)         ecEntries.push([t('cup.entry.dressCode'), String(ec.dress_code)])
+    if (ec.entry_fee_cents != null) {
+      const eur = (ec.entry_fee_cents / 100).toLocaleString(i18n.resolvedLanguage || 'de', { style: 'currency', currency: 'EUR' })
+      ecEntries.push([t('cup.entry.entryFee'), eur])
+    }
+    if (ec.payout)             ecEntries.push([t('cup.entry.payout'),    String(ec.payout)])
+    if (ec.equipment)          ecEntries.push([t('cup.entry.equipment'), String(ec.equipment)])
+  }
+  const joinModeLabel = cup.join_mode === 'open'
+    ? t('cup.joinModeOpen')
+    : cup.join_mode === 'request'
+      ? t('cup.joinModeRequest')
+      : null
+  const hasMeta = !!(cup.rules_md || ecEntries.length || joinModeLabel || cup.max_participants)
+
   return (
     <div className="min-h-screen bg-bg text-ink">
       <header className="px-4 pt-4 pb-3 flex items-center justify-between">
@@ -106,6 +133,54 @@ export default function PublicCupScreen() {
             </div>
           )}
         </div>
+
+        {hasMeta && (
+          <div className="mt-5 space-y-3">
+            {(joinModeLabel || cup.max_participants) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {joinModeLabel && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-bold uppercase tracking-wide">
+                    {joinModeLabel}
+                  </span>
+                )}
+                {cup.max_participants && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-surface border border-line text-inkMuted text-[11px] font-bold uppercase tracking-wide">
+                    {t('cup.maxParticipantsLabel', { count: cup.max_participants })}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {ecEntries.length > 0 && (
+              <section className="rounded-card bg-surface border border-line p-4">
+                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted mb-2">
+                  {t('cup.entryConditionsTitle')}
+                </p>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                  {ecEntries.map(([label, value], i) => (
+                    label
+                      ? <div key={i} className="contents">
+                          <dt className="text-inkMuted">{label}</dt>
+                          <dd className="text-ink font-medium text-right">{value}</dd>
+                        </div>
+                      : <dd key={i} className="col-span-2 text-ink font-medium">{value}</dd>
+                  ))}
+                </dl>
+              </section>
+            )}
+
+            {cup.rules_md && (
+              <section className="rounded-card bg-surface border border-line p-4">
+                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted mb-2">
+                  {t('cup.rulesTitle')}
+                </p>
+                <p className="text-sm text-ink leading-relaxed whitespace-pre-wrap break-words">
+                  {cup.rules_md}
+                </p>
+              </section>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3 mt-5">

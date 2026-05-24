@@ -156,13 +156,18 @@ async function main() {
   if (deLoc) {
     step('Localization patchen (state-aware)')
     const state = editable.attributes.appStoreState
-    const frozen = ['WAITING_FOR_REVIEW','IN_REVIEW','PROCESSING_FOR_APP_STORE','READY_FOR_DISTRIBUTION','PENDING_APPLE_RELEASE']
-    const isFrozen = frozen.includes(state)
-    // In gefrorenen States nur die "always editable"-Felder patchen.
-    const attrs = isFrozen
-      ? { promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl }
-      : { description: META.description, keywords: META.keywords, promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl, whatsNew: META.whatsNew }
-    if (isFrozen) warn(`State ist ${state} — nur promotionalText/supportUrl/marketingUrl sind editierbar`)
+    // promotionalText ist in jedem State editierbar.
+    // supportUrl/marketingUrl sind in IN_REVIEW + PROCESSING_FOR_APP_STORE + PENDING_APPLE_RELEASE
+    // gesperrt (HTTP 409 STATE_ERROR), in WAITING_FOR_REVIEW noch erlaubt.
+    const hardLocked = ['IN_REVIEW','PROCESSING_FOR_APP_STORE','PENDING_APPLE_RELEASE','READY_FOR_DISTRIBUTION'].includes(state)
+    const softLocked = ['WAITING_FOR_REVIEW'].includes(state)
+    const attrs = hardLocked
+      ? { promotionalText: META.promotionalText }
+      : softLocked
+        ? { promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl }
+        : { description: META.description, keywords: META.keywords, promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl, whatsNew: META.whatsNew }
+    if (hardLocked) warn(`State ist ${state} — nur promotionalText ist editierbar`)
+    else if (softLocked) warn(`State ist ${state} — nur promotionalText/supportUrl/marketingUrl sind editierbar`)
     if (DRY) {
       log('würde patchen:', attrs)
     } else {

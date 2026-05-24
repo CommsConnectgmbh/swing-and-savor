@@ -1,21 +1,24 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 const TIERS = [
-  { id: 'top',       label: 'Nach oben schieben', desc: 'Ganz oben in Entdecken', icon: '↑',
-    prices: { 3: 499, 7: 999, 14: 1499 } },
-  { id: 'highlight', label: 'Highlight',          desc: 'Farbiger Rahmen im Feed', icon: '✦',
-    prices: { 3: 299, 7: 499, 14: 799 } },
-  { id: 'both',      label: 'Top + Highlight',    desc: 'Beides — maximale Sichtbarkeit', icon: '★',
-    prices: { 3: 699, 7: 1299, 14: 1999 } },
+  { id: 'top',       icon: '↑', prices: { 3: 499, 7: 999, 14: 1499 } },
+  { id: 'highlight', icon: '✦', prices: { 3: 299, 7: 499, 14: 799 } },
+  { id: 'both',      icon: '★', prices: { 3: 699, 7: 1299, 14: 1999 } },
 ]
 const DURATIONS = [3, 7, 14]
 
 export default function BoostSheet({ cup, onClose }) {
+  const { t, i18n } = useTranslation()
   const [tier, setTier] = useState('top')
   const [duration, setDuration] = useState(3)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
+  const tierLabel = (id) => t(`sheets.boost.tier.${id}Label`)
+  const tierDesc  = (id) => t(`sheets.boost.tier.${id}Desc`)
+  const lang = i18n.resolvedLanguage || 'de'
+  const fmtEur = (cents) => (cents / 100).toLocaleString(lang, { style: 'currency', currency: 'EUR' })
 
   const def = TIERS.find(t => t.id === tier)
   const amount = def?.prices?.[duration]
@@ -27,7 +30,7 @@ export default function BoostSheet({ cup, onClose }) {
     try {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
-      if (!jwt) throw new Error('Bitte anmelden')
+      if (!jwt) throw new Error(t('sheets.boost.mustLogin'))
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-boost-checkout`, {
         method: 'POST',
         headers: {
@@ -53,7 +56,7 @@ export default function BoostSheet({ cup, onClose }) {
         onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-lineSoft flex items-center justify-between">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-accent">Boost</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-accent">{t('sheets.boost.title')}</p>
             <p className="font-condensed font-bold text-xl text-ink truncate">{cup.name}</p>
           </div>
           <button onClick={onClose} className="p-2 text-inkMuted active:scale-90 transition-transform">
@@ -66,13 +69,15 @@ export default function BoostSheet({ cup, onClose }) {
         <div className="px-5 py-5 space-y-5">
           {stillActive && (
             <div className="rounded-xl bg-accent/10 border border-accent/30 px-4 py-3 text-xs text-accent">
-              Bereits aktiv ({cup.promo_tier}) bis {activeUntil.toLocaleDateString('de-DE')} —
-              ein weiterer Kauf verlängert oder upgradet.
+              {t('sheets.boost.alreadyActive', {
+                tier: cup.promo_tier,
+                date: activeUntil.toLocaleDateString(lang),
+              })}
             </div>
           )}
 
           <div className="space-y-2">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">Variante</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">{t('sheets.boost.variantLabel')}</p>
             {TIERS.map(tdef => (
               <button key={tdef.id} type="button"
                 onClick={() => setTier(tdef.id)}
@@ -85,18 +90,18 @@ export default function BoostSheet({ cup, onClose }) {
                   {tdef.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-ink">{tdef.label}</p>
-                  <p className="text-[11px] text-inkMuted">{tdef.desc}</p>
+                  <p className="text-sm font-bold text-ink">{tierLabel(tdef.id)}</p>
+                  <p className="text-[11px] text-inkMuted">{tierDesc(tdef.id)}</p>
                 </div>
                 <p className="text-sm font-bold tabular-nums text-ink">
-                  {(tdef.prices[duration] / 100).toFixed(2).replace('.', ',')} €
+                  {fmtEur(tdef.prices[duration])}
                 </p>
               </button>
             ))}
           </div>
 
           <div>
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted mb-2">Dauer</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted mb-2">{t('sheets.boost.durationLabel')}</p>
             <div className="grid grid-cols-3 gap-2">
               {DURATIONS.map(d => (
                 <button key={d} type="button"
@@ -106,7 +111,7 @@ export default function BoostSheet({ cup, onClose }) {
                       ? 'bg-accent text-brandDark'
                       : 'bg-bg text-inkMuted border border-line'
                   }`}>
-                  {d} Tage
+                  {t('sheets.boost.daysSuffix', { count: d })}
                 </button>
               ))}
             </div>
@@ -120,11 +125,11 @@ export default function BoostSheet({ cup, onClose }) {
             className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40"
           >
             {busy
-              ? '…'
-              : `Jetzt boosten · ${(amount / 100).toFixed(2).replace('.', ',')} €`}
+              ? t('sheets.boost.ctaLoading')
+              : t('sheets.boost.cta', { price: amount ? fmtEur(amount) : '' })}
           </button>
           <p className="text-[10px] text-inkDim text-center">
-            Stripe-Checkout · einmalige Zahlung · Comms Connect GmbH
+            {t('sheets.boost.footer')}
           </p>
         </div>
       </div>

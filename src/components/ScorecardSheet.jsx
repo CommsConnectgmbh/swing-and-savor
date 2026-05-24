@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
 export default function ScorecardSheet({ match, players, holes, onClose }) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage || 'de'
   const { user } = useAuth()
   const [markers, setMarkers]     = useState({})
   const [scores,  setScores]      = useState({})
@@ -48,7 +51,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
       if (error) throw error
       await loadAll()
     } catch (e) {
-      alert(e.message || 'Shuffle fehlgeschlagen')
+      alert(e.message || t('sheets.scorecard.shuffleFail'))
     } finally { setShuffling(false) }
   }
 
@@ -82,7 +85,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
   }
 
   async function signCard(playerId, role) {
-    if (!user) { alert('Bitte zuerst anmelden'); return }
+    if (!user) { alert(t('sheets.scorecard.mustLogin')); return }
     const { error } = await supabase.from('match_signatures').insert({
       match_id: match.id, player_id: playerId, role,
       signer_user_id: user.id, signer_label: null,
@@ -131,7 +134,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
       if (!res.ok) throw new Error(j.error || 'ocr_failed')
       setOcrPreview({ uploadId: row.id, result: j.result })
     } catch (e) {
-      setOcrErr(e.message || 'Upload fehlgeschlagen')
+      setOcrErr(e.message || t('sheets.scorecard.ocrUploadFail'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -188,9 +191,9 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
 
         <div className="px-5 py-4 border-b border-lineSoft flex items-center justify-between flex-shrink-0">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">Scorekarten</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">{t('sheets.scorecard.title')}</p>
             <p className="font-condensed font-bold text-xl text-ink truncate">
-              {match?.tournament?.name || 'Match'}
+              {match?.tournament?.name || t('sheets.scorecard.matchFallback')}
             </p>
           </div>
           <button onClick={onClose} className="p-2 text-inkMuted active:scale-90 transition-transform">
@@ -205,12 +208,12 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
           {isOwner && (
             <button onClick={shuffleMarkers} disabled={shuffling}
               className="text-[11px] font-bold tracking-wide px-3 py-1.5 rounded-lg bg-accent/15 text-accent border border-accent/40 active:scale-95 transition-transform disabled:opacity-50">
-              ↻ Zähler shuffeln
+              {t('sheets.scorecard.shuffle')}
             </button>
           )}
           <button onClick={() => fileRef.current?.click()} disabled={uploading}
             className="text-[11px] font-bold tracking-wide px-3 py-1.5 rounded-lg bg-bg text-ink border border-line active:scale-95 transition-transform disabled:opacity-50">
-            {uploading ? 'Lese …' : '📷 Foto scannen'}
+            {uploading ? t('sheets.scorecard.ocrButtonLoading') : t('sheets.scorecard.ocrButton')}
           </button>
           <input ref={fileRef} type="file" accept="image/*" capture="environment"
             className="hidden" onChange={e => handleOcrUpload(e.target.files?.[0])} />
@@ -221,6 +224,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
         {/* OCR-Vorschau */}
         {ocrPreview && (
           <OcrPreviewPanel
+            t={t}
             preview={ocrPreview}
             players={players}
             onApply={applyOcrToPlayer}
@@ -252,6 +256,8 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
         <div className="flex-1 overflow-y-auto px-3 py-3 bg-bg border-t border-line">
           {activePlayer ? (
             <PlayerCard
+              t={t}
+              lang={lang}
               player={activePlayer}
               players={players}
               holes={holes}
@@ -269,7 +275,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
             />
           ) : (
             <div className="text-center py-10 text-inkMuted text-sm">
-              Keine Spieler in diesem Match.
+              {t('sheets.scorecard.emptyPlayers')}
             </div>
           )}
         </div>
@@ -278,30 +284,30 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
   )
 }
 
-function PlayerCard({ player, players, holes, markerId, scores, signatures, isOwner, canWrite, locked, total, onAssignMarker, onSetStroke, onSign, onClearSig }) {
+function PlayerCard({ t, lang, player, players, holes, markerId, scores, signatures, isOwner, canWrite, locked, total, onAssignMarker, onSetStroke, onSign, onClearSig }) {
   const otherPlayers = players.filter(p => p.id !== player.id)
   const markerPlayer = players.find(p => p.id === markerId)
   return (
     <div>
       <div className="mb-3 px-3 py-2 rounded-xl bg-surface border border-line flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold tracking-wider uppercase text-inkMuted">Zähler</p>
+          <p className="text-[10px] font-bold tracking-wider uppercase text-inkMuted">{t('sheets.scorecard.counter')}</p>
           {isOwner ? (
             <select
               value={markerId || ''}
               onChange={e => onAssignMarker(player.id, e.target.value)}
               className="mt-0.5 bg-bg border border-line rounded-md px-2 py-1 text-sm text-ink"
             >
-              <option value="">— Zähler wählen —</option>
+              <option value="">{t('sheets.scorecard.counterChoose')}</option>
               {otherPlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           ) : (
-            <p className="text-sm font-bold text-ink truncate">{markerPlayer?.name || '— noch nicht zugewiesen —'}</p>
+            <p className="text-sm font-bold text-ink truncate">{markerPlayer?.name || t('sheets.scorecard.counterNone')}</p>
           )}
         </div>
         {locked && (
           <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded bg-accent/15 text-accent border border-accent/30">
-            Unterschrieben
+            {t('sheets.scorecard.signed')}
           </span>
         )}
       </div>
@@ -339,15 +345,15 @@ function PlayerCard({ player, players, holes, markerId, scores, signatures, isOw
 
       <div className="mt-3 grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl bg-surface border border-line py-2">
-          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">Total</p>
+          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">{t('sheets.scorecard.total')}</p>
           <p className="font-condensed font-black text-2xl text-ink tabular-nums">{total.strokes || '—'}</p>
         </div>
         <div className="rounded-xl bg-surface border border-line py-2">
-          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">Gespielt</p>
+          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">{t('sheets.scorecard.played')}</p>
           <p className="font-condensed font-black text-2xl text-ink tabular-nums">{total.holes}/18</p>
         </div>
         <div className="rounded-xl bg-surface border border-line py-2">
-          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">Schnitt</p>
+          <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">{t('sheets.scorecard.avg')}</p>
           <p className="font-condensed font-black text-2xl text-ink tabular-nums">
             {total.holes ? (total.strokes / total.holes).toFixed(1) : '—'}
           </p>
@@ -357,15 +363,19 @@ function PlayerCard({ player, players, holes, markerId, scores, signatures, isOw
       {/* Unterschriften */}
       <div className="mt-4 grid grid-cols-2 gap-3">
         <SignRow
-          title="Spieler"
+          t={t}
+          lang={lang}
+          title={t('sheets.scorecard.playerLabel')}
           subtitle={player.name}
           signedAt={signatures.player}
           onSign={() => onSign(player.id, 'player')}
           onClear={() => onClearSig(player.id, 'player')}
         />
         <SignRow
-          title="Zähler"
-          subtitle={markerPlayer?.name || '— kein Zähler —'}
+          t={t}
+          lang={lang}
+          title={t('sheets.scorecard.markerLabel')}
+          subtitle={markerPlayer?.name || t('sheets.scorecard.markerNone')}
           signedAt={signatures.marker}
           onSign={() => onSign(player.id, 'marker')}
           onClear={() => onClearSig(player.id, 'marker')}
@@ -375,7 +385,7 @@ function PlayerCard({ player, players, holes, markerId, scores, signatures, isOw
   )
 }
 
-function SignRow({ title, subtitle, signedAt, onSign, onClear }) {
+function SignRow({ t, lang, title, subtitle, signedAt, onSign, onClear }) {
   return (
     <div className={`px-3 py-3 rounded-xl border ${signedAt ? 'border-accent/40 bg-accent/8' : 'border-line bg-surface'}`}>
       <p className="text-[9px] font-bold tracking-wider uppercase text-inkMuted">{title}</p>
@@ -384,31 +394,32 @@ function SignRow({ title, subtitle, signedAt, onSign, onClear }) {
         <div className="mt-2 flex items-center justify-between gap-2">
           <p className="text-[10px] text-accent font-bold flex items-center gap-1">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-            {new Date(signedAt).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
+            {new Date(signedAt).toLocaleString(lang, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
           </p>
           <button onClick={onClear}
-            className="text-[10px] text-inkDim underline">zurück</button>
+            className="text-[10px] text-inkDim underline">{t('sheets.scorecard.undo')}</button>
         </div>
       ) : (
         <button onClick={onSign}
           className="mt-2 w-full py-2 rounded-lg text-xs font-bold tracking-wide bg-accent text-brandDark active:scale-95 transition-transform">
-          Unterschreiben
+          {t('sheets.scorecard.sign')}
         </button>
       )}
     </div>
   )
 }
 
-function OcrPreviewPanel({ preview, players, onApply, onDismiss }) {
+function OcrPreviewPanel({ t, preview, players, onApply, onDismiss }) {
   const result = preview.result || {}
   const ocrPlayers = result.players || []
+  const pct = result.confidence != null ? Math.round(result.confidence * 100) : '?'
   return (
     <div className="px-3 py-3 border-b border-line bg-accent/8 flex-shrink-0">
       <div className="flex items-center justify-between mb-2">
         <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-accent">
-          OCR-Vorschau · Confidence {result.confidence != null ? Math.round(result.confidence * 100) : '?'}%
+          {t('sheets.scorecard.ocrPreviewHeader', { pct })}
         </p>
-        <button onClick={onDismiss} className="text-[10px] text-inkDim underline">verwerfen</button>
+        <button onClick={onDismiss} className="text-[10px] text-inkDim underline">{t('sheets.scorecard.ocrDismiss')}</button>
       </div>
       {result.notes && <p className="text-[11px] text-inkMuted mb-2 italic">{result.notes}</p>}
       <div className="space-y-2">
@@ -419,9 +430,9 @@ function OcrPreviewPanel({ preview, players, onApply, onDismiss }) {
             <div key={i} className="rounded-lg bg-surface border border-line p-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-ink truncate">{op.name || `Spieler ${i+1}`}</p>
+                  <p className="text-sm font-bold text-ink truncate">{op.name || t('sheets.scorecard.ocrPlayerFallback', { n: i + 1 })}</p>
                   <p className="text-[10px] text-inkMuted">
-                    {filled}/18 erkannt · Total {sum || '–'}
+                    {t('sheets.scorecard.ocrRecognized', { filled, sum: sum || '–' })}
                     {op.handicap != null && ` · HC ${op.handicap}`}
                   </p>
                 </div>
@@ -429,7 +440,7 @@ function OcrPreviewPanel({ preview, players, onApply, onDismiss }) {
                   defaultValue=""
                   onChange={e => e.target.value && onApply(e.target.value, op)}
                   className="bg-bg border border-line rounded-md px-2 py-1.5 text-xs text-ink">
-                  <option value="">Übernehmen für …</option>
+                  <option value="">{t('sheets.scorecard.ocrApplyPh')}</option>
                   {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -437,7 +448,7 @@ function OcrPreviewPanel({ preview, players, onApply, onDismiss }) {
           )
         })}
         {ocrPlayers.length === 0 && (
-          <p className="text-xs text-inkMuted">Keine Spieler erkannt — bitte schärferes Foto.</p>
+          <p className="text-xs text-inkMuted">{t('sheets.scorecard.ocrNoPlayers')}</p>
         )}
       </div>
     </div>

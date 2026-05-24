@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage || 'de'
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
@@ -34,7 +37,7 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
       if (error) throw error
       await load(); onChanged?.()
     } catch (e) {
-      alert(e.message || 'Approve failed')
+      alert(e.message || t('sheets.joinRequests.approveFail'))
     } finally { setBusyId(null) }
   }
 
@@ -54,7 +57,7 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
         onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-lineSoft flex items-center justify-between">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">Beitritts-Anfragen</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">{t('sheets.joinRequests.title')}</p>
             <p className="font-condensed font-bold text-xl text-ink truncate">{cup.name}</p>
           </div>
           <button onClick={onClose} className="p-2 text-inkMuted active:scale-90 transition-transform">
@@ -65,12 +68,12 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
         </div>
 
         <div className="px-3 py-2">
-          {loading && <div className="py-10 text-center text-inkMuted text-xs">Lade …</div>}
+          {loading && <div className="py-10 text-center text-inkMuted text-xs">{t('sheets.joinRequests.loading')}</div>}
           {!loading && rows.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-sm text-inkMuted">Keine Anfragen.</p>
+              <p className="text-sm text-inkMuted">{t('sheets.joinRequests.emptyTitle')}</p>
               <p className="text-xs text-inkDim mt-1">
-                Beitritte über Code (Privat) oder Mitspielen-Button (Offen/Anfrage).
+                {t('sheets.joinRequests.emptySub')}
               </p>
             </div>
           )}
@@ -86,11 +89,11 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-ink truncate">
-                  {r.display_name || r.profile?.display_name || 'Spieler'}
+                  {r.display_name || r.profile?.display_name || t('sheets.joinRequests.playerFallback')}
                   {r.profile?.handle && <span className="text-inkDim font-normal text-xs"> · @{r.profile.handle}</span>}
                 </p>
                 <p className="text-[11px] text-inkMuted">
-                  HC {r.handicap ?? r.profile?.hcp ?? '—'} · Anfrage {new Date(r.created_at).toLocaleDateString('de-DE')}
+                  HC {r.handicap ?? r.profile?.hcp ?? '—'} · {t('sheets.joinRequests.requestedOn', { date: new Date(r.created_at).toLocaleDateString(lang) })}
                   {r.status !== 'pending' && <span className="ml-2 text-accent">· {r.status}</span>}
                 </p>
                 {r.message && <p className="text-[11px] text-ink mt-1 italic">„{r.message}"</p>}
@@ -101,18 +104,18 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
                     <button disabled={busyId === r.id}
                       onClick={() => approve(r, 'A')}
                       className="text-[10px] font-bold px-2 py-1 rounded bg-teamA/20 text-teamA border border-teamA/40 active:scale-95 disabled:opacity-50">
-                      +Team A
+                      {t('sheets.joinRequests.toTeamA')}
                     </button>
                     <button disabled={busyId === r.id}
                       onClick={() => approve(r, 'B')}
                       className="text-[10px] font-bold px-2 py-1 rounded bg-teamB/20 text-teamB border border-teamB/40 active:scale-95 disabled:opacity-50">
-                      +Team B
+                      {t('sheets.joinRequests.toTeamB')}
                     </button>
                   </div>
                   <button disabled={busyId === r.id}
                     onClick={() => reject(r)}
                     className="text-[10px] font-bold px-2 py-1 rounded bg-danger/12 text-danger border border-danger/30 active:scale-95 disabled:opacity-50">
-                    Ablehnen
+                    {t('sheets.joinRequests.reject')}
                   </button>
                 </div>
               )}

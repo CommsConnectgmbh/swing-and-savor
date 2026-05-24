@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 
-// Beitritts-Sheet für Open- und Request-Mode.
-// open    → join_open_tournament RPC erstellt direkt player-row
-// request → schreibt tournament_join_requests, Owner approved
 export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [accepted, setAccepted] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -37,10 +36,10 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
                  || ((hcpMax == null || hcpNum <= hcpMax) && (hcpMin == null || hcpNum >= hcpMin))
 
   async function handleSubmit() {
-    if (!user) { setErr('Bitte zuerst anmelden'); return }
-    if (!accepted) { setErr('Regeln und Bedingungen müssen akzeptiert werden'); return }
-    if (!hcpOK)    { setErr(`Handicap erfüllt die Bedingungen nicht (${hcpMin ?? 0}–${hcpMax ?? '∞'})`); return }
-    if (!name.trim()) { setErr('Anzeigename fehlt'); return }
+    if (!user) { setErr(t('sheets.join.errLogin')); return }
+    if (!accepted) { setErr(t('sheets.join.errAccept')); return }
+    if (!hcpOK)    { setErr(t('sheets.join.errHcp', { min: hcpMin ?? 0, max: hcpMax ?? '∞' })); return }
+    if (!name.trim()) { setErr(t('sheets.join.errName')); return }
     setBusy(true); setErr(null)
     try {
       if (isOpen) {
@@ -62,7 +61,7 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
       }
       onJoined?.()
     } catch (e) {
-      setErr(e?.message || 'Beitritt fehlgeschlagen')
+      setErr(e?.message || t('sheets.join.errFail'))
     } finally { setBusy(false) }
   }
 
@@ -73,7 +72,7 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
         onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-surface/95 backdrop-blur px-5 py-4 border-b border-lineSoft flex items-center justify-between z-10">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">Beitritt</p>
+            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted">{t('sheets.join.title')}</p>
             <p className="font-condensed font-bold text-xl text-ink truncate">{tournament?.name}</p>
           </div>
           <button onClick={onClose} className="p-2 text-inkMuted active:scale-90 transition-transform">
@@ -86,18 +85,18 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
         <div className="px-5 py-5 space-y-5">
           {/* Conditions Strip */}
           <div className="grid grid-cols-2 gap-2">
-            {hcpMax != null && <Pill label="HC max" value={hcpMax} />}
-            {hcpMin != null && <Pill label="HC min" value={hcpMin} />}
-            {cond.age_min      && <Pill label="Alter ab" value={cond.age_min} />}
-            {cond.dress_code   && <Pill label="Dresscode" value={cond.dress_code} />}
-            {fee != null       && <Pill label="Startgeld" value={`${(fee/100).toFixed(2)} €`} />}
-            {cond.payout       && <Pill label="Preise" value={cond.payout} />}
+            {hcpMax != null && <Pill label={t('sheets.join.pillHcMax')} value={hcpMax} />}
+            {hcpMin != null && <Pill label={t('sheets.join.pillHcMin')} value={hcpMin} />}
+            {cond.age_min      && <Pill label={t('sheets.join.pillAge')} value={cond.age_min} />}
+            {cond.dress_code   && <Pill label={t('sheets.join.pillDress')} value={cond.dress_code} />}
+            {fee != null       && <Pill label={t('sheets.join.pillFee')} value={`${(fee/100).toFixed(2)} €`} />}
+            {cond.payout       && <Pill label={t('sheets.join.pillPayout')} value={cond.payout} />}
           </div>
 
           {/* Rules */}
           {tournament?.rules_md && (
             <div>
-              <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted mb-2">Regeln</p>
+              <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted mb-2">{t('sheets.join.rulesHeading')}</p>
               <div className="rounded-xl bg-bg border border-line px-4 py-3 text-sm text-ink whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
                 {tournament.rules_md}
               </div>
@@ -105,17 +104,17 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
           )}
 
           {!user && (
-            <p className="text-sm text-danger">Bitte zuerst anmelden, um beizutreten.</p>
+            <p className="text-sm text-danger">{t('sheets.join.mustLogin')}</p>
           )}
 
           {user && (
             <>
               <div className="space-y-3">
-                <Input label="Anzeigename" value={name} onChange={setName} placeholder="Vorname Nachname" />
-                <Input label="Handicap" value={hcp} onChange={setHcp} placeholder="z.B. 18.4" type="number" />
+                <Input label={t('sheets.join.displayName')} value={name} onChange={setName} placeholder={t('sheets.join.displayNamePh')} />
+                <Input label={t('sheets.join.handicap')} value={hcp} onChange={setHcp} placeholder={t('sheets.join.handicapPh')} type="number" />
                 {isRequest && (
-                  <Input label="Nachricht (optional)" value={msg} onChange={setMsg}
-                    placeholder="Stell dich kurz vor" textarea />
+                  <Input label={t('sheets.join.message')} value={msg} onChange={setMsg}
+                    placeholder={t('sheets.join.messagePh')} textarea />
                 )}
               </div>
 
@@ -123,7 +122,7 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
                 <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)}
                   className="mt-0.5 w-5 h-5 accent-accent flex-shrink-0" />
                 <span className="text-xs text-ink leading-relaxed">
-                  Ich akzeptiere die Regeln und Teilnahme-Bedingungen.
+                  {t('sheets.join.acceptRules')}
                 </span>
               </label>
 
@@ -134,9 +133,7 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
                 disabled={busy || !accepted || !user}
                 className="w-full py-3 rounded-xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {busy ? '…'
-                  : isOpen ? 'Verbindlich beitreten'
-                  : 'Beitritt anfragen'}
+                {busy ? '…' : isOpen ? t('sheets.join.ctaOpen') : t('sheets.join.ctaRequest')}
               </button>
             </>
           )}
