@@ -16,6 +16,13 @@ import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
 import { useAuth } from '../lib/auth'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import ScorecardSheet from '../components/ScorecardSheet'
+import {
+  publishMatchToWatch,
+  clearWatchMatch,
+  onWatchScore,
+  onWatchRefreshRequest,
+  buildWatchPayload,
+} from '../lib/watchBridge'
 
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
@@ -96,8 +103,84 @@ export default function MatchDetailScreen() {
   const [storyOpen, setStoryOpen] = useState(false)
   const photoInputRef = useRef(null)
   const matchRef = useRef(null)
+  const holesRef = useRef(holes)
+  const flightNamesRef = useRef(flightNames)
+  const courseRef = useRef(null)
+
+  useEffect(() => { holesRef.current = holes }, [holes])
+  useEffect(() => { flightNamesRef.current = flightNames }, [flightNames])
+  useEffect(() => { courseRef.current = course }, [course])
 
   useEffect(() => { loadAll() }, [matchId])
+
+  // Apple Watch sync — mirror this match to the paired watch.
+  async function applyHoleFromWatch(holeNum, sa, sb) {
+    if (!Number.isInteger(holeNum) || sa < 1 || sb < 1) return
+    setHoles(prev => {
+      const next = prev.map(h =>
+        h.hole_number === holeNum
+          ? { ...h, strokes_a: String(sa), strokes_b: String(sb), winner: calcWinner(String(sa), String(sb)) }
+          : h
+      )
+      holesRef.current = next
+      return next
+    })
+    try {
+      await supabase.from('hole_results').upsert(
+        [{
+          match_id: matchId, hole_number: holeNum,
+          strokes_a: sa, strokes_b: sb,
+          winner: calcWinner(String(sa), String(sb)),
+          stroke_advantage: 'none',
+        }],
+        { onConflict: 'match_id,hole_number' }
+      )
+      if (matchRef.current?.status === 'pending') {
+        await supabase.from('matches').update({ status: 'active' }).eq('id', matchId)
+        const upd = { ...matchRef.current, status: 'active' }
+        matchRef.current = upd
+        setMatch(upd)
+      }
+    } catch (e) {
+      console.warn('[watch] apply failed', e)
+    }
+  }
+
+  function pushToWatch() {
+    const m = matchRef.current
+    if (!m) return
+    const fn = flightNamesRef.current || { A: [], B: [] }
+    const namesA = fn.A?.length ? fn.A : [m.pa1?.name, m.pa2?.name].filter(Boolean)
+    const namesB = fn.B?.length ? fn.B : [m.pb1?.name, m.pb2?.name].filter(Boolean)
+    const baseTypeLbl = m.type === 'singles' ? 'Singles'
+      : m.type === 'doubles' ? 'Doubles'
+      : `Flight ${namesA.length}v${namesB.length}`
+    const typeLabel = m.format === 'stableford' ? `${baseTypeLbl} · Stableford` : baseTypeLbl
+    const payload = buildWatchPayload({
+      match: m, holes: holesRef.current, tournament: m.tournament,
+      course: courseRef.current, namesA, namesB, typeLabel,
+    })
+    if (payload) publishMatchToWatch(payload)
+  }
+
+  useEffect(() => {
+    if (!match) return
+    pushToWatch()
+  }, [match?.id, match?.status, holes])
+
+  useEffect(() => {
+    const offScore = onWatchScore((evt) => {
+      const holeNum = parseInt(evt?.holeNumber, 10)
+      const sa = parseInt(evt?.strokesA, 10)
+      const sb = parseInt(evt?.strokesB, 10)
+      if (!holeNum || !sa || !sb) return
+      if (evt?.matchId && matchRef.current?.id && evt.matchId !== matchRef.current.id) return
+      applyHoleFromWatch(holeNum, sa, sb)
+    })
+    const offRefresh = onWatchRefreshRequest(() => pushToWatch())
+    return () => { offScore(); offRefresh(); clearWatchMatch() }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchId])
 
   function getPars() {
     try { return JSON.parse(localStorage.getItem(`par_${matchId}`)) || null } catch { return null }
