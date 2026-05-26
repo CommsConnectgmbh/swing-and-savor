@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1FDEFC2B9FA0A94EC87B32F0 /* WatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AE30AD613C3EED15E04AA9 /* WatchBridge.swift */; };
-		2420313702BD4E86FA587178 /* MatchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132516E5287206500BF772C3 /* MatchStore.swift */; };
-		2AA3705B6407A7F8DEEF2A0E /* SwingSavorWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 026903F7E01178D0CCF9271B /* SwingSavorWatchApp.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -17,22 +14,10 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
-		63F94694DFDB55A1D905F654 /* WatchMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A15AFA1673C82AB9ABEADB /* WatchMatch.swift */; };
-		80AF08AD6BDDB2E90983D586 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 21C171068BB400ADB4E5CFFD /* Assets.xcassets */; };
-		863C7215619EDA5CBF94ED04 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24324BC7D07397F7E2DD084B /* ContentView.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
-		A5E9354CABEEAA8ED82300A6 /* MatchSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E3DC782D53B73B53BE55711 /* MatchSummaryView.swift */; };
-		C4399FE2F7CF857A4BAEB342 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C7329538C2DE3BF650725D9 /* Foundation.framework */; };
-		DCD59813C3A97C02984676F6 /* WatchBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DE247F568CFFB04BACACA319 /* WatchBridge.m */; };
-		EAFDB0622763BD08EC4DF3B6 /* ScoreEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63815850BFCFD4825B6CC39E /* ScoreEntryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		026903F7E01178D0CCF9271B /* SwingSavorWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SwingSavorWatchApp.swift; sourceTree = "<group>"; };
-		087163C0DB1601443CB78029 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		132516E5287206500BF772C3 /* MatchStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MatchStore.swift; sourceTree = "<group>"; };
-		21C171068BB400ADB4E5CFFD /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		24324BC7D07397F7E2DD084B /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -42,15 +27,8 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
-		58A15AFA1673C82AB9ABEADB /* WatchMatch.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchMatch.swift; sourceTree = "<group>"; };
-		63815850BFCFD4825B6CC39E /* ScoreEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScoreEntryView.swift; sourceTree = "<group>"; };
-		6E3DC782D53B73B53BE55711 /* MatchSummaryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MatchSummaryView.swift; sourceTree = "<group>"; };
-		7C7329538C2DE3BF650725D9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		91AE30AD613C3EED15E04AA9 /* WatchBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchBridge.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
-		DE247F568CFFB04BACACA319 /* WatchBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchBridge.m; sourceTree = "<group>"; };
-		F48E28891CBD66F7C6F95AA8 /* SwingSavorWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwingSavorWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,27 +44,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		06561D6FA42012564B7E3771 /* SwingSavorWatch */ = {
-			isa = PBXGroup;
-			children = (
-				026903F7E01178D0CCF9271B /* SwingSavorWatchApp.swift */,
-				58A15AFA1673C82AB9ABEADB /* WatchMatch.swift */,
-				132516E5287206500BF772C3 /* MatchStore.swift */,
-				24324BC7D07397F7E2DD084B /* ContentView.swift */,
-				6E3DC782D53B73B53BE55711 /* MatchSummaryView.swift */,
-				63815850BFCFD4825B6CC39E /* ScoreEntryView.swift */,
-				087163C0DB1601443CB78029 /* Info.plist */,
-				21C171068BB400ADB4E5CFFD /* Assets.xcassets */,
-			);
-			name = SwingSavorWatch;
-			path = ../SwingSavorWatch;
-			sourceTree = "<group>";
-		};
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
-				E4DA0A2AB6BCCD5AD43C4B40 /* watchOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -98,7 +59,6 @@
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
-				06561D6FA42012564B7E3771 /* SwingSavorWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -106,7 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
-				F48E28891CBD66F7C6F95AA8 /* SwingSavorWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,7 +81,6 @@
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
-				D01012F323A135217347B670 /* Plugins */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -134,24 +92,6 @@
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
-			sourceTree = "<group>";
-		};
-		D01012F323A135217347B670 /* Plugins */ = {
-			isa = PBXGroup;
-			children = (
-				91AE30AD613C3EED15E04AA9 /* WatchBridge.swift */,
-				DE247F568CFFB04BACACA319 /* WatchBridge.m */,
-			);
-			name = Plugins;
-			path = Plugins;
-			sourceTree = "<group>";
-		};
-		E4DA0A2AB6BCCD5AD43C4B40 /* watchOS */ = {
-			isa = PBXGroup;
-			children = (
-				7C7329538C2DE3BF650725D9 /* Foundation.framework */,
-			);
-			name = watchOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -201,6 +141,8 @@
 				Base,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
+			packageReferences = (
+			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -268,8 +210,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
-				1FDEFC2B9FA0A94EC87B32F0 /* WatchBridge.swift in Sources */,
-				DCD59813C3A97C02984676F6 /* WatchBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
