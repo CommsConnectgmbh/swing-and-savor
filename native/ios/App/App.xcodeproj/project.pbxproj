@@ -17,7 +17,6 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
-		6063600129487A49000B65BF /* SwingSavorWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F48E28891CBD66F7C6F95AA8 /* SwingSavorWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		63F94694DFDB55A1D905F654 /* WatchMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A15AFA1673C82AB9ABEADB /* WatchMatch.swift */; };
 		80AF08AD6BDDB2E90983D586 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 21C171068BB400ADB4E5CFFD /* Assets.xcassets */; };
 		863C7215619EDA5CBF94ED04 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24324BC7D07397F7E2DD084B /* ContentView.swift */; };
@@ -27,30 +26,6 @@
 		DCD59813C3A97C02984676F6 /* WatchBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DE247F568CFFB04BACACA319 /* WatchBridge.m */; };
 		EAFDB0622763BD08EC4DF3B6 /* ScoreEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63815850BFCFD4825B6CC39E /* ScoreEntryView.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		EF1FDCC6B1012ECE4E01C200 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F31B3FFE795ED7D8CF36B85B;
-			remoteInfo = SwingSavorWatch;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		485420E316B7894D255CA464 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				6063600129487A49000B65BF /* SwingSavorWatch.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		026903F7E01178D0CCF9271B /* SwingSavorWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SwingSavorWatchApp.swift; sourceTree = "<group>"; };
@@ -85,14 +60,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D1A6C9F4D0103B93E0FB63A6 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C4399FE2F7CF857A4BAEB342 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,33 +166,14 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
-				485420E316B7894D255CA464 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				E768218037BDCFF4BB030CFC /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
-			productType = "com.apple.product-type.application";
-		};
-		F31B3FFE795ED7D8CF36B85B /* SwingSavorWatch */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F6960838A4081FB370C35DB7 /* Build configuration list for PBXNativeTarget "SwingSavorWatch" */;
-			buildPhases = (
-				DEC5306869A74834ED6817D1 /* Sources */,
-				D1A6C9F4D0103B93E0FB63A6 /* Frameworks */,
-				0A9936BCBCBE23D709155533 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SwingSavorWatch;
-			productName = SwingSavorWatch;
-			productReference = F48E28891CBD66F7C6F95AA8 /* SwingSavorWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -258,20 +206,11 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
-				F31B3FFE795ED7D8CF36B85B /* SwingSavorWatch */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0A9936BCBCBE23D709155533 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80AF08AD6BDDB2E90983D586 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -334,29 +273,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		DEC5306869A74834ED6817D1 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				2AA3705B6407A7F8DEEF2A0E /* SwingSavorWatchApp.swift in Sources */,
-				63F94694DFDB55A1D905F654 /* WatchMatch.swift in Sources */,
-				2420313702BD4E86FA587178 /* MatchStore.swift in Sources */,
-				863C7215619EDA5CBF94ED04 /* ContentView.swift in Sources */,
-				A5E9354CABEEAA8ED82300A6 /* MatchSummaryView.swift in Sources */,
-				EAFDB0622763BD08EC4DF3B6 /* ScoreEntryView.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		E768218037BDCFF4BB030CFC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = SwingSavorWatch;
-			target = F31B3FFE795ED7D8CF36B85B /* SwingSavorWatch */;
-			targetProxy = EF1FDCC6B1012ECE4E01C200 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -592,15 +509,6 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F6960838A4081FB370C35DB7 /* Build configuration list for PBXNativeTarget "SwingSavorWatch" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				3AEBAFA71A3ADE881D02C72E /* Release */,
-				A4FA83DE83A0A91F78657EB3 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
