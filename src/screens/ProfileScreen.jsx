@@ -36,6 +36,8 @@ export default function ProfileScreen() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [pushState, setPushState] = useState(null) // 'on' | 'off' | 'unavailable' | 'busy'
+  const [blockedUsers, setBlockedUsers] = useState([])
+  const [unblocking, setUnblocking] = useState(null)
 
   useEffect(() => {
     if (!webPushAvailable()) { setPushState('unavailable'); return }
@@ -57,6 +59,26 @@ export default function ProfileScreen() {
       const r = await ensureWebPush(me)
       setPushState(r.ok ? 'on' : (r.reason === 'denied' ? 'denied' : 'off'))
     }
+  }
+
+  async function loadBlocked() {
+    if (!me?.id) return
+    const { data: blocks } = await supabase.from('user_blocks')
+      .select('blocked_id, created_at').order('created_at', { ascending: false })
+    const ids = (blocks || []).map(b => b.blocked_id)
+    if (ids.length === 0) { setBlockedUsers([]); return }
+    const { data: profs } = await supabase.from('profiles')
+      .select('id,handle,display_name,avatar_url').in('id', ids)
+    setBlockedUsers(profs || [])
+  }
+
+  useEffect(() => { if (isSelf) loadBlocked() }, [me?.id, isSelf])
+
+  async function unblock(targetId) {
+    setUnblocking(targetId)
+    await supabase.rpc('unblock_user', { target: targetId })
+    setUnblocking(null)
+    setBlockedUsers(prev => prev.filter(b => b.id !== targetId))
   }
 
   async function deleteAccount() {
@@ -539,6 +561,36 @@ export default function ProfileScreen() {
                 {pushState === 'on' ? 'Aus' : 'Einschalten'}
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Blockierte Konten */}
+      {isSelf && blockedUsers.length > 0 && (
+        <div className="px-3 mt-4">
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
+            <div className="px-4 py-2.5 text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted border-b border-lineSoft">
+              Blockierte Konten <span className="opacity-50 tabular-nums">{blockedUsers.length}</span>
+            </div>
+            <div className="divide-y divide-lineSoft">
+              {blockedUsers.map(b => (
+                <div key={b.id} className="px-4 py-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-bg border border-line flex items-center justify-center overflow-hidden">
+                    {b.avatar_url
+                      ? <img src={b.avatar_url} alt="" className="w-full h-full object-cover" />
+                      : <span className="font-condensed font-black text-sm text-inkMuted">{(b.display_name || b.handle || '?')[0]?.toUpperCase()}</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-ink truncate">{b.display_name || '—'}</p>
+                    <p className="text-[11px] text-inkDim truncate">@{b.handle}</p>
+                  </div>
+                  <button onClick={() => unblock(b.id)} disabled={unblocking === b.id}
+                    className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-bg text-inkMuted border border-line active:scale-95 transition-transform">
+                    {unblocking === b.id ? '…' : 'Entsperren'}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

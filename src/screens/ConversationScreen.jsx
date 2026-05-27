@@ -14,6 +14,9 @@ export default function ConversationScreen() {
   const [messages, setMessages] = useState([])
   const [body, setBody]       = useState('')
   const [sending, setSending] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [reporting, setReporting] = useState(null)
+  const [reportedIds, setReportedIds] = useState(() => new Set())
   const channelRef = useRef(null)
   const bottomRef = useRef(null)
 
@@ -86,6 +89,29 @@ export default function ConversationScreen() {
     setSending(false)
   }
 
+  async function blockOther() {
+    if (!other?.id) return
+    const ok = window.confirm(`@${other.handle} blockieren? Du siehst keine Nachrichten oder Kommentare mehr von diesem Account.`)
+    if (!ok) return
+    setMenuOpen(false)
+    const { error } = await supabase.rpc('block_user', { target: other.id })
+    if (error) { alert('Blockieren fehlgeschlagen.'); return }
+    navigate('/messages')
+  }
+
+  async function reportMessage(messageId) {
+    if (reporting || reportedIds.has(messageId)) return
+    const reason = window.prompt('Warum meldest du diese Nachricht? (optional)') ?? ''
+    setReporting(messageId)
+    const { error } = await supabase.rpc('report_message', { m_id: messageId, r_reason: reason || null })
+    setReporting(null)
+    if (!error) {
+      setReportedIds(prev => new Set(prev).add(messageId))
+    } else {
+      alert('Melden fehlgeschlagen.')
+    }
+  }
+
   if (loading) return <LoadingSpinner />
   if (!conv) return (
     <div className="p-6 text-center text-inkMuted text-sm">
@@ -118,6 +144,32 @@ export default function ConversationScreen() {
           <p className="font-semibold text-sm text-ink truncate">{other?.display_name}</p>
           <p className="text-[11px] text-inkDim truncate">@{other?.handle}</p>
         </div>
+        <div className="relative flex-shrink-0">
+          <button onClick={() => setMenuOpen(o => !o)}
+            aria-label="Optionen"
+            className="p-2 -mr-1 text-inkMuted active:scale-90 transition-transform">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="5"  r="1.5"/>
+              <circle cx="12" cy="12" r="1.5"/>
+              <circle cx="12" cy="19" r="1.5"/>
+            </svg>
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-20 min-w-[200px] rounded-card bg-surface border border-line shadow-lg overflow-hidden">
+                <button onClick={blockOther}
+                  className="block w-full text-left px-4 py-3 text-sm text-danger hover:bg-bg/60 border-b border-lineSoft">
+                  @{other?.handle} blockieren
+                </button>
+                <div className="px-4 py-2 text-[10px] text-inkDim">
+                  Lange auf eine Nachricht tippen, um sie zu melden.
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
@@ -127,16 +179,31 @@ export default function ConversationScreen() {
         )}
         {messages.map(m => {
           const mine = m.sender_id === user.id
+          const isReported = reportedIds.has(m.id)
           return (
-            <div key={m.id} className={`max-w-[78%] px-3 py-2 rounded-2xl ${
-              mine
-                ? 'self-end bg-accent text-brandDark rounded-br-md'
-                : 'self-start bg-surface border border-line text-ink rounded-bl-md'
-            }`}>
-              <p className="text-sm leading-snug whitespace-pre-wrap break-words">{m.body}</p>
-              <p className={`text-[9px] mt-0.5 tabular-nums ${mine ? 'text-brandDark/60 text-right' : 'text-inkDim'}`}>
-                {new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+            <div key={m.id} className={`flex flex-col max-w-[78%] ${mine ? 'self-end items-end' : 'self-start items-start'}`}>
+              <div
+                onContextMenu={(e) => { if (!mine) { e.preventDefault(); reportMessage(m.id) } }}
+                className={`px-3 py-2 rounded-2xl select-none ${
+                  mine
+                    ? 'bg-accent text-brandDark rounded-br-md'
+                    : 'bg-surface border border-line text-ink rounded-bl-md'
+                }`}>
+                <p className="text-sm leading-snug whitespace-pre-wrap break-words">{m.body}</p>
+                <p className={`text-[9px] mt-0.5 tabular-nums ${mine ? 'text-brandDark/60 text-right' : 'text-inkDim'}`}>
+                  {new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {!mine && (
+                isReported ? (
+                  <span className="text-[9px] text-inkDim mt-0.5 px-1">Gemeldet · wird geprüft</span>
+                ) : (
+                  <button onClick={() => reportMessage(m.id)} disabled={reporting === m.id}
+                    className="text-[9px] text-inkDim hover:text-danger mt-0.5 px-1 active:scale-95 transition-transform">
+                    {reporting === m.id ? 'Melde…' : 'Melden'}
+                  </button>
+                )
+              )}
             </div>
           )
         })}

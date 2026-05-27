@@ -53,7 +53,40 @@ Alles im einheitlichen Design, ohne Werbung, ohne Tracking jenseits dessen, was 
     demoAccountRequired: true,
     demoAccountName:     'apple-review@swingandsavor.at',
     demoAccountPassword: '87654321',
-    notes: `Reviewer-Bypass aktiv: gib auf dem Login-Screen die E-Mail apple-review@swingandsavor.at ein, dann den 8-stelligen Code 87654321 als OTP. Die Edge Function "reviewer-bypass" akzeptiert nur diese Kombination und gibt eine echte Session aus. Danach Home-Feed, Matches, Cup anlegen, Friends, Messaging und Rangliste vollständig zugänglich.`,
+    notes: `Resubmit for build 1.0(4) — addresses the 2026-05-26 review feedback on Submission b5f707ba (Guideline 2.1(a) Information Needed: "pre-populated content … multiple users in chat in order to review safety mechanisms").
+
+DEMO ACCOUNT
+The reviewer account auto-seeds a rich, pre-populated environment on first login. After signing in you'll find:
+
+• A public tournament "🍃 Apple Review Demo Cup" with 4 players, a finished 18-hole singles match (full scorecard), an active 9-hole doubles match, comments and reactions across both matches.
+• 3 accepted friendships with demo users (Lena Eagle, Sam Birdie, Tom Putter).
+• 2 active DM conversations (Reviewer ↔ Lena, Reviewer ↔ Sam) with 5 messages each — both sides have sent messages, so the chat clearly shows multiple users in the conversation.
+
+LOGIN STEPS
+1. Open the app, tap "Anmelden".
+2. Enter email: apple-review@swingandsavor.at
+3. Tap "Code senden".
+4. Enter the 8-digit code: 87654321
+5. You're in — Home, Cup, Matches, Messages, Profile all have visible content immediately.
+
+SAFETY MECHANISMS (UGC moderation)
+The app implements the four UGC requirements of Guideline 1.2:
+
+1. Block users — Open any DM conversation → tap the "⋮" menu in the top-right header → "@<handle> blockieren". The blocked user is hidden from your DMs, comments and friendship visibility (RLS-enforced server-side via the user_blocks table). The blocked list is visible and reversible in Profile → "Blockierte Konten".
+
+2. Report messages — In any DM conversation, tap "Melden" below a counter-party's message (or right-click on iPad). Reports go to the message_reports table; three unique reports auto-hide the message via the report_message RPC.
+
+3. Report comments — On any match detail screen, comments from other users show a "Melden" link below the comment body. Three reports auto-hide via report_comment.
+
+4. Content filtering / contact — The body of every DM and comment is RLS-filtered against the reporter's user_blocks set. Users can reach us at hi@swingandsavor.at (linked from Profile → Support and from the marketing site footer).
+
+WHAT'S NEW IN 1.0(4) vs 1.0(3)
+• Added block-user feature (DB + UI) on conversations and visible blocked list in Profile.
+• Added report-message feature (DB + UI) with auto-hide threshold at 3 reports.
+• Reviewer-bypass Edge Function now seeds 3 demo friends + 2 DM conversations with bidirectional messages so "multiple users in chat" is verifiable.
+• Camera/photo Info.plist permission strings (added in 1.0(3)) are retained.
+
+Demo account credentials are also in the Demo Account fields above. Thank you for reviewing.`,
   },
 }
 
