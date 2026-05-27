@@ -198,8 +198,17 @@ const WATCH_PROFILE_REPO = path.join(ROOT, 'ios', 'profiles', 'SwingSavor_Watch_
 const WATCH_BUNDLE_ID    = 'de.commsconnect.swingandsavor.watchkitapp';
 const IOS_BUNDLE_ID      = 'de.commsconnect.swingandsavor';
 
+// Default: Watch DISABLED solange CI auf Xcode 26.4.1 mit Multi-Platform-Export-
+// Bug läuft. Setze WATCH_DISABLED=0 sobald Runner auf Xcode 26.5+ sind, dann
+// laufen Wiring + Profile-Install + ExportOptions-Patcher wieder.
+const watchDisabled = (process.env.WATCH_DISABLED ?? '1') === '1';
 const haveWatchProfile = fs.existsSync(WATCH_PROFILE_REPO);
-if (!haveWatchProfile) {
+if (watchDisabled) {
+  console.log('WATCH_DISABLED=1 — Watch-Wiring deaktiviert (Xcode 26.4.1 hat einen');
+  console.log('IDEDistributionMethodManager-Bug bei Multi-Platform-Archive: "Unknown');
+  console.log('Distribution Error" + "for key method expected one {} but found ...").');
+  console.log('Re-enable sobald macOS-Runner Xcode 26.5+ haben.');
+} else if (!haveWatchProfile) {
   console.log('Watch-Profile fehlt im Repo unter native/ios/profiles/ — überspringe Watch-Wiring.');
 } else {
   // 1. xcodeproj gem installieren (idempotent — gem skip wenn schon da)
