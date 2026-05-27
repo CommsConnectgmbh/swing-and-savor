@@ -1,0 +1,24 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "U7CT3BQ7HY.de.commsconnect.swingandsavor",
+        "paths": [
+          "/i/*",
+          "/recap/*",
+          "/hall/*",
+          "/crew/*",
+          "/season/*",
+          "/savor/o/*",
+          "/u/*",
+          "/cup/*",
+          "/challenges/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["U7CT3BQ7HY.de.commsconnect.swingandsavor"]
+  }
+}

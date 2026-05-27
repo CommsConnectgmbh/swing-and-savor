@@ -33,7 +33,7 @@
       "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|whatsapp|twitterbot|slackbot|linkedinbot|telegrambot|discordbot|skypeuripreview|pinterest|googlebot|bingbot|applebot|embedly|redditbot).*" }],
       "destination": "/api/og?p=/savor/o/:slug*"
     },
-    { "source": "/((?!assets|icons|favicon|api|.*\\.[a-z0-9]{2,5}$).*)", "destination": "/index.html" }
+    { "source": "/((?!assets|icons|favicon|api|\\.well-known|.*\\.[a-z0-9]{2,5}$).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -55,6 +55,13 @@
     {
       "source": "/manifest.webmanifest",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
     }
   ]
 }
