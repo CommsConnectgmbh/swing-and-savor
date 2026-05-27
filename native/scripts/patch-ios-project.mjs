@@ -250,18 +250,28 @@ for i in $(seq 1 600); do
 import sys
 p = "${runnerTemp}/ExportOptions.plist"
 with open(p, "r") as f: txt = f.read()
-needle = "<string>${iosProfileName}</string>"
-if "${WATCH_BUNDLE_ID}" in txt:
-    print("[ExportOptions-Patcher] watch entry already present")
-    sys.exit(0)
-inject = needle + "\\n      <key>${WATCH_BUNDLE_ID}</key>\\n      <string>${WATCH_PROFILE_NAME}</string>"
-new_txt = txt.replace(needle, inject, 1)
-if new_txt == txt:
-    print("[ExportOptions-Patcher] FAILED — needle not found in plist:")
-    print(txt)
-    sys.exit(1)
-with open(p, "w") as f: f.write(new_txt)
-print("[ExportOptions-Patcher] watch entry injected (XML text mode)")
+changes = []
+# (1) Xcode 26.4.1 rejects method=app-store with "expected one {} but found
+# app-store" when the archive contains a watchOS embed. Use app-store-connect
+# which Xcode prints as the recommended replacement in single-target builds too.
+if "<string>app-store</string>" in txt and "<string>app-store-connect</string>" not in txt:
+    txt = txt.replace("<string>app-store</string>", "<string>app-store-connect</string>", 1)
+    changes.append("method app-store -> app-store-connect")
+# (2) Watch provisioning profile entry
+if "${WATCH_BUNDLE_ID}" not in txt:
+    needle = "<string>${iosProfileName}</string>"
+    inject = needle + "\\n      <key>${WATCH_BUNDLE_ID}</key>\\n      <string>${WATCH_PROFILE_NAME}</string>"
+    new_txt = txt.replace(needle, inject, 1)
+    if new_txt == txt:
+        print("[ExportOptions-Patcher] FAILED — needle not found in plist:")
+        print(txt)
+        sys.exit(1)
+    txt = new_txt
+    changes.append("watch profile entry injected")
+else:
+    changes.append("watch entry already present")
+with open(p, "w") as f: f.write(txt)
+print("[ExportOptions-Patcher] " + " | ".join(changes))
 PY
       echo "--- patched ExportOptions.plist ---"
       cat "${runnerTemp}/ExportOptions.plist"
