@@ -235,18 +235,36 @@ if (!haveWatchProfile) {
   //    IPA") und den Watch-Eintrag injectet.
   const runnerTemp = process.env.RUNNER_TEMP;
   if (runnerTemp) {
+    // XML-Text-Insert statt plistlib.dump — plistlib schreibt binary plist by
+    // default und Xcode 26 verweigert das mit "expected {} but found app-store".
+    // Wir hängen den Watch-Eintrag als reines XML direkt nach der iOS-Bundle-
+    // Zeile in das provisioningProfiles-dict an. Bleibt XML, bleibt verständlich.
+    const iosProfileName = profileName;
     const patcherScript = `
 for i in $(seq 1 600); do
   if [ -f "${runnerTemp}/ExportOptions.plist" ]; then
     if ! grep -q "watchkitapp" "${runnerTemp}/ExportOptions.plist"; then
+      # Wait one extra second to be sure heredoc-cat finished writing
+      sleep 1
       python3 - <<'PY'
-import plistlib, sys
+import sys
 p = "${runnerTemp}/ExportOptions.plist"
-with open(p, "rb") as f: d = plistlib.load(f)
-d.setdefault("provisioningProfiles", {})["${WATCH_BUNDLE_ID}"] = "${WATCH_PROFILE_NAME}"
-with open(p, "wb") as f: plistlib.dump(d, f)
-print("[ExportOptions-Patcher] watch entry injected")
+with open(p, "r") as f: txt = f.read()
+needle = "<string>${iosProfileName}</string>"
+if "${WATCH_BUNDLE_ID}" in txt:
+    print("[ExportOptions-Patcher] watch entry already present")
+    sys.exit(0)
+inject = needle + "\\n      <key>${WATCH_BUNDLE_ID}</key>\\n      <string>${WATCH_PROFILE_NAME}</string>"
+new_txt = txt.replace(needle, inject, 1)
+if new_txt == txt:
+    print("[ExportOptions-Patcher] FAILED — needle not found in plist:")
+    print(txt)
+    sys.exit(1)
+with open(p, "w") as f: f.write(new_txt)
+print("[ExportOptions-Patcher] watch entry injected (XML text mode)")
 PY
+      echo "--- patched ExportOptions.plist ---"
+      cat "${runnerTemp}/ExportOptions.plist"
       exit 0
     else
       echo "[ExportOptions-Patcher] watch entry already present"
