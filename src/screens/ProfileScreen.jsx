@@ -39,6 +39,9 @@ export default function ProfileScreen() {
   const [blockedUsers, setBlockedUsers] = useState([])
   const [unblocking, setUnblocking] = useState(null)
 
+  const isSelf = !handle || (me && handle === me.handle)
+  const target = isSelf ? me : profile
+
   useEffect(() => {
     if (!webPushAvailable()) { setPushState('unavailable'); return }
     if (typeof Notification === 'undefined') { setPushState('unavailable'); return }
@@ -110,9 +113,6 @@ export default function ProfileScreen() {
       setDeleting(false)
     }
   }
-
-  const isSelf = !handle || (me && handle === me.handle)
-  const target = isSelf ? me : profile
 
   useEffect(() => { load() }, [handle, me?.id])
 
