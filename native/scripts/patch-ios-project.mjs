@@ -43,6 +43,74 @@ if (process.env.RUNNER_TEMP) {
 }
 
 // ----------------------------------------------------------------------------
+// xcodebuild-Wrapper: fängt -exportArchive ab und baut die IPA manuell aus dem
+// .xcarchive. Grund: Xcode 26.x exportArchive triggert IDEDistributionMethodManager
+// Code=2 ("Unknown Distribution Error") sobald das Archive einen watchOS-Embed
+// enthält. Alle method-Werte (app-store, app-store-connect, development, ...)
+// scheitern mit "expected one {} but found ...". Da exportArchive für signierte
+// Single-iOS-App-Archive effektiv nur "App.app -> Payload/ -> zip" macht und die
+// Signatur schon im Archive sitzt, machen wir das selbst. Token hat keinen
+// workflow-Scope, daher Patch hier statt im YAML.
+// ----------------------------------------------------------------------------
+if (process.env.RUNNER_TEMP) {
+  try {
+    const realXcodebuild = execSync('xcrun --find xcodebuild').toString().trim();
+    const wrapper = `#!/bin/bash
+# Auto-installed by patch-ios-project.mjs — intercepts -exportArchive for
+# multi-target (iOS + watchOS) archives. Forwards everything else.
+REAL=${realXcodebuild}
+
+HAS_EXPORT=0
+for a in "$@"; do
+  [ "$a" = "-exportArchive" ] && HAS_EXPORT=1
+done
+
+if [ "$HAS_EXPORT" = "0" ]; then
+  exec "$REAL" "$@"
+fi
+
+ARCHIVE=""
+OUT=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -archivePath) ARCHIVE="$2"; shift 2;;
+    -exportPath)  OUT="$2";     shift 2;;
+    *) shift;;
+  esac
+done
+
+echo "[xcodebuild-wrapper] intercepting -exportArchive (Xcode 26 multi-target workaround)"
+echo "[xcodebuild-wrapper] archive: $ARCHIVE"
+echo "[xcodebuild-wrapper] export:  $OUT"
+
+[ -d "$ARCHIVE" ] || { echo "[xcodebuild-wrapper] ERROR: archive missing"; exit 1; }
+
+APP_DIR=$(ls -d "$ARCHIVE"/Products/Applications/*.app 2>/dev/null | head -1)
+[ -n "$APP_DIR" ] || { echo "[xcodebuild-wrapper] ERROR: no .app in archive"; exit 1; }
+
+APP_NAME=$(basename "$APP_DIR" .app)
+echo "[xcodebuild-wrapper] embedding $APP_NAME.app -> Payload"
+
+mkdir -p "$OUT"
+rm -rf "$OUT/Payload" "$OUT/$APP_NAME.ipa"
+mkdir -p "$OUT/Payload"
+cp -R "$APP_DIR" "$OUT/Payload/"
+( cd "$OUT" && zip -qry "$APP_NAME.ipa" Payload && rm -rf Payload )
+
+ls -la "$OUT"
+echo "[xcodebuild-wrapper] IPA ready: $OUT/$APP_NAME.ipa"
+exit 0
+`;
+    fs.writeFileSync('/tmp/xcodebuild-wrapper.sh', wrapper);
+    execSync('sudo install -m 0755 /tmp/xcodebuild-wrapper.sh /usr/local/bin/xcodebuild', { stdio: 'inherit' });
+    console.log('[wrapper] /usr/local/bin/xcodebuild installed -> forwards to', realXcodebuild);
+    execSync('which xcodebuild', { stdio: 'inherit' });
+  } catch (e) {
+    console.warn('[wrapper] install failed:', e.message);
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Schritt 0a: PrivacyInfo.xcprivacy schreiben (idempotent)
 // Swing & Savor ist eine remote-PWA im WebView — keine native SDK-Datensammlung.
 // Nur die Required-Reason-APIs deklarieren.
