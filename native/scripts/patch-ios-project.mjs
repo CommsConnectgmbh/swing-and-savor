@@ -24,6 +24,25 @@ if (!fs.existsSync(PROJECT)) {
 }
 
 // ----------------------------------------------------------------------------
+// Schritt 0: Xcode 26.5 selektieren auf CI-Runnern. macos-26 Default ist 26.4.1
+// mit IDEDistributionMethodManager-Bug bei Multi-Platform-Archive (Watch). 26.5
+// fixt das. Best-effort: wenn 26.5 fehlt, bleibt Default.
+// ----------------------------------------------------------------------------
+if (process.env.RUNNER_TEMP) {
+  const xcode265 = '/Applications/Xcode_26.5.app';
+  if (fs.existsSync(xcode265)) {
+    try {
+      execSync(`sudo xcode-select -s ${xcode265}/Contents/Developer`, { stdio: 'inherit' });
+      execSync('xcodebuild -version', { stdio: 'inherit' });
+    } catch (e) {
+      console.warn('Xcode 26.5 select fehlgeschlagen:', e.message);
+    }
+  } else {
+    console.log('Xcode 26.5 nicht installiert — bleibe bei Default.');
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Schritt 0a: PrivacyInfo.xcprivacy schreiben (idempotent)
 // Swing & Savor ist eine remote-PWA im WebView — keine native SDK-Datensammlung.
 // Nur die Required-Reason-APIs deklarieren.
@@ -198,16 +217,14 @@ const WATCH_PROFILE_REPO = path.join(ROOT, 'ios', 'profiles', 'SwingSavor_Watch_
 const WATCH_BUNDLE_ID    = 'de.commsconnect.swingandsavor.watchkitapp';
 const IOS_BUNDLE_ID      = 'de.commsconnect.swingandsavor';
 
-// Default: Watch DISABLED solange CI auf Xcode 26.4.1 mit Multi-Platform-Export-
-// Bug läuft. Setze WATCH_DISABLED=0 sobald Runner auf Xcode 26.5+ sind, dann
-// laufen Wiring + Profile-Install + ExportOptions-Patcher wieder.
-const watchDisabled = (process.env.WATCH_DISABLED ?? '1') === '1';
+// Default: Watch ENABLED auf CI sobald Xcode 26.5 verfügbar ist (siehe Schritt 0
+// oben — der select läuft vorher). Override mit WATCH_DISABLED=1 falls Build mal
+// kurzfristig iOS-only nötig wird.
+const defaultDisabled = process.env.RUNNER_TEMP ? '0' : '1';
+const watchDisabled = (process.env.WATCH_DISABLED ?? defaultDisabled) === '1';
 const haveWatchProfile = fs.existsSync(WATCH_PROFILE_REPO);
 if (watchDisabled) {
-  console.log('WATCH_DISABLED=1 — Watch-Wiring deaktiviert (Xcode 26.4.1 hat einen');
-  console.log('IDEDistributionMethodManager-Bug bei Multi-Platform-Archive: "Unknown');
-  console.log('Distribution Error" + "for key method expected one {} but found ...").');
-  console.log('Re-enable sobald macOS-Runner Xcode 26.5+ haben.');
+  console.log('WATCH_DISABLED=1 — Watch-Wiring übersprungen (Override oder lokaler Lauf).');
 } else if (!haveWatchProfile) {
   console.log('Watch-Profile fehlt im Repo unter native/ios/profiles/ — überspringe Watch-Wiring.');
 } else {
