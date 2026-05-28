@@ -277,13 +277,13 @@ import sys
 p = "${runnerTemp}/ExportOptions.plist"
 with open(p, "r") as f: txt = f.read()
 changes = []
-# (1) Xcode 26.4.1 rejects method=app-store with "expected one {} but found
-# app-store" when the archive contains a watchOS embed. Use app-store-connect
-# which Xcode prints as the recommended replacement in single-target builds too.
-if "<string>app-store</string>" in txt and "<string>app-store-connect</string>" not in txt:
-    txt = txt.replace("<string>app-store</string>", "<string>app-store-connect</string>", 1)
-    changes.append("method app-store -> app-store-connect")
-# (2) Watch provisioning profile entry
+# Xcode 26.5 akzeptiert method=app-store wieder. Vorheriger Workaround
+# app-store-connect (für 26.4.1 Multi-Platform-Bug) wird rückgängig gemacht
+# falls vorhanden — 26.5 erkennt 'app-store-connect' nicht als gültigen Wert.
+if "<string>app-store-connect</string>" in txt:
+    txt = txt.replace("<string>app-store-connect</string>", "<string>app-store</string>", 1)
+    changes.append("method app-store-connect -> app-store")
+# Watch provisioning profile entry
 if "${WATCH_BUNDLE_ID}" not in txt:
     needle = "<string>${iosProfileName}</string>"
     inject = needle + "\\n      <key>${WATCH_BUNDLE_ID}</key>\\n      <string>${WATCH_PROFILE_NAME}</string>"
