@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { GoogleAuth } from 'google-auth-library'
 
 const PKG = 'de.commsconnect.swingandsavor'
-const SA  = '/Volumes/Code/Projects/.local-secrets/play-store-service-account.json'
+const SA  = '/Volumes/Code/Projects/commsos/.local-secrets/play-service-account-commsos.json'
 
 const auth = new GoogleAuth({
   keyFile: SA,
@@ -44,8 +44,8 @@ if (edit.status === 200) {
   console.log(`  6. Deklarationen: Inhaltsrichtlinien + US-Exportgesetze haken`)
   console.log(`  7. Dann unter "App-Inhalte" Datenschutzerklärungs-URL: https://swingandsavor.at/datenschutz`)
   console.log(`  8. Service-Account für API-Upload freischalten:`)
-  console.log(`     Setup → API-Zugriff → "play-publisher@comms-play-store.iam.gserviceaccount.com" einladen`)
-  console.log(`     → Berechtigung: Admin (alle Bereiche)`)
+  console.log(`     Setup → API-Zugriff → "commsos-play-publisher@comms-play-publisher.iam.gserviceaccount.com" → App-Berechtigungen → SS hinzufügen`)
+  console.log(`     → Rollen: App-Informationen + Tests verwalten + Releases zu Test-Tracks`)
   console.log()
   console.log(`Sobald App-Record existiert + SA freigeschaltet ist, übernehme ich:`)
   console.log(`  • AAB aus CI-Build hochladen (Internal Track)`)

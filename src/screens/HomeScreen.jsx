@@ -345,8 +345,8 @@ function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst,
   const cupLive  = matches.filter(m => m.status === 'active').length
   const shareable = !!tournament?.invite_code
 
-  // Live-Cups default offen, Rest zu — so ist der Feed scanbar.
-  const [open, setOpen] = useState(cupLive > 0)
+  // Turniere immer zu — User klickt drauf, um aufzuklappen.
+  const [open, setOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef(null)
 

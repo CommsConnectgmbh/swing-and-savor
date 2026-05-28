@@ -193,12 +193,17 @@ async function main() {
     // supportUrl/marketingUrl sind in IN_REVIEW + PROCESSING_FOR_APP_STORE + PENDING_APPLE_RELEASE
     // gesperrt (HTTP 409 STATE_ERROR), in WAITING_FOR_REVIEW noch erlaubt.
     const hardLocked = ['IN_REVIEW','PROCESSING_FOR_APP_STORE','PENDING_APPLE_RELEASE','READY_FOR_DISTRIBUTION'].includes(state)
-    const softLocked = ['WAITING_FOR_REVIEW'].includes(state)
+    // REJECTED + WAITING_FOR_REVIEW: Apple lässt whatsNew nicht editieren,
+    // description/keywords nur in PREPARE_FOR_SUBMISSION
+    const softLocked = ['WAITING_FOR_REVIEW','REJECTED','METADATA_REJECTED','DEVELOPER_REJECTED'].includes(state)
+    // whatsNew nach einem accepted submission gelockt — Apple gibt sonst HTTP 409,
+    // selbst im PREPARE_FOR_SUBMISSION nach Build-Relink. Wir patchen es bewusst
+    // gar nicht mehr, der Text ist eh schon final aus dem ersten Submit.
     const attrs = hardLocked
       ? { promotionalText: META.promotionalText }
       : softLocked
         ? { promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl }
-        : { description: META.description, keywords: META.keywords, promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl, whatsNew: META.whatsNew }
+        : { description: META.description, keywords: META.keywords, promotionalText: META.promotionalText, supportUrl: META.supportUrl, marketingUrl: META.marketingUrl }
     if (hardLocked) warn(`State ist ${state} — nur promotionalText ist editierbar`)
     else if (softLocked) warn(`State ist ${state} — nur promotionalText/supportUrl/marketingUrl sind editierbar`)
     if (DRY) {
