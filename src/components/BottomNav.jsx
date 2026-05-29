@@ -101,6 +101,10 @@ export default function BottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 hairline-t"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
+          // fixed-Elemente erben das laterale Body-Padding nicht — sonst clippt
+          // die Navi im Landscape/iPad unter Notch & abgerundeten Ecken.
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
           background: '#0A1A12',
         }}
       >

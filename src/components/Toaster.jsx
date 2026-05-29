@@ -17,7 +17,11 @@ export default function Toaster() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[200] flex flex-col items-center gap-2"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)' }}>
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}>
       {toasts.map(t => (
         <button key={t.id}
           onClick={() => {

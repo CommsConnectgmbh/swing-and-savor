@@ -213,7 +213,11 @@ export default function ConversationScreen() {
       {/* Input */}
       <form onSubmit={send}
         className="fixed inset-x-0 max-w-lg mx-auto bg-surface/96 backdrop-blur-md border-t border-line p-2 flex gap-2"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 0px)' }}>
+        style={{
+          bottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'calc(0.5rem + env(safe-area-inset-left))',
+          paddingRight: 'calc(0.5rem + env(safe-area-inset-right))',
+        }}>
         <input type="text" value={body} maxLength={2000}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Nachricht…"

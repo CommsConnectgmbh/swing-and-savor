@@ -52,13 +52,14 @@ export default function DiscoverScreen() {
     setJoinError(null)
     const code = joinCode.trim().toLowerCase()
     if (code.length !== 8) { setJoinError('Code ist 8 Zeichen'); return }
-    const { data, error } = await supabase
-      .from('tournaments').select('id').eq('invite_code', code).maybeSingle()
-    if (error || !data) { setJoinError('Code unbekannt'); return }
-    if (user) {
-      await supabase.from('tournament_invites').upsert({
-        tournament_id: data.id, profile_id: user.id, invited_by: user.id,
-      }, { onConflict: 'tournament_id,profile_id' })
+    if (!user) { setJoinError('Bitte zuerst anmelden'); return }
+    // Server löst den Code auf und schaltet das Turnier frei (umgeht RLS, da der
+    // Code selbst die Berechtigung ist). Direkter Client-Select/Upsert scheiterte
+    // für private/friends-Turniere an tournaments_read bzw. invites_write.
+    const { error } = await supabase.rpc('redeem_invite_code', { p_code: code })
+    if (error) {
+      setJoinError(error.message === 'not_found' ? 'Code unbekannt' : 'Beitritt fehlgeschlagen')
+      return
     }
     navigate('/board')
   }

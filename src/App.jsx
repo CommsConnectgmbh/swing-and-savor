@@ -85,7 +85,15 @@ export default function App() {
 
   if (isPublicCup) {
     return (
-      <div className="min-h-screen bg-bg text-ink">
+      <div
+        className="min-h-screen bg-bg text-ink"
+        style={{
+          // Header-less full-screen routes: ohne diese Insets klebt der Inhalt
+          // unter Notch/Dynamic Island und der Home-Indicator deckt das Ende ab.
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         <Suspense fallback={<ScreenFallback />}>
           <Routes>
             <Route path="/c/:inviteCode"     element={<PublicCupScreen />} />

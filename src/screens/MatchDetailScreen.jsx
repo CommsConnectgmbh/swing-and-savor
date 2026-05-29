@@ -750,7 +750,7 @@ export default function MatchDetailScreen() {
         className="fixed inset-x-0 z-40 bg-surface/96 backdrop-blur-md border-t border-line shadow-lift"
         style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="max-w-lg mx-auto grid px-4 py-3" style={{ gridTemplateColumns: COLS }}>
+        <div className="max-w-lg mx-auto grid py-3" style={{ gridTemplateColumns: COLS, paddingLeft: 'calc(1rem + env(safe-area-inset-left))', paddingRight: 'calc(1rem + env(safe-area-inset-right))' }}>
           <div className="text-center">
             <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-1 text-inkMuted">Par</p>
             <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totalPar}</p>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { challengeFriendOnDealBuddy } from '../lib/dealbuddy'
+import { pushToast } from '../lib/toast'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function FriendsScreen() {
@@ -16,8 +17,22 @@ export default function FriendsScreen() {
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
+  const channelRef = useRef(null)
 
-  useEffect(() => { if (user) load() }, [user])
+  useEffect(() => {
+    if (!user) return
+    load()
+    // Live aktualisieren, wenn die Gegenseite annimmt/anfragt/entfreundet.
+    if (channelRef.current) supabase.removeChannel(channelRef.current)
+    const ch = supabase.channel(`friendships-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, (payload) => {
+        const row = payload.new ?? payload.old
+        if (row && (row.user_a === user.id || row.user_b === user.id)) load()
+      })
+      .subscribe()
+    channelRef.current = ch
+    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+  }, [user])
 
   async function load() {
     setLoading(true)
@@ -81,7 +96,13 @@ export default function FriendsScreen() {
     const { error } = await supabase.from('friendships').insert({
       user_a: a, user_b: b, requested_by: user.id, status: 'pending',
     })
-    if (!error) await load()
+    if (error) {
+      // 23505 = die Gegenseite hat dich bereits angefragt → direkt annehmen.
+      if (error.code === '23505') { await accept(other); setTab('friends') }
+      else pushToast({ icon: '⚠️', title: 'Anfrage fehlgeschlagen', body: 'Bitte später erneut versuchen.' })
+      return
+    }
+    await load()
   }
 
   if (!profile) return null
