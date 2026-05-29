@@ -34,3 +34,4 @@ scripts/asc-screenshots/package-lock.json
 # Native build outputs that should regenerate
 native/www/
 
+scripts/_st.mjs
