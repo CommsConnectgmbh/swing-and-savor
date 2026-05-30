@@ -82,10 +82,14 @@ export default function BrandHeader({ title }) {
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 hairline-b"
+      className="sticky top-0 z-40 flex items-center gap-3 py-3 hairline-b"
       style={{
         backgroundColor: '#0A1A12',
         paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)',
+        // sticky-Elemente erben das body-Padding nicht, sonst kollidiert der
+        // Header im Landscape mit Notch/Island bzw. abgerundeten iPad-Ecken.
+        paddingLeft: 'calc(env(safe-area-inset-left) + 1rem)',
+        paddingRight: 'calc(env(safe-area-inset-right) + 1rem)',
       }}
     >
       <Wordmark />

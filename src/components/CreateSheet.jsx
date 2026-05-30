@@ -25,6 +25,19 @@ export default function CreateSheet({ open, onClose }) {
 
   const items = [
     {
+      key: 'casual',
+      label: 'Just for fun',
+      sub: 'Lockere Runde mit Freunden — einfache Scorecard, kein Turnier',
+      to: '/casual?new=1',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 22V4"/><path d="M4 4l13 2-2 5 2 5-13-2"/>
+          <circle cx="18" cy="18" r="2"/>
+        </svg>
+      ),
+    },
+    {
       key: 'match',
       label: 'Neues Match',
       sub: 'Singles, Doubles oder Flight im Turnier',

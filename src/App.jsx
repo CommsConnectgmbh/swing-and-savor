@@ -38,6 +38,7 @@ const SeasonScreen       = lazy(() => import('./screens/SeasonScreen'))
 const SavorScreen        = lazy(() => import('./screens/SavorScreen'))
 const SavorCategoryScreen= lazy(() => import('./screens/SavorCategoryScreen'))
 const SavorOfferScreen   = lazy(() => import('./screens/SavorOfferScreen'))
+const CasualScreen       = lazy(() => import('./screens/CasualScreen'))
 
 captureReferralFromUrl()
 
@@ -50,6 +51,7 @@ function HeaderForRoute() {
     '/discover':    t('nav.discover'),
     '/challenges':  t('nav.challenges'),
     '/matches':     t('nav.matches'),
+    '/casual':      t('nav.casual', 'Casual'),
     '/friends':     t('nav.friends'),
     '/teams':       t('nav.teams'),
     '/cup':         t('nav.cups'),
@@ -138,6 +140,8 @@ export default function App() {
             <Route path="/savor"             element={<SavorScreen />} />
             <Route path="/savor/c/:category"  element={<SavorCategoryScreen />} />
             <Route path="/savor/o/:slug"      element={<SavorOfferScreen />} />
+            <Route path="/casual"             element={<CasualScreen />} />
+            <Route path="/casual/:roundId"    element={<CasualScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>
