@@ -238,5 +238,49 @@
   "lang": {
     "title": "Langue",
     "subtitle": "Choisis ta langue préférée"
+  },
+  "sheets": {
+    "boost": {
+      "instantConsent": "I request immediate activation of the boost and acknowledge that my right of withdrawal expires once it is fully performed.",
+      "consentRequired": "Please agree to immediate activation to continue."
+    },
+    "premium": {
+      "title": "Premium",
+      "cta": "Premium · €49"
+    }
+  },
+  "widerruf": {
+    "title": "Withdraw from contract",
+    "intro": "Online withdrawal function under Art. 11a of the EU Consumer Rights Directive. Pick a paid purchase you want to withdraw from within the 14-day withdrawal period. The amount is refunded to your original payment method and you receive an email confirmation.",
+    "chooseLabel": "Withdrawable purchases",
+    "summaryLabel": "Summary",
+    "empty": "You currently have no withdrawable purchases. The right of withdrawal lasts 14 days from purchase and only applies to paid purchases not yet withdrawn.",
+    "paidOn": "Purchased on {{date}}",
+    "daysLeft": "{{count}} day left to withdraw",
+    "daysLeft_other": "{{count}} days left to withdraw",
+    "contract": "Purchase",
+    "amount": "Amount",
+    "paidLabel": "Paid on",
+    "nameLabel": "Name",
+    "namePlaceholder": "First and last name",
+    "emailLabel": "Email address",
+    "confirmHint": "Clicking “Confirm withdrawal” declares your withdrawal bindingly. The purchase is reversed immediately.",
+    "confirmBtn": "Confirm withdrawal",
+    "submitting": "Processing…",
+    "doneTitle": "Withdrawal received",
+    "doneBody": "Your withdrawal has been recorded. We sent you an email confirmation including the content of your declaration plus date and time.",
+    "refundLine": "Refund: {{amount}} — returned to your original payment method.",
+    "backToProfile": "Back to profile",
+    "bannerCta": "Withdraw from contract",
+    "mustLogin": "Please sign in.",
+    "footer": "Alternatively you can withdraw informally by email to hi@swingandsavor.at. Provider: Comms Connect GmbH, Tal 30, 80331 Munich, Germany.",
+    "err": {
+      "generic": "Something went wrong. Please try again or email hi@swingandsavor.at.",
+      "widerruf_period_expired": "The 14-day withdrawal period for this purchase has expired.",
+      "already_widerrufen": "This purchase has already been withdrawn.",
+      "not_your_purchase": "This purchase does not belong to your account.",
+      "not_refundable": "This purchase cannot be withdrawn.",
+      "purchase_not_found": "Purchase not found."
+    }
   }
 }

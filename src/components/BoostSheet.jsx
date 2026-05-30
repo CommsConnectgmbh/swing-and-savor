@@ -15,6 +15,9 @@ export default function BoostSheet({ cup, onClose }) {
   const [duration, setDuration] = useState(3)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
+  // §356 Abs. 5 BGB: ausdrückliche Zustimmung zur sofortigen Ausführung +
+  // Kenntnis vom Erlöschen des Widerrufsrechts. Pflicht vor Zahlung.
+  const [instantConsent, setInstantConsent] = useState(false)
   const tierLabel = (id) => t(`sheets.boost.tier.${id}Label`)
   const tierDesc  = (id) => t(`sheets.boost.tier.${id}Desc`)
   const lang = i18n.resolvedLanguage || 'de'
@@ -26,6 +29,7 @@ export default function BoostSheet({ cup, onClose }) {
   const stillActive = activeUntil && activeUntil > new Date()
 
   async function startCheckout() {
+    if (!instantConsent) { setErr(t('sheets.boost.consentRequired')); return }
     setBusy(true); setErr(null)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -38,7 +42,7 @@ export default function BoostSheet({ cup, onClose }) {
           'Authorization': `Bearer ${jwt}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration }),
+        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
@@ -117,11 +121,23 @@ export default function BoostSheet({ cup, onClose }) {
             </div>
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={instantConsent}
+              onChange={(e) => { setInstantConsent(e.target.checked); if (e.target.checked) setErr(null) }}
+              className="mt-0.5 w-4 h-4 shrink-0 accent-accent"
+            />
+            <span className="text-[11px] leading-relaxed text-inkMuted">
+              {t('sheets.boost.instantConsent')}
+            </span>
+          </label>
+
           {err && <p className="text-xs text-danger">{err}</p>}
 
           <button
             onClick={startCheckout}
-            disabled={busy || !amount}
+            disabled={busy || !amount || !instantConsent}
             className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40"
           >
             {busy

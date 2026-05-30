@@ -117,8 +117,11 @@ export default function CupScreen() {
   }, [searchParams])
 
   const [upgrading, setUpgrading] = useState(null)
+  // §356 Abs. 5 BGB: Pflicht-Zustimmung zur sofortigen Ausführung vor Premium-Kauf.
+  const [premiumConsentCup, setPremiumConsentCup] = useState(null)
   async function upgradeToPremium(cup) {
     if (!user?.id) return
+    setPremiumConsentCup(null)
     setUpgrading(cup.id)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -131,7 +134,7 @@ export default function CupScreen() {
           'Authorization': `Bearer ${jwt}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium' }),
+        body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium', instant_execution_consent: true }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
@@ -584,7 +587,7 @@ export default function CupScreen() {
                 )}
                 {cup.owner_id === user?.id && (cup.package_type || 'free') === 'free' && (
                   <button
-                    onClick={() => upgradeToPremium(cup)}
+                    onClick={() => setPremiumConsentCup(cup)}
                     disabled={upgrading === cup.id}
                     className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform bg-accent text-bg hover:bg-accentDeep disabled:opacity-50"
                     title="Auf Premium upgraden"
@@ -701,6 +704,47 @@ export default function CupScreen() {
           onChanged={loadTournaments}
         />
       )}
+
+      {premiumConsentCup && (
+        <PremiumConsentModal
+          cup={premiumConsentCup}
+          onCancel={() => setPremiumConsentCup(null)}
+          onConfirm={() => upgradeToPremium(premiumConsentCup)}
+        />
+      )}
+    </div>
+  )
+}
+
+// §356 Abs. 5 BGB: ausdrückliche Zustimmung zur sofortigen Ausführung +
+// Kenntnis vom Erlöschen des Widerrufsrechts. Pflicht-Checkbox vor dem Premium-Kauf.
+function PremiumConsentModal({ cup, onCancel, onConfirm }) {
+  const { t } = useTranslation()
+  const [checked, setChecked] = useState(false)
+  return (
+    <div className="fixed inset-0 z-50 bg-black/65 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
+      <div className="bg-surface w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-line p-6 space-y-4">
+        <div>
+          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-accent">{t('sheets.premium.title', 'Premium')}</p>
+          <p className="font-condensed font-bold text-xl text-ink mt-1">{cup.name}</p>
+        </div>
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)}
+            className="mt-0.5 w-4 h-4 shrink-0 accent-accent" />
+          <span className="text-[11px] leading-relaxed text-inkMuted">{t('sheets.boost.instantConsent')}</span>
+        </label>
+        <div className="flex gap-2">
+          <button type="button" onClick={onCancel}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-bg text-inkMuted border border-line active:scale-[0.98] transition-transform">
+            {t('common.cancel', 'Abbrechen')}
+          </button>
+          <button type="button" onClick={onConfirm} disabled={!checked}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40">
+            {t('sheets.premium.cta', 'Premium · 49 €')}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

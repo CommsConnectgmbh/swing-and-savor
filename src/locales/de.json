@@ -21,7 +21,9 @@
         "highlightDesc": "Farbiger Rahmen im Feed",
         "bothLabel": "Top + Highlight",
         "bothDesc": "Beides — maximale Sichtbarkeit"
-      }
+      },
+      "instantConsent": "Ich verlange die sofortige Aktivierung des Boosts und weiß, dass mein Widerrufsrecht mit vollständiger Ausführung erlischt.",
+      "consentRequired": "Bitte stimme der sofortigen Aktivierung zu, um fortzufahren."
     },
     "join": {
       "title": "Beitritt",
@@ -88,6 +90,10 @@
       "sign": "Unterschreiben",
       "undo": "zurück",
       "mustLogin": "Bitte zuerst anmelden"
+    },
+    "premium": {
+      "title": "Premium",
+      "cta": "Premium · 49 €"
     }
   },
   "nav": {
@@ -368,5 +374,39 @@
   "lang": {
     "title": "Sprache",
     "subtitle": "Wähle deine bevorzugte Sprache"
+  },
+  "widerruf": {
+    "title": "Vertrag widerrufen",
+    "intro": "Online-Widerrufsfunktion nach Art. 11a EU-Verbraucherrechte-Richtlinie. Wähle einen kostenpflichtigen Kauf, den du innerhalb der 14-tägigen Widerrufsfrist widerrufen möchtest. Der Betrag wird auf dein ursprüngliches Zahlungsmittel erstattet und du erhältst eine Eingangsbestätigung per E-Mail.",
+    "chooseLabel": "Widerrufbare Käufe",
+    "summaryLabel": "Zusammenfassung",
+    "empty": "Du hast aktuell keine widerrufbaren Käufe. Das Widerrufsrecht gilt 14 Tage ab Kauf und nur für noch nicht widerrufene, bezahlte Käufe.",
+    "paidOn": "Gekauft am {{date}}",
+    "daysLeft": "noch {{count}} Tag widerrufbar",
+    "daysLeft_other": "noch {{count}} Tage widerrufbar",
+    "contract": "Kauf",
+    "amount": "Betrag",
+    "paidLabel": "Bezahlt am",
+    "nameLabel": "Name",
+    "namePlaceholder": "Vor- und Nachname",
+    "emailLabel": "E-Mail-Adresse",
+    "confirmHint": "Mit Klick auf „Widerruf bestätigen“ erklärst du den Widerruf verbindlich. Der Kauf wird sofort rückabgewickelt.",
+    "confirmBtn": "Widerruf bestätigen",
+    "submitting": "Wird verarbeitet…",
+    "doneTitle": "Widerruf eingegangen",
+    "doneBody": "Dein Widerruf wurde verbucht. Eine Eingangsbestätigung mit dem Inhalt deiner Erklärung sowie Datum und Uhrzeit haben wir dir per E-Mail geschickt.",
+    "refundLine": "Erstattung: {{amount}} — wird auf dein ursprüngliches Zahlungsmittel zurückgebucht.",
+    "backToProfile": "Zurück zum Profil",
+    "bannerCta": "Vertrag widerrufen",
+    "mustLogin": "Bitte melde dich an.",
+    "footer": "Alternativ kannst du formlos per E-Mail an hi@swingandsavor.at widerrufen. Anbieter: Comms Connect GmbH, Tal 30, 80331 München.",
+    "err": {
+      "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut oder schreibe an hi@swingandsavor.at.",
+      "widerruf_period_expired": "Die 14-tägige Widerrufsfrist für diesen Kauf ist abgelaufen.",
+      "already_widerrufen": "Dieser Kauf wurde bereits widerrufen.",
+      "not_your_purchase": "Dieser Kauf gehört nicht zu deinem Konto.",
+      "not_refundable": "Dieser Kauf ist nicht widerrufbar.",
+      "purchase_not_found": "Kauf nicht gefunden."
+    }
   }
 }
