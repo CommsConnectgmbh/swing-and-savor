@@ -9,6 +9,8 @@ export function calcMatchStanding(holeResults) {
 
   const diff = scoreA - scoreB
   const holesUp = Math.abs(diff)
+  // 'none' = Live-Standing-Gleichstand (UI-only). Entspricht dem 'halved'-Wert
+  // aus calcWinner / hole_results.winner; NICHT in die DB schreiben.
   const leader = diff > 0 ? 'A' : diff < 0 ? 'B' : 'none'
   const label = leader === 'none' ? 'ALL SQ' : `${holesUp} UP`
 

@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import CoursePicker from '../components/CoursePicker'
+import { isUnlocked } from '../lib/tournamentGate'
 
 function PencilIcon() {
   return (
@@ -48,10 +49,6 @@ function LockPlaceholder({ onUnlock }) {
   )
 }
 
-function isUnlocked(t) {
-  if (!t?.edit_password) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
-}
 
 // Form-State unterstützt jetzt Arrays für Flight.
 // singles → a:[id], b:[id]  doubles → a:[id,id], b:[id,id]  flight → a:[…], b:[…]
@@ -800,7 +797,6 @@ export default function MatchesScreen() {
 
       {showGate && selected && (
         <PasswordGate
-          correctPassword={selected.edit_password}
           tournamentId={selected.id}
           onSuccess={handleGateSuccess}
           onCancel={() => { setShowGate(false); pendingRef.current = null }}
@@ -810,7 +806,6 @@ export default function MatchesScreen() {
       {showViewGate && selected && (
         <PasswordGate
           viewMode
-          correctPassword={selected.edit_password}
           tournamentId={selected.id}
           onSuccess={handleViewGateSuccess}
           onCancel={() => setShowViewGate(false)}

@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { pushToast } from './toast'
+import { debounce } from './debounce'
 
 /**
  * Globale Realtime-Subscriptions, die App-weit Toasts und Push-Trigger feuern.
@@ -36,6 +37,10 @@ export function startLiveEvents(user) {
       myMatchIds = new Set()
     }
   }
+
+  // Debounced: ein Schwall unbekannter Fremd-Match-Updates ⇒ ein einziger
+  // refreshMine() statt einem pro Event (Request-Verstärkung vermeiden, P2-5).
+  const debouncedRefreshMine = debounce(() => { refreshMine() }, 1000)
 
   async function profileFor(id) {
     if (myProfilesById[id]) return myProfilesById[id]
@@ -92,9 +97,11 @@ export function startLiveEvents(user) {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' },
         async ({ new: m, old: o }) => {
           if (!myMatchIds.has(m.id)) {
-            // Cup könnte neu sein — refresh
-            await refreshMine()
-            if (!myMatchIds.has(m.id)) return
+            // Unbekanntes Match: evtl. ein neuer eigener Cup. Refresh nur
+            // gebündelt anstoßen und dieses Event verwerfen (kein await pro
+            // Fremd-Update). Folge-Events nach dem Refresh treffen die Toasts.
+            debouncedRefreshMine()
+            return
           }
           if (o.status !== 'active' && m.status === 'active') {
             pushToast({ icon: '⛳', title: 'Match ist live',
@@ -108,6 +115,7 @@ export function startLiveEvents(user) {
   })
 
   return () => {
+    debouncedRefreshMine.cancel()
     if (chMsgs)    supabase.removeChannel(chMsgs)
     if (chRest)    supabase.removeChannel(chRest)
     if (chMatches) supabase.removeChannel(chMatches)
