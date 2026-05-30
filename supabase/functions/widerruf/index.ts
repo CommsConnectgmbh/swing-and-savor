@@ -252,8 +252,8 @@ Deno.serve(async (req: Request) => {
     const html = `<!doctype html>
 <html><body style="font-family:system-ui,-apple-system,sans-serif;color:#0d271e;background:#f4f7f2;margin:0;padding:32px 16px;">
 <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e2e8de;border-radius:16px;padding:32px;">
-<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Widerruf eingegangen</h1>
-<p style="margin:0 0 24px;color:#5b6b62;font-size:14px;line-height:1.55;">Hallo ${escapeHtml(fullName)}, wir bestätigen den Eingang deines Widerrufs. Du musst nichts weiter tun.</p>
+<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Eingangsbestätigung deines Widerrufs</h1>
+<p style="margin:0 0 24px;color:#5b6b62;font-size:14px;line-height:1.55;">Hallo ${escapeHtml(fullName)}, wir bestätigen den Eingang deiner Widerrufserklärung. Über die Wirksamkeit und die weitere Abwicklung informieren wir dich gesondert.</p>
 <div style="margin:0 0 24px;padding:16px;background:#f4f7f2;border-radius:12px;font-size:14px;line-height:1.75;color:#0d271e;">
   <div><strong>Widerrufener Kauf:</strong> ${escapeHtml(contractLabel)}</div>
   <div><strong>Eingegangen am:</strong> ${escapeHtml(received)}</div>
