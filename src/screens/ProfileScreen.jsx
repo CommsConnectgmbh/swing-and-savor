@@ -12,6 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ShareSheet from '../components/ShareSheet'
 import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
+import { hasWiderrufbareKaeufe } from '../lib/widerruf'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   const [pushState, setPushState] = useState(null) // 'on' | 'off' | 'unavailable' | 'busy'
   const [blockedUsers, setBlockedUsers] = useState([])
   const [unblocking, setUnblocking] = useState(null)
+  const [canWiderrufen, setCanWiderrufen] = useState(false)
 
   const isSelf = !handle || (me && handle === me.handle)
   const target = isSelf ? me : profile
@@ -76,6 +78,18 @@ export default function ProfileScreen() {
   }
 
   useEffect(() => { if (isSelf) loadBlocked() }, [me?.id, isSelf])
+
+  // Widerruf-Banner nur zeigen, wenn der Nutzer mind. einen widerrufbaren Kauf hat
+  // (status='paid', innerhalb 14 Tage ab paid_at, noch nicht widerrufen).
+  useEffect(() => {
+    let alive = true
+    if (isSelf && me?.id) {
+      hasWiderrufbareKaeufe(me.id).then((ok) => { if (alive) setCanWiderrufen(ok) }).catch(() => {})
+    } else {
+      setCanWiderrufen(false)
+    }
+    return () => { alive = false }
+  }, [me?.id, isSelf])
 
   async function unblock(targetId) {
     setUnblocking(targetId)
@@ -598,6 +612,13 @@ export default function ProfileScreen() {
       {/* Sign out + Legal + Konto löschen */}
       {isSelf && (
         <div className="px-3 mt-4 flex flex-col gap-2">
+          {canWiderrufen && (
+            <button onClick={() => navigate('/widerruf')}
+              className="w-full py-3 rounded-xl text-sm font-bold bg-accent/12 text-accent border border-accent/40 active:scale-[0.98] transition-transform">
+              {t('widerruf.bannerCta')}
+            </button>
+          )}
+
           <button onClick={signOut}
             className="w-full py-3 rounded-xl text-sm font-semibold bg-surface text-inkMuted border border-line active:scale-[0.98] transition-transform">
             {t('common.signOut')}
