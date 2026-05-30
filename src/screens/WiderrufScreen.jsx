@@ -25,6 +25,8 @@ export default function WiderrufScreen() {
   const [err, setErr] = useState(null)
   const [result, setResult] = useState(null)
 
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+
   useEffect(() => {
     if (user?.email) setEmail((e) => e || user.email)
     if (profile?.display_name) setFullName((n) => n || profile.display_name)
@@ -48,6 +50,8 @@ export default function WiderrufScreen() {
 
   async function submit() {
     if (!selected) return
+    if (!fullName.trim()) { setErr('missing_full_name'); return }
+    if (!emailValid) { setErr('invalid_email'); return }
     setBusy(true); setErr(null)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -145,10 +149,13 @@ export default function WiderrufScreen() {
           </label>
           <label className="block">
             <span className="text-[11px] font-semibold text-inkMuted">{t('widerruf.emailLabel')}</span>
-            <input type="email" value={email}
+            <input type="email" value={email} required
               onChange={(e) => setEmail(e.target.value)}
               placeholder="dein@email.de"
               className="mt-1 w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-ink text-sm focus:border-accent/60" />
+            {email.trim() && !emailValid && (
+              <span className="mt-1 block text-[11px] text-danger">{t('widerruf.err.invalid_email')}</span>
+            )}
           </label>
 
           <p className="text-xs text-inkMuted leading-relaxed">{t('widerruf.confirmHint')}</p>
@@ -159,7 +166,7 @@ export default function WiderrufScreen() {
               className="flex-1 py-3 rounded-xl text-sm font-bold bg-bg text-inkMuted border border-line active:scale-[0.98] transition-transform disabled:opacity-50">
               {t('common.back', 'Zurück')}
             </button>
-            <button type="button" onClick={submit} disabled={busy || !fullName.trim() || !email.trim()}
+            <button type="button" onClick={submit} disabled={busy || !fullName.trim() || !emailValid}
               className="flex-1 py-3 rounded-xl text-sm font-bold bg-danger text-white active:scale-[0.98] transition-transform disabled:opacity-50">
               {busy ? t('widerruf.submitting') : t('widerruf.confirmBtn')}
             </button>
