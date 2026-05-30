@@ -163,6 +163,19 @@ export default function MatchesScreen() {
     setPlayers(data || [])
   }
 
+  // Optimistic upsert in den lokalen players-State, damit der eben angelegte
+  // Spieler sofort als gewählt im PlayerSelect-Button erscheint — ohne auf
+  // den async loadPlayers-Roundtrip zu warten.
+  function addOrRefreshPlayer(newPlayer) {
+    if (!newPlayer?.id) return
+    setPlayers(prev => {
+      const others = prev.filter(p => p.id !== newPlayer.id)
+      return [...others, newPlayer]
+    })
+    // Hintergrund-Reload für Konsistenz mit Server (sort, andere Felder).
+    loadPlayers().catch(() => {})
+  }
+
   function guarded(action) {
     if (isUnlocked(selected)) action()
     else { pendingRef.current = action; setShowGate(true) }
@@ -551,7 +564,7 @@ export default function MatchesScreen() {
               tournamentId={selected?.id}
               teamSide="A"
               teamName={selected?.team_a_name || 'Team A'}
-              onPlayerCreated={loadPlayers}
+              onPlayerCreated={addOrRefreshPlayer}
               onChange={(v) => setSlot('A', i, v)} />
           ))}
 
@@ -565,7 +578,7 @@ export default function MatchesScreen() {
               tournamentId={selected?.id}
               teamSide="B"
               teamName={selected?.team_b_name || 'Team B'}
-              onPlayerCreated={loadPlayers}
+              onPlayerCreated={addOrRefreshPlayer}
               onChange={(v) => setSlot('B', i, v)} />
           ))}
 
@@ -853,9 +866,9 @@ function PlayerSelect({
           tournamentId={tournamentId}
           options={options} taken={taken} value={value}
           onPick={(id) => { onChange(id); setOpen(false) }}
-          onCreated={async (newId) => {
-            if (onPlayerCreated) await onPlayerCreated()
-            onChange(newId); setOpen(false)
+          onCreated={async (newPlayer) => {
+            if (onPlayerCreated) await onPlayerCreated(newPlayer)
+            onChange(newPlayer.id); setOpen(false)
           }}
           onClose={() => setOpen(false)}
         />
@@ -868,7 +881,14 @@ function PlayerPickSheet({
   label, teamName, teamSide, tournamentId,
   options, taken, value, onPick, onCreated, onClose,
 }) {
-  const [mode, setMode] = useState('roster') // 'roster' | 'friends' | 'guest'
+  // Default: wenn das Team leer ist, direkt Freunde-Tab zeigen — sonst Roster.
+  const [mode, setMode] = useState(options.length === 0 ? 'friends' : 'roster')
+
+  // BottomNav ausblenden während Sheet offen ist — sonst überlappt der Plus-FAB.
+  useEffect(() => {
+    document.body.classList.add('sheet-open')
+    return () => document.body.classList.remove('sheet-open')
+  }, [])
   const [friends, setFriends] = useState([])
   const [loadingFriends, setLoadingFriends] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -899,34 +919,44 @@ function PlayerPickSheet({
   }, [mode])
 
   async function provisionPlayer(name, handicap) {
-    if (!tournamentId || !teamSide) return
+    if (!tournamentId || !teamSide) {
+      console.warn('provisionPlayer: missing tournament/team', { tournamentId, teamSide })
+      return
+    }
     setBusy(true)
     try {
       const cleanName = String(name).trim().slice(0, 60)
       if (!cleanName) { setBusy(false); return }
       const hc = Number.isFinite(handicap) && handicap >= 0 && handicap <= 54 ? handicap : 0
+      // Existing? Wiederverwenden.
       const { data: existing } = await supabase.from('players')
-        .select('id').eq('tournament_id', tournamentId)
+        .select('id, name, handicap, team, tournament_id')
+        .eq('tournament_id', tournamentId)
         .eq('team', teamSide).eq('name', cleanName).maybeSingle()
-      if (existing?.id) { await onCreated(existing.id); return }
-      const { data: ins } = await supabase.from('players').insert({
+      if (existing?.id) { await onCreated(existing); return }
+      // Neu einfügen.
+      const { data: ins, error } = await supabase.from('players').insert({
         tournament_id: tournamentId, name: cleanName, handicap: hc, team: teamSide,
-      }).select('id').single()
-      if (ins?.id) await onCreated(ins.id)
+      }).select('id, name, handicap, team, tournament_id').single()
+      if (error) { alert('Konnte Spieler nicht anlegen: ' + error.message); return }
+      if (ins?.id) await onCreated(ins)
     } finally { setBusy(false) }
   }
 
   return (
     <div className="fixed inset-0 z-[110] flex items-end justify-center" role="dialog" aria-modal="true">
       <div onClick={onClose} className="absolute inset-0 bg-black/60" />
-      <div className="relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-t-3xl bg-surface border-t border-line shadow-lift"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
+      <div className="relative w-full max-w-lg flex flex-col rounded-t-3xl bg-surface border-t border-line shadow-lift"
+        style={{
+          height: 'min(92dvh, 720px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)',
+        }}>
         <div className="pt-2.5 pb-3 flex justify-center">
           <div className="w-10 h-1.5 rounded-full bg-line" />
         </div>
         <div className="px-5 pb-2 flex items-baseline justify-between">
           <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">
-            {label} · {teamName}
+            {label} wählen
           </p>
           <button onClick={onClose}
             className="text-[10px] font-bold tracking-wider uppercase text-inkDim active:scale-95">
@@ -938,7 +968,7 @@ function PlayerPickSheet({
         <div className="px-3 pb-2">
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              ['roster',  `Im ${teamName}`],
+              ['roster',  options.length ? 'Vorhanden' : '— leer —'],
               ['friends', 'Freunde'],
               ['guest',   'Gast'],
             ].map(([k, lbl]) => (
@@ -1008,7 +1038,7 @@ function PlayerPickSheet({
                   </p>
                 </div>
                 <span className="text-[10px] font-bold tracking-wider uppercase text-accent flex-shrink-0">
-                  + {teamName}
+                  Wählen
                 </span>
               </button>
             ))
@@ -1025,7 +1055,7 @@ function PlayerPickSheet({
                 className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink text-sm focus:border-accent/60" />
               <button type="submit" disabled={!guestName.trim() || busy}
                 className="py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40">
-                {busy ? '…' : `Zu ${teamName} hinzufügen`}
+                {busy ? '…' : 'Hinzufügen'}
               </button>
             </form>
           )}

@@ -36,6 +36,10 @@ body {
   min-height: 100dvh;
 }
 
+/* Wenn ein Bottom-Sheet offen ist, blendet sich die BottomNav weg —
+   sonst überlappt der Plus-FAB jedes Sheet unangenehm. */
+body.sheet-open nav[aria-label-bottomnav], body.sheet-open .bottom-nav { display: none; }
+
 /* Editorial display class for headlines (Hero, Recap, Winner Cards) */
 .font-display {
   font-family: 'Fraunces', Georgia, serif;

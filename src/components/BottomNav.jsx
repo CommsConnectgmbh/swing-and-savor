@@ -98,7 +98,7 @@ export default function BottomNav() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 hairline-t"
+        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 hairline-t"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
           // fixed-Elemente erben das laterale Body-Padding nicht — sonst clippt

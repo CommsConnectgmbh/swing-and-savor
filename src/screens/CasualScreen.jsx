@@ -40,6 +40,11 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
   const [query, setQuery] = useState('')
 
   useEffect(() => {
+    document.body.classList.add('sheet-open')
+    return () => document.body.classList.remove('sheet-open')
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     async function load() {
       const { data: rows } = await supabase.from('friendships').select('*')
@@ -128,6 +133,11 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
 function GuestSheet({ onAdd, onClose }) {
   const [name, setName] = useState('')
   const [hcp, setHcp] = useState('')
+
+  useEffect(() => {
+    document.body.classList.add('sheet-open')
+    return () => document.body.classList.remove('sheet-open')
+  }, [])
 
   function submit(e) {
     e.preventDefault()
