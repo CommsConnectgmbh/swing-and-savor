@@ -469,6 +469,8 @@ create policy client_debug_select_none on client_debug for select using (false);
 drop policy if exists groups_select_public on community_groups;
 create policy groups_select_public on community_groups for select using (
   visibility = 'public' or owner_id = auth.uid()
+  -- NB: Original-Live-Zustand mit Self-Comparison-Bug (m.group_id = m.id) —
+  -- bewusst as-was abgebildet; korrigiert in Migration 028.
   or exists (select 1 from community_group_members m where m.group_id = m.id and m.profile_id = auth.uid()));
 drop policy if exists groups_insert_self on community_groups;
 create policy groups_insert_self on community_groups for insert with check (owner_id = auth.uid());
