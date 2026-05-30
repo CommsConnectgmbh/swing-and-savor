@@ -40,7 +40,7 @@ function Wordmark() {
           Swing<span style={{ color: '#D9C9A8' }}> &amp; </span>Savor
         </span>
         <span className="text-[8px] text-inkMuted uppercase tracking-[0.36em] mt-0.5">
-          The Clubhouse
+          Club
         </span>
       </span>
     </Link>

@@ -548,6 +548,10 @@ export default function MatchesScreen() {
               value={form.a[i] || ''}
               options={teamA}
               taken={form.a.filter((id, idx) => idx !== i && id)}
+              tournamentId={selected?.id}
+              teamSide="A"
+              teamName={selected?.team_a_name || 'Team A'}
+              onPlayerCreated={loadPlayers}
               onChange={(v) => setSlot('A', i, v)} />
           ))}
 
@@ -558,6 +562,10 @@ export default function MatchesScreen() {
               value={form.b[i] || ''}
               options={teamB}
               taken={form.b.filter((id, idx) => idx !== i && id)}
+              tournamentId={selected?.id}
+              teamSide="B"
+              teamName={selected?.team_b_name || 'Team B'}
+              onPlayerCreated={loadPlayers}
               onChange={(v) => setSlot('B', i, v)} />
           ))}
 
@@ -815,19 +823,215 @@ export default function MatchesScreen() {
   )
 }
 
-function PlayerSelect({ label, value, options, taken = [], onChange }) {
+function PlayerSelect({
+  label, value, options, taken = [],
+  tournamentId, teamSide, teamName, onPlayerCreated, onChange,
+}) {
+  const [open, setOpen] = useState(false)
+  const picked = options.find(p => p.id === value)
+
   return (
-    <select
-      className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink text-sm focus:border-accent/60"
-      value={value} onChange={e => onChange(e.target.value)}
-    >
-      <option value="">{label} wählen…</option>
-      {options.map(p => (
-        <option key={p.id} value={p.id} disabled={taken.includes(p.id) && p.id !== value}>
-          {p.name} (HC {Number(p.handicap).toFixed(1)}){taken.includes(p.id) && p.id !== value ? ' · vergeben' : ''}
-        </option>
-      ))}
-    </select>
+    <>
+      <button type="button" onClick={() => setOpen(true)}
+        className="w-full text-left bg-bg border border-line rounded-xl px-4 py-3 text-sm flex items-center justify-between active:border-accent/60 transition-colors">
+        {picked ? (
+          <span className="text-ink truncate">
+            {picked.name}
+            <span className="text-inkMuted ml-1.5 text-xs tabular-nums">HC {Number(picked.handicap).toFixed(1)}</span>
+          </span>
+        ) : (
+          <span className="text-inkDim">{label} wählen…</span>
+        )}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" className="text-inkDim flex-shrink-0 ml-2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <PlayerPickSheet
+          label={label} teamName={teamName} teamSide={teamSide}
+          tournamentId={tournamentId}
+          options={options} taken={taken} value={value}
+          onPick={(id) => { onChange(id); setOpen(false) }}
+          onCreated={async (newId) => {
+            if (onPlayerCreated) await onPlayerCreated()
+            onChange(newId); setOpen(false)
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  )
+}
+
+function PlayerPickSheet({
+  label, teamName, teamSide, tournamentId,
+  options, taken, value, onPick, onCreated, onClose,
+}) {
+  const [mode, setMode] = useState('roster') // 'roster' | 'friends' | 'guest'
+  const [friends, setFriends] = useState([])
+  const [loadingFriends, setLoadingFriends] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [guestName, setGuestName] = useState('')
+  const [guestHcp, setGuestHcp] = useState('')
+
+  useEffect(() => {
+    if (mode !== 'friends') return
+    let cancelled = false
+    async function load() {
+      setLoadingFriends(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoadingFriends(false); return }
+      const { data: rows } = await supabase.from('friendships').select('*')
+        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+      const accepted = (rows || []).filter(r => r.status === 'accepted')
+      const ids = accepted.map(r => r.user_a === user.id ? r.user_b : r.user_a)
+      if (!ids.length) { if (!cancelled) { setFriends([]); setLoadingFriends(false) }; return }
+      const { data: profs } = await supabase.from('profiles')
+        .select('id, handle, display_name, hcp, avatar_url').in('id', ids)
+      if (!cancelled) {
+        setFriends((profs || []).sort((a, b) => a.display_name.localeCompare(b.display_name)))
+        setLoadingFriends(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [mode])
+
+  async function provisionPlayer(name, handicap) {
+    if (!tournamentId || !teamSide) return
+    setBusy(true)
+    try {
+      const cleanName = String(name).trim().slice(0, 60)
+      if (!cleanName) { setBusy(false); return }
+      const hc = Number.isFinite(handicap) && handicap >= 0 && handicap <= 54 ? handicap : 0
+      const { data: existing } = await supabase.from('players')
+        .select('id').eq('tournament_id', tournamentId)
+        .eq('team', teamSide).eq('name', cleanName).maybeSingle()
+      if (existing?.id) { await onCreated(existing.id); return }
+      const { data: ins } = await supabase.from('players').insert({
+        tournament_id: tournamentId, name: cleanName, handicap: hc, team: teamSide,
+      }).select('id').single()
+      if (ins?.id) await onCreated(ins.id)
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-end justify-center" role="dialog" aria-modal="true">
+      <div onClick={onClose} className="absolute inset-0 bg-black/60" />
+      <div className="relative w-full max-w-lg max-h-[80vh] flex flex-col rounded-t-3xl bg-surface border-t border-line shadow-lift"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
+        <div className="pt-2.5 pb-3 flex justify-center">
+          <div className="w-10 h-1.5 rounded-full bg-line" />
+        </div>
+        <div className="px-5 pb-2 flex items-baseline justify-between">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">
+            {label} · {teamName}
+          </p>
+          <button onClick={onClose}
+            className="text-[10px] font-bold tracking-wider uppercase text-inkDim active:scale-95">
+            schließen
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="px-3 pb-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              ['roster',  `Im ${teamName}`],
+              ['friends', 'Freunde'],
+              ['guest',   'Gast'],
+            ].map(([k, lbl]) => (
+              <button key={k} type="button" onClick={() => setMode(k)}
+                className={`py-2 rounded-lg text-[11px] font-bold tracking-wide active:scale-[0.97] transition-all ${
+                  mode === k
+                    ? 'bg-accent text-brandDark'
+                    : 'bg-bg text-inkMuted border border-line'
+                }`}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-3 pt-1 pb-1 overflow-y-auto flex-1">
+          {mode === 'roster' && (
+            options.length === 0 ? (
+              <div className="py-8 px-4 text-center">
+                <p className="text-sm text-inkMuted">Noch niemand in {teamName}.</p>
+                <p className="text-xs text-inkDim mt-1">Füge oben einen Freund oder Gast hinzu.</p>
+              </div>
+            ) : options.map(p => {
+              const isTaken = taken.includes(p.id) && p.id !== value
+              const isSelf = p.id === value
+              return (
+                <button key={p.id} disabled={isTaken}
+                  onClick={() => onPick(p.id)}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl active:bg-bg/60 transition-colors disabled:opacity-30 text-left">
+                  <span className="w-9 h-9 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0">
+                    {p.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-ink truncate">{p.name}</p>
+                    <p className="text-[11px] text-inkMuted tabular-nums">
+                      HC {Number(p.handicap).toFixed(1)}
+                      {isTaken && ' · in anderem Slot'}
+                      {isSelf && ' · aktuell gewählt'}
+                    </p>
+                  </div>
+                </button>
+              )
+            })
+          )}
+
+          {mode === 'friends' && (
+            loadingFriends ? <div className="py-8 flex justify-center"><LoadingSpinner /></div> :
+            friends.length === 0 ? (
+              <div className="py-8 px-4 text-center">
+                <p className="text-sm text-inkMuted">Keine Freunde verknüpft.</p>
+              </div>
+            ) : friends.map(f => (
+              <button key={f.id} disabled={busy}
+                onClick={() => provisionPlayer(f.display_name, Number(f.hcp ?? 0))}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl active:bg-bg/60 transition-colors disabled:opacity-40 text-left">
+                <div className="w-9 h-9 rounded-full bg-bg border border-line flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {f.avatar_url
+                    ? <img src={f.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-xs font-bold text-inkMuted">
+                        {f.display_name.slice(0, 2).toUpperCase()}
+                      </span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-ink truncate">{f.display_name}</p>
+                  <p className="text-[11px] text-inkMuted truncate">
+                    @{f.handle}{f.hcp != null && ` · HC ${Number(f.hcp).toFixed(1)}`}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-accent flex-shrink-0">
+                  + {teamName}
+                </span>
+              </button>
+            ))
+          )}
+
+          {mode === 'guest' && (
+            <form onSubmit={(e) => { e.preventDefault(); const h = parseFloat(String(guestHcp).replace(',', '.')); provisionPlayer(guestName, Number.isFinite(h) ? h : 0) }}
+              className="px-2 pt-2 pb-3 flex flex-col gap-3">
+              <input value={guestName} onChange={e => setGuestName(e.target.value)}
+                placeholder="Name" autoFocus maxLength={60}
+                className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink text-sm focus:border-accent/60" />
+              <input value={guestHcp} onChange={e => setGuestHcp(e.target.value)}
+                placeholder="Handicap (optional)" inputMode="decimal"
+                className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink text-sm focus:border-accent/60" />
+              <button type="submit" disabled={!guestName.trim() || busy}
+                className="py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40">
+                {busy ? '…' : `Zu ${teamName} hinzufügen`}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

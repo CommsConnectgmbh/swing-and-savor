@@ -82,13 +82,13 @@ export default function App() {
   }, [user?.id])
 
   if (loading) {
-    return <div className="min-h-screen bg-bg flex items-center justify-center"><LoadingSpinner /></div>
+    return <div className="min-h-[100dvh] bg-bg flex items-center justify-center"><LoadingSpinner /></div>
   }
 
   if (isPublicCup) {
     return (
       <div
-        className="min-h-screen bg-bg text-ink"
+        className="min-h-[100dvh] bg-bg text-ink"
         style={{
           // Header-less full-screen routes: ohne diese Insets klebt der Inhalt
           // unter Notch/Dynamic Island und der Home-Indicator deckt das Ende ab.
@@ -114,7 +114,7 @@ export default function App() {
   if (!profile) return <OnboardingScreen />
 
   return (
-    <div className="min-h-screen bg-bg text-ink">
+    <div className="min-h-[100dvh] bg-bg text-ink">
       <HeaderForRoute />
       <Toaster />
       <main className="pb-safe">

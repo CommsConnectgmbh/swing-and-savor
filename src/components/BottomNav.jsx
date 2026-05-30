@@ -106,6 +106,10 @@ export default function BottomNav() {
           paddingLeft: 'env(safe-area-inset-left)',
           paddingRight: 'env(safe-area-inset-right)',
           background: '#0A1A12',
+          // GPU-Layer fixiert die Nav: sonst zuckt sie auf iOS bei URL-Bar-Toggle
+          // und im Capacitor-1.1.3 mit contentInset='always' beim Scrollen mit.
+          transform: 'translateZ(0)',
+          willChange: 'transform',
         }}
       >
         <div className="flex max-w-lg mx-auto">
