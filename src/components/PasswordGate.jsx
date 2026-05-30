@@ -1,13 +1,19 @@
 import { useState } from 'react'
+import { verifyPassword, markUnlocked } from '../lib/tournamentGate'
 
-export default function PasswordGate({ correctPassword, tournamentId, onSuccess, onCancel, viewMode = false }) {
+export default function PasswordGate({ tournamentId, onSuccess, onCancel, viewMode = false }) {
   const [pw, setPw] = useState('')
   const [error, setError] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (pw === correctPassword) {
-      try { sessionStorage.setItem(`golf_unlocked_${tournamentId}`, '1') } catch {}
+    if (busy) return
+    setBusy(true)
+    const ok = await verifyPassword(tournamentId, pw)
+    setBusy(false)
+    if (ok) {
+      markUnlocked(tournamentId)
       onSuccess()
     } else {
       setError(true)
@@ -54,9 +60,9 @@ export default function PasswordGate({ correctPassword, tournamentId, onSuccess,
               className="flex-1 py-3 rounded-xl text-sm font-bold bg-bg text-inkDim border border-line active:scale-[0.98] transition-transform">
               Cancel
             </button>
-            <button type="submit"
-              className="flex-1 py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform">
-              Unlock
+            <button type="submit" disabled={busy}
+              className="flex-1 py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-50">
+              {busy ? '…' : 'Unlock'}
             </button>
           </div>
         </form>

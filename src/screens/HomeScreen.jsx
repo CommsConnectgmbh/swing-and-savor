@@ -7,6 +7,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { debounce } from '../lib/debounce'
 
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
@@ -44,11 +45,20 @@ export default function HomeScreen() {
   const [sponsorByCup, setSponsorByCup] = useState({}) // cupId → { name, logo_url, website_url }
   const [coverOverrides, setCoverOverrides] = useState({}) // cupId → fresh cover_url (optimistic)
   const channelRef = useRef(null)
+  const loadRef = useRef(() => {})
+  const refreshSocialRef = useRef(() => {})
+  // Stabile, debouncte Realtime-Handler: ein Event-Schwall ⇒ ein Reload.
+  const debouncedLoad = useRef(debounce(() => loadRef.current(), 400)).current
+  const debouncedSocial = useRef(debounce(() => refreshSocialRef.current(), 400)).current
 
   useEffect(() => {
     load()
     subscribe()
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+    return () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current)
+      debouncedLoad.cancel()
+      debouncedSocial.cancel()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
@@ -207,11 +217,14 @@ export default function HomeScreen() {
 
   function subscribe() {
     if (channelRef.current) supabase.removeChannel(channelRef.current)
+    // Globaler Feed (alle RLS-sichtbaren Matches) lässt sich nicht auf einen
+    // festen id-Filter eingrenzen — daher Debounce, damit ein Tastatur-Schwall
+    // irgendeines Users nicht pro Tastenanschlag einen Voll-Reload auslöst.
     const ch = supabase.channel('home-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, () => load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reactions' }, () => refreshSocial())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_comments' }, () => refreshSocial())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, debouncedLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, debouncedLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reactions' }, debouncedSocial)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_comments' }, debouncedSocial)
       .subscribe()
     channelRef.current = ch
   }
@@ -222,6 +235,8 @@ export default function HomeScreen() {
     const counts = await fetchSocialCounts(ids)
     setSocial(counts)
   }
+  loadRef.current = load
+  refreshSocialRef.current = refreshSocial
 
   async function handleShare(m) {
     try {

@@ -11,6 +11,7 @@ import ShareSheet from '../components/ShareSheet'
 import CupExtrasSheet from '../components/CupExtrasSheet'
 import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
+import { isUnlocked } from '../lib/tournamentGate'
 
 const emptyForm = {
   name: '', date: '',
@@ -65,11 +66,6 @@ function LockIcon({ size = 11 }) {
       <path d="M7 11V7a5 5 0 0110 0v4"/>
     </svg>
   )
-}
-
-function isUnlocked(t) {
-  if (!t?.edit_password) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
 }
 
 function ShareIcon() {
@@ -186,7 +182,10 @@ export default function CupScreen() {
       setForm({
         name: t.name, date: t.date,
         team_a_name: t.team_a_name, team_b_name: t.team_b_name,
-        edit_password: t.edit_password || '',
+        // Klartext-Passwort ist serverseitig gekapselt und nie lesbar.
+        // Leer lassen = beibehalten; neuer Wert = setzen/ersetzen.
+        edit_password: '',
+        had_password: !!t.has_edit_password,
         visibility: t.visibility || 'friends',
         location_name: t.location_name || '',
         format: t.format || '',
@@ -219,10 +218,11 @@ export default function CupScreen() {
     if (form.ec_entry_fee_eur !== '') entry_conditions.entry_fee_cents = Math.round(Number(form.ec_entry_fee_eur) * 100)
     if (form.ec_payout.trim())       entry_conditions.payout       = form.ec_payout.trim()
 
+    // Passwort wird NICHT mehr in tournaments geschrieben (Klartext-Leakage).
+    // Es lebt in tournament_secrets und wird via security-definer RPC gesetzt.
     const payload = {
       name: form.name, date: form.date,
       team_a_name: form.team_a_name, team_b_name: form.team_b_name,
-      edit_password: form.edit_password.trim() || null,
       visibility: form.visibility,
       location_name: form.location_name.trim() || null,
       format: form.format.trim() || null,
@@ -233,11 +233,19 @@ export default function CupScreen() {
       max_participants: form.max_participants ? parseInt(form.max_participants, 10) : null,
       entry_conditions,
     }
+    const newPw = form.edit_password.trim()
     if (mode === 'create') {
       if (user) payload.owner_id = user.id
-      await supabase.from('tournaments').insert([payload])
+      const { data: inserted } = await supabase.from('tournaments').insert([payload]).select('id').single()
+      if (inserted?.id && newPw) {
+        await supabase.rpc('set_tournament_password', { t_id: inserted.id, pw: newPw })
+      }
     } else {
       await supabase.from('tournaments').update(payload).eq('id', editId)
+      // Leeres Feld bei bestehendem Passwort = beibehalten (kein versehentliches Löschen).
+      if (newPw) {
+        await supabase.rpc('set_tournament_password', { t_id: editId, pw: newPw })
+      }
     }
     closeForm(); loadTournaments()
   }
@@ -490,8 +498,9 @@ export default function CupScreen() {
           {/* Legacy password (optional) */}
           <div>
             <input
+              type="password"
               className={inputCls}
-              placeholder="Schreibschutz-Passwort (optional)"
+              placeholder={form.had_password ? 'Passwort gesetzt — leer lassen zum Beibehalten' : 'Schreibschutz-Passwort (optional)'}
               value={form.edit_password}
               onChange={e => setForm(f => ({ ...f, edit_password: e.target.value }))}
               autoComplete="off"
@@ -528,7 +537,7 @@ export default function CupScreen() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm leading-tight text-ink flex items-center gap-1.5">
                   {cup.name}
-                  {cup.edit_password && <span className="text-lock"><LockIcon /></span>}
+                  {cup.has_edit_password && <span className="text-lock"><LockIcon /></span>}
                 </p>
                 <p className="text-xs mt-0.5 text-inkMuted flex items-center gap-1.5 flex-wrap">
                   <span>{new Date(cup.date + 'T12:00:00').toLocaleDateString()}</span>
@@ -654,7 +663,6 @@ export default function CupScreen() {
 
       {showGate && gateTournament && (
         <PasswordGate
-          correctPassword={gateTournament.edit_password}
           tournamentId={gateTournament.id}
           onSuccess={handleGateSuccess}
           onCancel={() => { setShowGate(false); pendingRef.current = null }}

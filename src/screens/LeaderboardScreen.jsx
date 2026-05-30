@@ -15,6 +15,7 @@ export default function LeaderboardScreen() {
   const [loading, setLoading] = useState(true)
   const [rows, setRows]       = useState([])
   const [me, setMe]           = useState(null)
+  const [myRank, setMyRank]   = useState(0)
 
   useEffect(() => { load() /* eslint-disable-next-line */ }, [filter, user?.id])
 
@@ -42,11 +43,28 @@ export default function LeaderboardScreen() {
         .select('id,handle,display_name,avatar_url,elo_rating,games_played,wins')
         .eq('id', user.id).maybeSingle()
       setMe(myProf || null)
+
+      // Echter Welt-Rang unabhängig vom 200er-Fenster: zähle aktive Profile mit
+      // höherem ELO (+1). Im Freunde-Filter weiter Index-basiert (kleines Set).
+      if (myProf && (myProf.games_played || 0) > 0) {
+        if (filter === 'world') {
+          const { count } = await supabase.from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .gt('games_played', 0)
+            .gt('elo_rating', myProf.elo_rating)
+          setMyRank((count ?? 0) + 1)
+        } else {
+          const idx = (data || []).findIndex(r => r.id === myProf.id)
+          setMyRank(idx >= 0 ? idx + 1 : 0)
+        }
+      } else {
+        setMyRank(0)
+      }
+    } else {
+      setMyRank(0)
     }
     setLoading(false)
   }
-
-  const myRank = me ? rows.findIndex(r => r.id === me.id) + 1 : 0
 
   return (
     <div className="max-w-lg mx-auto animate-fade-up">

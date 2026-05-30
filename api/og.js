@@ -2,8 +2,14 @@
 // Routed via vercel.json `has`-matcher on user-agent.
 export const config = { runtime: 'edge' }
 
-const SUPABASE_URL  = 'https://rcqichlyllhwougopfkg.supabase.co'
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcWljaGx5bGxod291Z29wZmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDA2MTksImV4cCI6MjA5NDUxNjYxOX0.s-vvEaz_cqT3pS5lHZvUPNOXILgJMq2qHVp4idUY_wY'
+// Anon-Key (Rolle = anon, kein Geheimnis) bevorzugt aus Vercel-Env ziehen,
+// damit Rotation ohne Code-Änderung möglich ist. Literal nur als Fallback.
+const SUPABASE_URL  = process.env.VITE_SUPABASE_URL
+  || process.env.SUPABASE_URL
+  || 'https://rcqichlyllhwougopfkg.supabase.co'
+const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY
+  || process.env.SUPABASE_ANON_KEY
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcWljaGx5bGxod291Z29wZmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDA2MTksImV4cCI6MjA5NDUxNjYxOX0.s-vvEaz_cqT3pS5lHZvUPNOXILgJMq2qHVp4idUY_wY'
 
 function esc(str) {
   return String(str ?? '')

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
+import { isUnlocked } from '../lib/tournamentGate'
 
 function validateHC(val) {
   const n = parseFloat(val)
@@ -53,10 +54,6 @@ function LockPlaceholder({ onUnlock }) {
   )
 }
 
-function isUnlocked(t) {
-  if (!t?.edit_password) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
-}
 
 const emptyForm = { name: '', handicap: '', team: 'A' }
 
@@ -316,7 +313,6 @@ export default function TeamsScreen() {
 
       {showGate && selectedTournament && (
         <PasswordGate
-          correctPassword={selectedTournament.edit_password}
           tournamentId={selectedTournament.id}
           onSuccess={handleGateSuccess}
           onCancel={() => { setShowGate(false); pendingRef.current = null }}
@@ -326,7 +322,6 @@ export default function TeamsScreen() {
       {showViewGate && selectedTournament && (
         <PasswordGate
           viewMode
-          correctPassword={selectedTournament.edit_password}
           tournamentId={selectedTournament.id}
           onSuccess={handleViewGateSuccess}
           onCancel={() => setShowViewGate(false)}

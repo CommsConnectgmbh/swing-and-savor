@@ -13,6 +13,8 @@ import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
+import { isUnlocked } from '../lib/tournamentGate'
+import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import ScorecardSheet from '../components/ScorecardSheet'
@@ -27,11 +29,6 @@ import {
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
 
-function isUnlocked(t) {
-  if (!t?.edit_password) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
-}
-
 function initHoles() {
   return Array.from({ length: 18 }, (_, i) => ({
     hole_number: i + 1, par: 4, strokes_a: '', strokes_b: '', winner: null,
@@ -39,8 +36,8 @@ function initHoles() {
 }
 
 function calcWinner(sa, sb) {
-  const a = parseInt(sa), b = parseInt(sb)
-  if (!a || !b || a < 1 || b < 1) return null
+  const a = parseInt(sa, 10), b = parseInt(sb, 10)
+  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 1 || b < 1) return null
   if (a < b) return 'A'
   if (b < a) return 'B'
   return 'halved'
@@ -92,6 +89,7 @@ export default function MatchDetailScreen() {
   const [confirmFinish, setConfirmFinish] = useState(false)
   const [showGate, setShowGate] = useState(false)
   const [showViewGate, setShowViewGate] = useState(false)
+  const [viewGateTournamentId, setViewGateTournamentId] = useState(null)
   const [course, setCourse] = useState(null)
   const [showCourseEditor, setShowCourseEditor] = useState(false)
   const [showCoursePicker, setShowCoursePicker] = useState(false)
@@ -106,12 +104,43 @@ export default function MatchDetailScreen() {
   const holesRef = useRef(holes)
   const flightNamesRef = useRef(flightNames)
   const courseRef = useRef(null)
+  const channelRef = useRef(null)
+  const loadTokenRef = useRef(0)
 
   useEffect(() => { holesRef.current = holes }, [holes])
   useEffect(() => { flightNamesRef.current = flightNames }, [flightNames])
   useEffect(() => { courseRef.current = course }, [course])
 
-  useEffect(() => { loadAll() }, [matchId])
+  useEffect(() => {
+    init()
+    return () => {
+      // Invalidate in-flight loads and tear down realtime on match switch/unmount.
+      loadTokenRef.current++
+      if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchId])
+
+  // ── gate-first init: prüft Sicht-Schutz BEVOR Match/Holes geladen werden ──
+  async function init() {
+    const token = ++loadTokenRef.current
+    setLoading(true)
+    setShowViewGate(false)
+    // Minimaler Vorab-Fetch: nur Schutz-Flag, keine Score-/Spielerdaten.
+    const { data: meta } = await supabase
+      .from('matches')
+      .select('id, tournament:tournament_id(id, has_edit_password)')
+      .eq('id', matchId).single()
+    if (token !== loadTokenRef.current) return
+    if (meta?.tournament && !isUnlocked(meta.tournament)) {
+      // Daten NICHT laden, bis das Passwort serverseitig geprüft wurde.
+      setViewGateTournamentId(meta.tournament.id)
+      setShowViewGate(true)
+      setLoading(false)
+      return
+    }
+    await loadAll(token)
+  }
 
   // Apple Watch sync — mirror this match to the paired watch.
   async function applyHoleFromWatch(holeNum, sa, sb) {
@@ -189,7 +218,7 @@ export default function MatchDetailScreen() {
     try { localStorage.setItem(`par_${matchId}`, JSON.stringify(holesArr.map(h => h.par))) } catch {}
   }
 
-  async function loadAll() {
+  async function loadAll(token = loadTokenRef.current) {
     const [{ data: m }, { data: hrs }] = await Promise.all([
       supabase.from('matches').select(`
         *,
@@ -197,12 +226,13 @@ export default function MatchDetailScreen() {
         pa2:team_a_player2_id(name),
         pb1:team_b_player1_id(name),
         pb2:team_b_player2_id(name),
-        tournament:tournament_id(id, team_a_name, team_b_name, edit_password),
+        tournament:tournament_id(id, team_a_name, team_b_name, name, date, owner_id, has_edit_password),
         course:course_id(id, name, city, country, hole_pars, hole_handicaps, total_par, contributor_count)
       `).eq('id', matchId).single(),
       supabase.from('hole_results')
         .select('*').eq('match_id', matchId).order('hole_number'),
     ])
+    if (token !== loadTokenRef.current) return
 
     matchRef.current = m
     setMatch(m)
@@ -217,6 +247,7 @@ export default function MatchDetailScreen() {
     if (allIds.length > 0) {
       const { data: pls } = await supabase.from('players')
         .select('id,name,handicap,profile_id,team').in('id', allIds)
+      if (token !== loadTokenRef.current) return
       const byId = Object.fromEntries((pls || []).map(p => [p.id, p]))
       setFlightNames({
         A: aIds.map(id => byId[id]?.name).filter(Boolean),
@@ -234,6 +265,12 @@ export default function MatchDetailScreen() {
     const matchPars = (m?.hole_pars && m.hole_pars.length === 18) ? m.hole_pars : null
     const coursePars = (m?.course?.hole_pars && m.course.hole_pars.length === 18) ? m.course.hole_pars : null
     const sourcePars = matchPars || coursePars || localPars
+
+    // Verlässt sich eine DB-Quelle auf Pars, ist der lokale Cache obsolet →
+    // invalidieren, damit er nach Course-Wechsel nicht stale weiterlebt.
+    if (matchPars || coursePars) {
+      try { localStorage.removeItem(`par_${matchId}`) } catch {}
+    }
 
     const next = initHoles()
     if (sourcePars) sourcePars.forEach((p, i) => { if (p) next[i].par = p })
@@ -253,15 +290,53 @@ export default function MatchDetailScreen() {
     setHoles(next)
     setLoading(false)
 
-    if (m?.tournament && !isUnlocked(m.tournament)) setShowViewGate(true)
+    subscribeRealtime(token)
 
     // Social-Counts laden
     const [counts, mine] = await Promise.all([
       fetchSocialCounts([matchId]),
       user?.id ? fetchMyReactions([matchId], user.id) : Promise.resolve(new Set()),
     ])
+    if (token !== loadTokenRef.current) return
     setSocialCount(counts[matchId] || { likes: 0, comments: 0 })
     setILiked(mine.has(matchId))
+  }
+
+  // ── Live-Scoring: match-gescopte Realtime-Subscription ──────────────────────
+  // Server-Filter (match_id / id) statt globaler Stream. Eingehende Holes werden
+  // gemergt; lokal noch unbestätigte Tipp-Eingaben werden NICHT überschrieben.
+  function subscribeRealtime(token) {
+    if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
+    const ch = supabase.channel(`match-${matchId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'hole_results', filter: `match_id=eq.${matchId}` },
+        ({ new: hr }) => {
+          if (token !== loadTokenRef.current || !hr?.hole_number) return
+          mergeRemoteHole(hr)
+        })
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` },
+        ({ new: m }) => {
+          if (token !== loadTokenRef.current || !m) return
+          const merged = { ...(matchRef.current || {}), status: m.status, winner: m.winner }
+          matchRef.current = merged
+          setMatch(merged)
+        })
+      .subscribe()
+    channelRef.current = ch
+  }
+
+  function mergeRemoteHole(hr) {
+    const i = hr.hole_number
+    setHoles(prev => prev.map(h => {
+      if (h.hole_number !== i) return h
+      // Lokale Eingabe (ein Feld gefüllt, Loch noch nicht persistiert) schützen:
+      // nur übernehmen, wenn lokal noch nichts Abweichendes getippt wurde.
+      const localTyped = (h.strokes_a !== '' && h.strokes_a !== String(hr.strokes_a))
+                      || (h.strokes_b !== '' && h.strokes_b !== String(hr.strokes_b))
+      if (localTyped) return h
+      return { ...h, strokes_a: String(hr.strokes_a), strokes_b: String(hr.strokes_b), winner: hr.winner }
+    }))
   }
 
   async function handleShare() {
@@ -301,11 +376,16 @@ export default function MatchDetailScreen() {
     if (!c) return
     setCourse(c)
     // Update match record (snapshot pars + handicaps)
-    await supabase.from('matches').update({
+    const { error } = await supabase.from('matches').update({
       course_id: c.id,
       hole_pars: c.hole_pars?.length ? c.hole_pars : [],
       hole_handicaps: c.hole_handicaps?.length ? c.hole_handicaps : [],
     }).eq('id', matchId)
+    if (error) {
+      console.error('[match] pickCourse', error)
+      pushToast({ icon: '⚠️', title: 'Platz nicht gespeichert', body: 'Bitte erneut versuchen.' })
+      return
+    }
     // Re-apply pars in UI if no holes played yet (don't overwrite player data)
     if (c.hole_pars?.length === 18) {
       setHoles(prev => prev.map((h, i) =>
@@ -323,8 +403,13 @@ export default function MatchDetailScreen() {
     try {
       const updated = await applyCourseEdit(course.id, pars, course.hole_handicaps || [], matchId)
       setCourse(prev => ({ ...prev, ...updated }))
-      await supabase.from('matches').update({ hole_pars: pars }).eq('id', matchId)
-    } catch (e) { console.error('[match] share course:', e) }
+      const { error } = await supabase.from('matches').update({ hole_pars: pars }).eq('id', matchId)
+      if (error) throw error
+      pushToast({ icon: '⛳', title: 'Platz aktualisiert', body: 'Pars geteilt.' })
+    } catch (e) {
+      console.error('[match] share course:', e)
+      pushToast({ icon: '⚠️', title: 'Konnte nicht teilen', body: 'Bitte erneut versuchen.' })
+    }
   }
 
   function adjustPar(holeNum, delta) {
@@ -370,6 +455,9 @@ export default function MatchDetailScreen() {
   }
 
   async function handleFinish() {
+    // Optimistisches UI-Echo. Der maßgebliche winner wird serverseitig aus den
+    // hole_results berechnet (Trigger matches_finish_validate_winner) — der hier
+    // gesendete Wert wird beim Finish ignoriert/überschrieben.
     let winner
     if (matchRef.current?.format === 'stableford') {
       const { a, b } = calcStablefordTotals(holes)
@@ -383,13 +471,30 @@ export default function MatchDetailScreen() {
       winner = a > b ? 'A' : b > a ? 'B' : 'halved'
     }
     await supabase.from('matches').update({ status: 'finished', winner }).eq('id', matchId)
-    const upd = { ...matchRef.current, status: 'finished', winner }
+    // Autoritativen, serverseitig korrigierten winner zurücklesen.
+    const { data: fresh } = await supabase.from('matches')
+      .select('status, winner').eq('id', matchId).single()
+    const upd = { ...matchRef.current, status: 'finished', winner: fresh?.winner ?? winner }
     matchRef.current = upd
     setMatch(upd)
     setConfirmFinish(false)
   }
 
   if (loading) return <LoadingSpinner />
+
+  // View-Gate noch bevor Daten geladen sind: Match steckt hinter Passwort,
+  // wir haben bewusst nichts außer der matchId geladen.
+  if (showViewGate && !match) {
+    return (
+      <PasswordGate
+        viewMode
+        tournamentId={viewGateTournamentId}
+        onSuccess={() => { setShowViewGate(false); init() }}
+        onCancel={() => { setShowViewGate(false); navigate(-1) }}
+      />
+    )
+  }
+
   if (!match) return <div className="p-6 text-inkMuted text-sm">Match nicht gefunden</div>
 
   const tA   = match.tournament?.team_a_name || 'Team A'
@@ -797,7 +902,6 @@ export default function MatchDetailScreen() {
 
       {showGate && match?.tournament && (
         <PasswordGate
-          correctPassword={match.tournament.edit_password}
           tournamentId={match.tournament.id}
           onSuccess={() => { setShowGate(false) }}
           onCancel={() => setShowGate(false)}
@@ -807,7 +911,6 @@ export default function MatchDetailScreen() {
       {showViewGate && match?.tournament && (
         <PasswordGate
           viewMode
-          correctPassword={match.tournament.edit_password}
           tournamentId={match.tournament.id}
           onSuccess={() => setShowViewGate(false)}
           onCancel={() => { setShowViewGate(false); navigate(-1) }}

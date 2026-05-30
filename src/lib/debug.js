@@ -23,10 +23,14 @@ export function getDebugSessionId() {
   return sessionId
 }
 
+// Telemetrie nur in Entwicklung — in Produktion komplett aus, damit die
+// (jetzt auth-gebundene) client_debug-Senke nicht im Normalbetrieb beschrieben
+// wird. Per VITE_DEBUG_TELEMETRY=1 explizit aktivierbar.
+const TELEMETRY_ON = import.meta.env.DEV || import.meta.env.VITE_DEBUG_TELEMETRY === '1'
+
 export function logDebug(event, payload = {}, userId = null) {
+  if (!TELEMETRY_ON) return
   try {
-    // eslint-disable-next-line no-console
-    console.log('[debug]', event, payload)
     if (!SUPABASE_URL || !ANON_KEY) return
     const body = JSON.stringify({
       session_id: sessionId,

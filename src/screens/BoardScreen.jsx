@@ -4,17 +4,13 @@ import { supabase } from '../lib/supabase'
 import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
+import { isUnlocked } from '../lib/tournamentGate'
 
 const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
 const LIVE   = '#D9C9A8'
 
 function fmtPts(v) { return v % 1 === 0 ? String(v) : v.toFixed(1) }
-
-function isUnlocked(t) {
-  if (!t?.edit_password) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
-}
 
 export default function BoardScreen() {
   const navigate = useNavigate()
@@ -182,7 +178,6 @@ export default function BoardScreen() {
       {showViewGate && tournament && (
         <PasswordGate
           viewMode
-          correctPassword={tournament.edit_password}
           tournamentId={tournament.id}
           onSuccess={handleViewGateSuccess}
           onCancel={() => setShowViewGate(false)}
@@ -435,7 +430,6 @@ export default function BoardScreen() {
       {showViewGate && tournament && (
         <PasswordGate
           viewMode
-          correctPassword={tournament.edit_password}
           tournamentId={tournament.id}
           onSuccess={handleViewGateSuccess}
           onCancel={() => setShowViewGate(false)}

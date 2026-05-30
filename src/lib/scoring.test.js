@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcTeamPoints, suggestFactors } from './scoring'
+import { calcMatchStanding, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -76,5 +76,51 @@ describe('suggestFactors', () => {
 
   it('clamps inputs to 1..4', () => {
     expect(suggestFactors(0, 5)).toEqual({ team_a_factor: 1, team_b_factor: 0.25 })
+  })
+})
+
+describe('stablefordPoints', () => {
+  it('scores eagle (>=2 under par) as 4', () => {
+    expect(stablefordPoints(3, 5)).toBe(4)
+    expect(stablefordPoints(2, 4)).toBe(4)
+  })
+
+  it('scores birdie as 3, par as 2, bogey as 1', () => {
+    expect(stablefordPoints(3, 4)).toBe(3)
+    expect(stablefordPoints(4, 4)).toBe(2)
+    expect(stablefordPoints(5, 4)).toBe(1)
+  })
+
+  it('scores double bogey or worse as 0', () => {
+    expect(stablefordPoints(6, 4)).toBe(0)
+    expect(stablefordPoints(8, 4)).toBe(0)
+  })
+
+  it('rejects strokes < 1 and par < 3 as null', () => {
+    expect(stablefordPoints(0, 4)).toBe(null)
+    expect(stablefordPoints(4, 2)).toBe(null)
+    expect(stablefordPoints('', 4)).toBe(null)
+    expect(stablefordPoints(4, '')).toBe(null)
+  })
+
+  it('coerces numeric strings', () => {
+    expect(stablefordPoints('4', '4')).toBe(2)
+    expect(stablefordPoints('3', '4')).toBe(3)
+  })
+})
+
+describe('calcStablefordTotals', () => {
+  it('sums per-team points and ignores invalid holes', () => {
+    const holes = [
+      { strokes_a: 4, strokes_b: 3, par: 4 }, // A=2, B=3
+      { strokes_a: 5, strokes_b: 6, par: 4 }, // A=1, B=0
+      { strokes_a: '', strokes_b: 4, par: 4 }, // A=null(skip), B=2
+    ]
+    expect(calcStablefordTotals(holes)).toEqual({ a: 3, b: 5 })
+  })
+
+  it('handles empty/undefined input', () => {
+    expect(calcStablefordTotals([])).toEqual({ a: 0, b: 0 })
+    expect(calcStablefordTotals(undefined)).toEqual({ a: 0, b: 0 })
   })
 })
