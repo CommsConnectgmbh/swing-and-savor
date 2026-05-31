@@ -1,0 +1,158 @@
+/* =========================================================
+   Comms CI — Glass Bottom Nav
+   Canonical, BRAND-AGNOSTIC liquid-glass mobile bottom navigation.
+   Single source of truth. Adopted by Belegify, DealBuddy, Swing & Savor.
+   (Obacht deliberately opts OUT of glass + hide — see README.)
+
+   This file ships NO brand colours and NO font. Everything is driven
+   by CSS custom properties so each app keeps its own identity:
+
+     --ccnav-accent          brand accent (FAB fill, active tab)        REQUIRED
+     --ccnav-accent-ink      ink/text on top of the accent (FAB icon)   default #fff
+     --ccnav-surface         translucent pill fill                      has dark/light default
+     --ccnav-border          hairline pill border                       has dark/light default
+     --ccnav-ink             default (inactive) icon + label colour      default currentColor
+     --ccnav-shadow          drop shadow of the floating pill           has default
+
+   Apply `.ccnav` to the <nav>, `.ccnav--hidden` to slide it away,
+   `.ccnav__row` to the flex/grid row, `.ccnav__tab` to each item,
+   `.is-active` to the active tab, and `.ccnav__fab` to the centre button.
+   See README.md for the full markup contract + per-app wiring.
+   ========================================================= */
+
+.ccnav {
+  /* --- geometry (the Paper "floating pill" signature) --- */
+  --_inset: 12px;
+  --_radius: 24px;
+
+  position: fixed;
+  left: var(--_inset);
+  right: var(--_inset);
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 100;
+
+  margin-inline: auto;
+  max-width: 460px;
+
+  border-radius: var(--_radius);
+  border: 1px solid var(--ccnav-border, rgba(255, 255, 255, 0.10));
+  background: var(--ccnav-surface, rgba(20, 22, 28, 0.72));
+
+  /* Liquid glass. NOTE: blur is static — never animate it (perf). */
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  backdrop-filter: saturate(180%) blur(28px);
+
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    var(--ccnav-shadow, 0 18px 44px -16px rgba(0, 0, 0, 0.55));
+
+  /* hide-on-scroll: only transform/opacity animate (compositor-friendly) */
+  transform: translateY(0);
+  opacity: 1;
+  transition:
+    transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.24s ease;
+  will-change: transform;
+
+  /* the pill must never clip the raised FAB */
+  overflow: visible;
+}
+
+/* Light surfaces opt in by setting these (apps usually bind to their theme) */
+.ccnav[data-theme="light"] {
+  --ccnav-surface: rgba(255, 255, 255, 0.80);
+  --ccnav-border: rgba(0, 0, 0, 0.06);
+  --ccnav-shadow: 0 18px 44px -18px rgba(15, 23, 42, 0.28);
+}
+
+/* Slid away on scroll-down. +28px clears the shadow so nothing peeks. */
+.ccnav--hidden {
+  transform: translateY(calc(100% + 28px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ccnav__row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 6px 8px;
+  padding-bottom: max(env(safe-area-inset-bottom), 6px);
+}
+
+/* ---- regular tab ---- */
+.ccnav__tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 0 4px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--ccnav-ink, inherit);
+  opacity: 0.62;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.ccnav__tab:active { transform: scale(0.94); }
+
+.ccnav__tab.is-active {
+  color: var(--ccnav-accent);
+  opacity: 1;
+}
+
+.ccnav__tab svg,
+.ccnav__tab img { width: 22px; height: 22px; display: block; }
+
+/* ---- prominent centre FAB (always bigger than the tabs) ---- */
+.ccnav__fab-slot {
+  flex: 1 1 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ccnav__fab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-top: -20px;          /* lifts above the pill */
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--ccnav-accent-ink, #fff);
+  background: var(--ccnav-accent);
+  box-shadow:
+    0 0 0 4px var(--ccnav-fab-halo, transparent),
+    0 10px 26px -8px var(--ccnav-accent),
+    0 6px 14px -6px rgba(0, 0, 0, 0.45);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+}
+
+.ccnav__fab:hover { transform: scale(1.05); }
+.ccnav__fab:active { transform: scale(0.93); }
+
+.ccnav__fab svg { width: 28px; height: 28px; display: block; }
+
+/* Respect reduced-motion: keep the bar visible (never hide), kill transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .ccnav,
+  .ccnav__tab,
+  .ccnav__fab { transition: none; }
+  .ccnav--hidden {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

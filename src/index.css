@@ -1,3 +1,6 @@
+/* Comms CI glass bottom nav (copied from Comms CI/components/glass-bottom-nav) */
+@import './cc-glassnav.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
