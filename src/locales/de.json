@@ -398,6 +398,7 @@
     "refundLine": "Erstattung: {{amount}} — wird auf dein ursprüngliches Zahlungsmittel zurückgebucht.",
     "backToProfile": "Zurück zum Profil",
     "bannerCta": "Vertrag widerrufen",
+    "permanentLink": "Vertrag widerrufen",
     "mustLogin": "Bitte melde dich an.",
     "footer": "Alternativ kannst du formlos per E-Mail an hi@swingandsavor.at widerrufen. Anbieter: Comms Connect GmbH, Tal 30, 80331 München.",
     "err": {

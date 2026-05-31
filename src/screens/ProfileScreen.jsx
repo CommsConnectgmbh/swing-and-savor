@@ -624,6 +624,14 @@ export default function ProfileScreen() {
             {t('common.signOut')}
           </button>
 
+          {/* Dauerhafter, plattformübergreifender Zugang zur Widerruf-Ansicht (§ 356a BGB).
+              Immer sichtbar — die Widerruf-Ansicht listet widerrufbare Käufe selbst bzw. zeigt
+              einen Leer-Zustand. Nicht auf canWiderrufen gegatet. */}
+          <button onClick={() => navigate('/widerruf')}
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-surface text-inkMuted border border-line active:scale-[0.98] transition-transform">
+            {t('widerruf.permanentLink')}
+          </button>
+
           <div className="flex gap-2 text-[11px] text-inkDim justify-center pt-1">
             <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.impressum')}</a>
             <span>·</span>

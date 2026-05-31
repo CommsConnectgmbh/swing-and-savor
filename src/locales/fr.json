@@ -272,6 +272,7 @@
     "refundLine": "Refund: {{amount}} — returned to your original payment method.",
     "backToProfile": "Back to profile",
     "bannerCta": "Withdraw from contract",
+    "permanentLink": "Withdraw from contract",
     "mustLogin": "Please sign in.",
     "footer": "Alternatively you can withdraw informally by email to hi@swingandsavor.at. Provider: Comms Connect GmbH, Tal 30, 80331 Munich, Germany.",
     "err": {
