@@ -72,6 +72,20 @@
   pointer-events: none;
 }
 
+/* Edge-to-edge variant: full-width frosted bar, no side insets, no rounding,
+   flush to the bottom. Still frosted + hides on scroll. (Swing & Savor.) */
+.ccnav--edge {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: none;
+  margin-inline: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
 .ccnav__row {
   display: flex;
   align-items: stretch;
