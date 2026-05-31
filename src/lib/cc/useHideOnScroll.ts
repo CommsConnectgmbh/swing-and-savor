@@ -42,15 +42,32 @@ export function useHideOnScroll(options: HideOnScrollOptions = {}): boolean {
       return;
     }
 
-    const readTop =
+    const scrollEl = options.target?.() as HTMLElement | Window | null;
+    const targetEl: Window | HTMLElement = scrollEl ?? window;
+    const isWindow = targetEl === window;
+
+    const rawTop =
       options.getScrollTop ??
       (() =>
-        window.scrollY ??
-        document.documentElement.scrollTop ??
-        0);
+        isWindow
+          ? window.scrollY || document.documentElement.scrollTop || 0
+          : (targetEl as HTMLElement).scrollTop);
 
-    const targetEl: Window | HTMLElement =
-      (options.target?.() as Window | HTMLElement | null) ?? window;
+    // Max scrollable distance — used to ignore iOS rubber-band overscroll,
+    // which otherwise produces phantom direction flips and a jumpy bar.
+    const maxScroll = () => {
+      if (isWindow) {
+        return Math.max(
+          0,
+          document.documentElement.scrollHeight - window.innerHeight
+        );
+      }
+      const el = targetEl as HTMLElement;
+      return Math.max(0, el.scrollHeight - el.clientHeight);
+    };
+
+    // Clamp out the bounce region so overscroll past either end is ignored.
+    const readTop = () => Math.min(Math.max(rawTop(), 0), maxScroll());
 
     lastY.current = readTop();
 
@@ -60,15 +77,21 @@ export function useHideOnScroll(options: HideOnScrollOptions = {}): boolean {
       requestAnimationFrame(() => {
         const y = readTop();
         const diff = y - lastY.current;
+        const max = maxScroll();
 
-        if (Math.abs(diff) > delta) {
-          if (y <= topThreshold) {
-            setHidden(false); // always visible near the top
-          } else if (diff > 0) {
-            setHidden(true); // scrolling down → hide
-          } else {
-            setHidden(false); // scrolling up → show
-          }
+        // Hysteresis: hiding needs a firmer push than revealing, so small
+        // jitter near the threshold can't toggle the bar back and forth.
+        if (y <= topThreshold) {
+          setHidden(false); // always visible near the top
+          lastY.current = y;
+        } else if (y >= max - 4) {
+          // At the very bottom: don't flip on the rubber-band settle.
+          lastY.current = y;
+        } else if (diff > delta) {
+          setHidden(true); // sustained scroll down → hide
+          lastY.current = y;
+        } else if (diff < -delta) {
+          setHidden(false); // sustained scroll up → show
           lastY.current = y;
         }
         ticking.current = false;
