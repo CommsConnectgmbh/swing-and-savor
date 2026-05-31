@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CreateSheet from './CreateSheet'
+import { useHideOnScroll } from '../lib/cc/useHideOnScroll'
 
 const HomeIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -62,6 +63,7 @@ export default function BottomNav() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const hidden = useHideOnScroll()
 
   const isSavorMode = pathname === '/savor' || pathname.startsWith('/savor/')
 
@@ -97,35 +99,31 @@ export default function BottomNav() {
 
   return (
     <>
+      {/* Comms CI glass pill — hide-on-scroll. Keeps the .bottom-nav class so the
+          existing `body.sheet-open .bottom-nav { display:none }` rule still hides
+          it behind sheets (FAB never sits under a sheet). No inline `transform`
+          here — the canonical .ccnav owns transform for the slide animation. */}
       <nav
-        className="bottom-nav fixed bottom-0 left-0 right-0 z-50 hairline-t"
+        aria-label="Hauptnavigation"
+        className={`ccnav bottom-nav${hidden ? ' ccnav--hidden' : ''}`}
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          // fixed-Elemente erben das laterale Body-Padding nicht — sonst clippt
-          // die Navi im Landscape/iPad unter Notch & abgerundeten Ecken.
-          paddingLeft: 'env(safe-area-inset-left)',
-          paddingRight: 'env(safe-area-inset-right)',
-          background: '#0A1A12',
-          // GPU-Layer fixiert die Nav: sonst zuckt sie auf iOS bei URL-Bar-Toggle
-          // und im Capacitor-1.1.3 mit contentInset='always' beim Scrollen mit.
-          transform: 'translateZ(0)',
-          willChange: 'transform',
+          // Forest-tinted dark glass + champagne accent.
+          '--ccnav-surface': 'rgba(10,26,18,0.72)',
+          '--ccnav-border': 'rgba(244,241,234,0.10)',
+          '--ccnav-accent': '#D9C9A8',
+          '--ccnav-accent-ink': '#0A1A12',
+          '--ccnav-ink': '#9CAFA4',
         }}
       >
-        <div className="flex max-w-lg mx-auto">
-          {tabs.map((tab, i) => {
+        <div className="ccnav__row">
+          {tabs.map((tab) => {
             if (tab.fab) {
               return (
-                <div key="fab" className="flex-1 flex items-start justify-center -mt-5">
+                <div key="fab" className="ccnav__fab-slot">
                   <button
                     onClick={() => setSheetOpen(true)}
                     aria-label={tab.label}
-                    className="w-14 h-14 rounded-full flex items-center justify-center active:scale-95 transition-transform"
-                    style={{
-                      background: '#D9C9A8',
-                      color: '#0A1A12',
-                      boxShadow: '0 8px 20px rgba(217,201,168,0.32), 0 0 0 4px #0A1A12',
-                    }}
+                    className="ccnav__fab"
                   >
                     <PlusIcon />
                   </button>
@@ -138,9 +136,7 @@ export default function BottomNav() {
               <NavLink
                 key={tab.to}
                 to={tab.to}
-                className={`flex-1 flex flex-col items-center pt-2.5 pb-2 gap-1 transition-all duration-150 active:scale-[0.94] ${
-                  active ? 'text-accent' : 'text-inkDim'
-                }`}
+                className={`ccnav__tab${active ? ' is-active' : ''}`}
               >
                 <span className={`transition-transform duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
                   <Icon />
