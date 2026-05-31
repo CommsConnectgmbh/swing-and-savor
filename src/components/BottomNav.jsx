@@ -105,7 +105,7 @@ export default function BottomNav() {
           here — the canonical .ccnav owns transform for the slide animation. */}
       <nav
         aria-label="Hauptnavigation"
-        className={`ccnav bottom-nav${hidden ? ' ccnav--hidden' : ''}`}
+        className={`ccnav ccnav--edge bottom-nav${hidden ? ' ccnav--hidden' : ''}`}
         style={{
           // Forest-tinted dark glass + champagne accent.
           '--ccnav-surface': 'rgba(10,26,18,0.72)',
