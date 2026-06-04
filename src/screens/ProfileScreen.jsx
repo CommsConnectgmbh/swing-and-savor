@@ -475,7 +475,8 @@ export default function ProfileScreen() {
           <ProfileLink to="/cup"         label={t('nav.cups')} />
           <ProfileLink to="/teams"       label={t('nav.teams')} />
           <ProfileLink to="/leaderboard" label={t('nav.leaderboard', 'Rangliste')} />
-          <ProfileLink to="/tour"        label={t('nav.tour', 'Tour')} last />
+          <ProfileLink to="/tour"        label={t('nav.tour', 'Tour')} />
+          <ProfileLink to="/support"     label={t('nav.support', 'Hilfe & Support')} last />
         </div>
       )}
 

@@ -40,6 +40,7 @@ const SavorCategoryScreen= lazy(() => import('./screens/SavorCategoryScreen'))
 const SavorOfferScreen   = lazy(() => import('./screens/SavorOfferScreen'))
 const CasualScreen       = lazy(() => import('./screens/CasualScreen'))
 const WiderrufScreen     = lazy(() => import('./screens/WiderrufScreen'))
+const SupportScreen      = lazy(() => import('./screens/SupportScreen'))
 
 captureReferralFromUrl()
 
@@ -144,6 +145,7 @@ export default function App() {
             <Route path="/casual"             element={<CasualScreen />} />
             <Route path="/casual/:roundId"    element={<CasualScreen />} />
             <Route path="/widerruf"           element={<WiderrufScreen />} />
+            <Route path="/support"            element={<SupportScreen />} />
             <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>
