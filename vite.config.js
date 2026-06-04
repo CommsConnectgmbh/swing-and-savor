@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 export default defineConfig({
   base: '/',
-  plugins: [react()],
+  plugins: [react(), sentryVitePlugin({ org: "comms-connect-gmbh", project: "swing-and-savor", authToken: process.env.SENTRY_AUTH_TOKEN })],
   build: {
     target: 'es2020',
-    sourcemap: false,
+    sourcemap: true,
     cssCodeSplit: true,
     chunkSizeWarningLimit: 800,
     rollupOptions: {
