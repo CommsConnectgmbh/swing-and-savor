@@ -691,8 +691,12 @@ export default function CasualScreen() {
     if (form.slots.length === 0) return
     setCreating(true)
     try {
-      const pars = form.course?.hole_pars?.length === 18 ? form.course.hole_pars : []
-      const hcps = form.course?.hole_handicaps?.length === 18 ? form.course.hole_handicaps : []
+      // Default-Setup: Par 4 × 18 (Total 72) + SI 1..18. Owner kann
+      // jederzeit per Loch-Setup-Sheet die echten Werte nachtragen.
+      const DEFAULT_PARS = Array(18).fill(4)
+      const DEFAULT_HCPS = Array.from({ length: 18 }, (_, i) => i + 1)
+      const pars = form.course?.hole_pars?.length === 18 ? form.course.hole_pars : DEFAULT_PARS
+      const hcps = form.course?.hole_handicaps?.length === 18 ? form.course.hole_handicaps : DEFAULT_HCPS
       const { data: round, error: roundErr } = await supabase.from('casual_rounds').insert({
         owner_id: user.id,
         name: form.name.trim() || null,
@@ -777,6 +781,35 @@ export default function CasualScreen() {
     }
     setActive(a => ({ ...a, hole_pars: pars, hole_handicaps: hcps }))
     setShowSetupSheet(false)
+
+    // Community-Sourcing: wenn der Course noch keine 18-Loch-Werte hat
+    // UND die Eingabe nicht das pure Default-Set (Par 4 × 18, SI 1..18)
+    // ist, mit dieser Eingabe befruchten. Künftige Runden auf demselben
+    // Platz erben die Werte automatisch. Default-Set wird NICHT in
+    // courses gespiegelt, sonst pollutet sich die Course-DB selbst.
+    if (active.course_id) {
+      const isDefaultPars = pars.every(p => p === 4)
+      const isDefaultHcps = hcps.every((h, i) => h === i + 1)
+      if (!isDefaultPars || !isDefaultHcps) {
+        const { data: course } = await supabase.from('courses')
+          .select('hole_pars, hole_handicaps').eq('id', active.course_id).maybeSingle()
+        const courseHasPars = course?.hole_pars?.length === 18 && course.hole_pars.some(x => x > 0)
+        const courseHasHcps = course?.hole_handicaps?.length === 18
+        if (!courseHasPars || !courseHasHcps) {
+          const patch = {}
+          if (!courseHasPars && !isDefaultPars) {
+            patch.hole_pars = pars
+            patch.total_par = pars.reduce((s, p) => s + (p || 0), 0)
+          }
+          if (!courseHasHcps && !isDefaultHcps) {
+            patch.hole_handicaps = hcps
+          }
+          if (Object.keys(patch).length > 0) {
+            await supabase.from('courses').update(patch).eq('id', active.course_id)
+          }
+        }
+      }
+    }
   }
 
   // ─────────────────────────── List view ───────────────────────────────────
