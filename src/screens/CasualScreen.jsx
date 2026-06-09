@@ -353,18 +353,23 @@ function LiveStanding({ round, playersList, scores }) {
     return { p, played, total, grossDiff, netDiff, hasHcp: p.handicap > 0 }
   })
 
-  // Match-Play nur bei genau 2 Spielern und vorhandenem SI
+  // Match-Play nur bei genau 2 Spielern. Brutto immer; Netto zusätzlich
+  // wenn SI vorhanden und mind. ein Spieler HCP > 0.
   const matchPlay = (() => {
-    if (playersList.length !== 2 || !hcps) return null
+    if (playersList.length !== 2) return null
     const a = playersList[0], b = playersList[1]
-    const aStr = strokesPerHole(a.handicap, hcps)
-    const bStr = strokesPerHole(b.handicap, hcps)
     const byHole = {}
     for (const s of scores) {
       if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
       byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
     }
-    return calcCasualMatchStanding(byHole, aStr, bStr)
+    const zero = Array(18).fill(0)
+    const gross = calcCasualMatchStanding(byHole, zero, zero)
+    const showNet = hcps && (Number(a.handicap) > 0 || Number(b.handicap) > 0)
+    const net = showNet ? calcCasualMatchStanding(byHole,
+      strokesPerHole(a.handicap, hcps),
+      strokesPerHole(b.handicap, hcps)) : null
+    return { a, b, gross, net }
   })()
 
   if (rows.every(r => r.played === 0)) return null
@@ -409,33 +414,51 @@ function LiveStanding({ round, playersList, scores }) {
         ))}
       </div>
 
-      {matchPlay && matchPlay.played > 0 && (
-        <div className="px-3 py-2 border-t border-line bg-bg/40">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Match Play (Netto)</p>
-            <p className="text-[11px] tabular-nums text-inkDim">
-              {matchPlay.played}/18{matchPlay.remaining > 0 ? ` · ${matchPlay.remaining} offen` : ''}
-            </p>
-          </div>
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-ink truncate">
-                {matchPlay.leader === 'A' ? playersList[0].display_name
-                 : matchPlay.leader === 'B' ? playersList[1].display_name
-                 : 'All Square'}
-              </span>
-              {matchPlay.leader !== 'AS' && (
-                <span className="px-2 py-0.5 rounded-md bg-accent/20 text-accent text-[11px] font-bold tracking-wider">
-                  {matchPlay.label}
+      {matchPlay && matchPlay.gross.played > 0 && (() => {
+        const isFinished = round.status === 'finished' || matchPlay.gross.played === 18
+        function renderLine(s, label) {
+          const winnerName = s.leader === 'A' ? matchPlay.a.display_name
+                           : s.leader === 'B' ? matchPlay.b.display_name : null
+          return (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted w-12 flex-shrink-0">
+                  {label}
                 </span>
-              )}
+                <span className="text-sm font-semibold text-ink truncate">
+                  {winnerName ? `${winnerName} ${isFinished ? 'gewinnt' : 'führt'}` : 'All Square'}
+                </span>
+                {s.leader !== 'AS' && (
+                  <span className="px-2 py-0.5 rounded-md bg-accent/20 text-accent text-[11px] font-bold tracking-wider flex-shrink-0">
+                    {s.label}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-inkMuted tabular-nums flex-shrink-0">
+                {s.upA}–{s.upB}–{s.halved}
+              </p>
             </div>
-            <p className="text-[11px] text-inkMuted tabular-nums">
-              {matchPlay.upA}↑ · {matchPlay.upB}↓ · {matchPlay.halved}↔
+          )
+        }
+        return (
+          <div className="px-3 py-2 border-t border-line bg-bg/40">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Lochspiel</p>
+              <p className="text-[11px] tabular-nums text-inkDim">
+                {matchPlay.gross.played}/18
+                {matchPlay.gross.remaining > 0 ? ` · ${matchPlay.gross.remaining} offen` : ''}
+              </p>
+            </div>
+            <div className="mt-1.5 space-y-1.5">
+              {renderLine(matchPlay.gross, matchPlay.net ? 'Brutto' : '')}
+              {matchPlay.net && renderLine(matchPlay.net, 'Netto')}
+            </div>
+            <p className="mt-1.5 text-[10px] text-inkDim tabular-nums">
+              {matchPlay.a.display_name.split(' ')[0]} ↑ – {matchPlay.b.display_name.split(' ')[0]} ↑ – halbiert
             </p>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
