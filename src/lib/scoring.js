@@ -53,6 +53,68 @@ export function stablefordPoints(strokes, par) {
   return 0
 }
 
+// HCP-Schläge pro Loch nach Stroke-Index (SI).
+// playingHcp = ganze Schläge, die der Spieler über 18 Löcher kriegt.
+// hcps = Array[18] mit SI 1..18 (1 = schwerstes, 18 = leichtestes).
+// Liefert Array[18] mit Zusatz-Schlägen pro Loch.
+//   Bsp HCP 18, SI=[…1..18…]: jedes Loch +1.
+//   Bsp HCP 22: jedes Loch +1, plus +1 auf SI 1..4 → 4 Löcher mit +2.
+//   Bsp HCP 34: jedes Loch +1, plus +1 auf SI 1..16 → 16 Löcher mit +2.
+export function strokesPerHole(playingHcp, hcps) {
+  const out = Array(18).fill(0)
+  const hcp = Math.max(0, Math.round(Number(playingHcp) || 0))
+  if (!hcp) return out
+  if (!Array.isArray(hcps) || hcps.length !== 18) return out
+  const base = Math.floor(hcp / 18)
+  const extra = hcp % 18
+  for (let i = 0; i < 18; i++) {
+    const si = Number(hcps[i])
+    out[i] = base + (Number.isFinite(si) && si >= 1 && si <= extra ? 1 : 0)
+  }
+  return out
+}
+
+// Loch-Sieger im Casual Match-Play (Netto).
+// strokesA/strokesB sind die Bruttoschläge auf diesem Loch (oder null).
+// addA/addB sind die HCP-Strokes, die der Spieler auf diesem Loch kriegt.
+// Liefert 'A' | 'B' | 'halved' | null (wenn unkomplett).
+export function holeWinnerNet(strokesA, strokesB, addA, addB) {
+  if (!Number.isFinite(strokesA) || !Number.isFinite(strokesB) || strokesA < 1 || strokesB < 1) return null
+  const netA = strokesA - (addA || 0)
+  const netB = strokesB - (addB || 0)
+  if (netA < netB) return 'A'
+  if (netB < netA) return 'B'
+  return 'halved'
+}
+
+// Match-Play-Stand für 2 Casual-Spieler.
+// scoresByHole = { holeNumber → { a, b } } Bruttoscores.
+// strokesA/strokesB = Array[18] der HCP-Strokes pro Loch.
+// Liefert { upA, upB, halved, played, leader: 'A'|'B'|'AS', label }
+export function calcCasualMatchStanding(scoresByHole, strokesA, strokesB) {
+  let upA = 0, upB = 0, halved = 0, played = 0
+  for (let h = 1; h <= 18; h++) {
+    const s = scoresByHole[h]
+    if (!s) continue
+    const w = holeWinnerNet(s.a, s.b, strokesA?.[h - 1] || 0, strokesB?.[h - 1] || 0)
+    if (!w) continue
+    played++
+    if (w === 'A') upA++
+    else if (w === 'B') upB++
+    else halved++
+  }
+  const diff = upA - upB
+  const leader = diff > 0 ? 'A' : diff < 0 ? 'B' : 'AS'
+  const remaining = 18 - played
+  let label
+  if (leader === 'AS') label = played === 0 ? '—' : 'All Square'
+  else {
+    const up = Math.abs(diff)
+    label = (up > remaining && played === 18) ? `${up}&${remaining}` : `${up} Up`
+  }
+  return { upA, upB, halved, played, leader, label, remaining }
+}
+
 export function calcStablefordTotals(holes) {
   let a = 0, b = 0
   for (const h of (holes || [])) {

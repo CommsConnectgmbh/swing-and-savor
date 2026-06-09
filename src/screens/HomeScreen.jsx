@@ -37,6 +37,7 @@ export default function HomeScreen() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [matches, setMatches] = useState([])
+  const [casualRounds, setCasualRounds] = useState([])
   const [holesByMatch, setHolesByMatch] = useState({})
   const [filter, setFilter] = useState('all')
   const [friendOwnerIds, setFriendOwnerIds] = useState(new Set())
@@ -75,6 +76,34 @@ export default function HomeScreen() {
       for (const f of (fs || [])) ids.add(f.user_a === user.id ? f.user_b : f.user_a)
       setFriendOwnerIds(ids)
     }
+
+    // Casual-Runden (RLS: own + public + friends + player)
+    const { data: cRounds } = await supabase
+      .from('casual_rounds')
+      .select('id, name, course_name, hole_pars, status, visibility, owner_id, created_at, finished_at')
+      .order('created_at', { ascending: false })
+      .limit(8)
+    const cRoundIds = (cRounds || []).map(r => r.id)
+    let cPlayersByRound = {}
+    let cScoreCountByRound = {}
+    if (cRoundIds.length > 0) {
+      const [{ data: cps }, { data: css }] = await Promise.all([
+        supabase.from('casual_round_players').select('round_id, idx, display_name, profile_id').in('round_id', cRoundIds).order('idx'),
+        supabase.from('casual_scores').select('round_id').in('round_id', cRoundIds),
+      ])
+      for (const p of (cps || [])) {
+        if (!cPlayersByRound[p.round_id]) cPlayersByRound[p.round_id] = []
+        cPlayersByRound[p.round_id].push(p)
+      }
+      for (const s of (css || [])) {
+        cScoreCountByRound[s.round_id] = (cScoreCountByRound[s.round_id] || 0) + 1
+      }
+    }
+    setCasualRounds((cRounds || []).map(r => ({
+      ...r,
+      _players: cPlayersByRound[r.id] || [],
+      _scoreCount: cScoreCountByRound[r.id] || 0,
+    })))
 
     // Matches (RLS sorgt für Sichtbarkeit — public + friends + own)
     const { data: mList } = await supabase
@@ -223,6 +252,8 @@ export default function HomeScreen() {
     const ch = supabase.channel('home-feed')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, debouncedLoad)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, debouncedLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'casual_rounds' }, debouncedLoad)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'casual_scores' }, debouncedLoad)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reactions' }, debouncedSocial)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'match_comments' }, debouncedSocial)
       .subscribe()
@@ -317,6 +348,18 @@ export default function HomeScreen() {
 
       <div className="hairline-b" />
 
+      {casualRounds.length > 0 && (
+        <CasualSection
+          rounds={casualRounds.filter(r => {
+            if (filter === 'mine')    return r.owner_id === user?.id
+            if (filter === 'friends') return friendOwnerIds.has(r.owner_id) || r.owner_id === user?.id
+            return true
+          })}
+          userId={user?.id}
+          onOpen={(r) => navigate(`/casual/${r.id}`)}
+        />
+      )}
+
       {/* Feed: pro Turnier eine collapsible Section */}
       <div className="flex flex-col px-3 pt-2">
         {groups.map((g, gi) => (
@@ -347,6 +390,45 @@ export default function HomeScreen() {
       </div>
 
       <div className="h-32" />
+    </div>
+  )
+}
+
+function CasualSection({ rounds, userId, onOpen }) {
+  if (!rounds || rounds.length === 0) return null
+  const top = rounds.slice(0, 5)
+  return (
+    <div className="px-3 pt-3">
+      <div className="px-2 pb-2 flex items-baseline justify-between">
+        <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-inkMuted">Casual</p>
+        <p className="text-[10px] tracking-[0.2em] uppercase text-inkDim">{rounds.length}</p>
+      </div>
+      <div className="rounded-card bg-surface border border-line overflow-hidden">
+        {top.map((r, i) => {
+          const live = r.status === 'active'
+          const playersLabel = (r._players || []).map(p => p.display_name).filter(Boolean).join(' vs ')
+          const totalHoles = (r._players?.length || 1) * 18
+          const progress = totalHoles > 0 ? Math.min(100, Math.round(((r._scoreCount || 0) / totalHoles) * 100)) : 0
+          const dateStr = new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
+          return (
+            <button key={r.id} onClick={() => onOpen(r)}
+              className={`w-full px-3 py-3 flex items-center gap-3 active:bg-bg/40 transition-colors text-left ${i > 0 ? 'border-t border-lineSoft' : ''}`}>
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${live ? 'bg-accent animate-pulse' : 'bg-line'}`} />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-ink truncate">
+                  {playersLabel || r.name || r.course_name || 'Casual Runde'}
+                </p>
+                <p className="text-[11px] text-inkMuted truncate">
+                  {dateStr}
+                  {r.course_name && ` · ${r.course_name}`}
+                  {' · '}{live ? `${progress}%` : 'beendet'}
+                </p>
+              </div>
+              <span className="text-inkDim text-xs">›</span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

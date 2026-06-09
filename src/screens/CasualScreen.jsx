@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { strokesPerHole, calcCasualMatchStanding } from '../lib/scoring'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -183,6 +184,106 @@ function GuestSheet({ onAdd, onClose }) {
   )
 }
 
+// ─── Course-Setup Sheet (Par + SI pro Loch nachtragen) ─────────────────────
+function CourseSetupSheet({ initialPars, initialHcps, onSave, onClose }) {
+  const [pars, setPars] = useState(() => {
+    const a = Array.isArray(initialPars) && initialPars.length === 18 ? [...initialPars] : Array(18).fill(4)
+    return a.map(p => Number.isFinite(p) && p > 0 ? p : 4)
+  })
+  const [hcps, setHcps] = useState(() => {
+    const a = Array.isArray(initialHcps) && initialHcps.length === 18 ? [...initialHcps] : null
+    if (a && a.every(v => Number.isFinite(v) && v >= 1 && v <= 18)) return a
+    return Array.from({ length: 18 }, (_, i) => i + 1)
+  })
+
+  useEffect(() => {
+    document.body.classList.add('sheet-open')
+    return () => document.body.classList.remove('sheet-open')
+  }, [])
+
+  function setPar(i, v) {
+    const n = parseInt(v, 10)
+    setPars(arr => arr.map((p, idx) => idx === i ? (Number.isFinite(n) && n >= 3 && n <= 6 ? n : p) : p))
+  }
+  function setHcp(i, v) {
+    const n = parseInt(v, 10)
+    setHcps(arr => arr.map((h, idx) => idx === i ? (Number.isFinite(n) && n >= 1 && n <= 18 ? n : h) : h))
+  }
+
+  const totalPar = pars.reduce((s, p) => s + (p || 0), 0)
+  const hcpsValid = (() => {
+    const set = new Set(hcps)
+    return set.size === 18 && [...set].every(v => v >= 1 && v <= 18)
+  })()
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-end justify-center" role="dialog" aria-modal="true">
+      <div onClick={onClose} className="absolute inset-0 bg-black/60" />
+      <div className="relative w-full max-w-lg max-h-[88vh] flex flex-col rounded-t-3xl bg-surface border-t border-line shadow-lift"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
+        <div className="pt-2.5 pb-3 flex justify-center">
+          <div className="w-10 h-1.5 rounded-full bg-line" />
+        </div>
+        <div className="px-5 pb-1 flex items-baseline justify-between">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Loch-Setup</p>
+          <p className="text-[11px] text-inkMuted tabular-nums">Par {totalPar}</p>
+        </div>
+        <p className="px-5 pb-2 text-[11px] text-inkDim leading-snug">
+          Par pro Loch (3–6) und Vorgabe-Rang/SI (1 = schwerstes, 18 = leichtestes).
+          Wird für Live-Stand und Pro-Loch-Vorgabe genutzt.
+        </p>
+
+        <div className="px-3 pt-2 pb-1 overflow-y-auto flex-1">
+          <table className="w-full" style={{ borderSpacing: 0 }}>
+            <thead>
+              <tr className="text-[10px] uppercase tracking-wider text-inkDim">
+                <th className="text-left py-1 pl-2">Loch</th>
+                <th className="text-center py-1 w-20">Par</th>
+                <th className="text-center py-1 w-20">SI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {HOLES.map((h, i) => (
+                <tr key={h} className="border-t border-lineSoft">
+                  <td className="py-1.5 pl-2 text-sm text-ink tabular-nums">{h}</td>
+                  <td className="py-1.5 text-center">
+                    <input type="number" inputMode="numeric" min={3} max={6} value={pars[i]}
+                      onChange={e => setPar(i, e.target.value)}
+                      className="w-14 h-9 text-center bg-bg border border-line rounded-lg text-ink text-sm focus:border-accent/60 tabular-nums" />
+                  </td>
+                  <td className="py-1.5 text-center">
+                    <input type="number" inputMode="numeric" min={1} max={18} value={hcps[i]}
+                      onChange={e => setHcp(i, e.target.value)}
+                      className={`w-14 h-9 text-center bg-bg border rounded-lg text-sm focus:border-accent/60 tabular-nums ${
+                        hcpsValid ? 'border-line text-ink' : 'border-danger/60 text-ink'
+                      }`} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!hcpsValid && (
+            <p className="px-2 py-2 text-[11px] text-danger">
+              SI muss jede Zahl 1–18 genau einmal enthalten.
+            </p>
+          )}
+        </div>
+
+        <div className="px-3 pt-2 grid grid-cols-2 gap-2">
+          <button onClick={onClose}
+            className="py-3 rounded-xl text-sm font-bold bg-bg text-inkMuted border border-line">
+            Abbrechen
+          </button>
+          <button onClick={() => onSave({ pars, hcps })} disabled={!hcpsValid}
+            className="py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40">
+            Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Score Cell ─────────────────────────────────────────────────────────────
 function ScoreCell({ value, par, onChange, disabled }) {
   const [editing, setEditing] = useState(false)
@@ -233,10 +334,118 @@ function ScoreCell({ value, par, onChange, disabled }) {
   )
 }
 
+// ─── Live-Stand (groß über der Scorecard) ──────────────────────────────────
+function LiveStanding({ round, playersList, scores }) {
+  const pars = round.hole_pars?.length === 18 ? round.hole_pars : null
+  const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
+  const totalPar = pars ? pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0) : 0
+
+  const rows = playersList.map(p => {
+    const own = scores.filter(s => s.player_idx === p.idx)
+    const played = own.length
+    const total = own.reduce((sum, s) => sum + s.strokes, 0)
+    const playerStrokes = strokesPerHole(p.handicap, hcps)
+    const playerAdd = own.reduce((sum, s) => sum + (playerStrokes[s.hole_number - 1] || 0), 0)
+    const grossDiff = pars
+      ? own.reduce((d, s) => d + (s.strokes - (pars[s.hole_number - 1] || 0)), 0)
+      : null
+    const netDiff = grossDiff != null ? grossDiff - playerAdd : null
+    return { p, played, total, grossDiff, netDiff, hasHcp: p.handicap > 0 }
+  })
+
+  // Match-Play nur bei genau 2 Spielern und vorhandenem SI
+  const matchPlay = (() => {
+    if (playersList.length !== 2 || !hcps) return null
+    const a = playersList[0], b = playersList[1]
+    const aStr = strokesPerHole(a.handicap, hcps)
+    const bStr = strokesPerHole(b.handicap, hcps)
+    const byHole = {}
+    for (const s of scores) {
+      if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
+      byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+    }
+    return calcCasualMatchStanding(byHole, aStr, bStr)
+  })()
+
+  if (rows.every(r => r.played === 0)) return null
+
+  return (
+    <div className="rounded-card bg-surface border border-line overflow-hidden mb-3">
+      <div className="px-3 py-2 flex items-baseline justify-between">
+        <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Stand</p>
+        <p className="text-[10px] tabular-nums text-inkDim">
+          {Math.max(...rows.map(r => r.played))}/18
+          {totalPar > 0 && ` · Par ${totalPar}`}
+        </p>
+      </div>
+      <div className="divide-y divide-lineSoft">
+        {rows.map(r => (
+          <div key={r.p.idx} className="px-3 py-2 flex items-center gap-3">
+            <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+              {r.p.idx}
+            </span>
+            <span className="flex-1 font-semibold text-sm text-ink truncate">{r.p.display_name}</span>
+            <div className="text-right tabular-nums">
+              <p className="text-2xl font-display font-bold text-ink leading-none">
+                {r.played > 0 ? r.total : '—'}
+              </p>
+              {r.played > 0 && r.grossDiff != null && (
+                <p className="text-[11px] text-inkMuted mt-0.5">
+                  <span className={r.grossDiff > 0 ? 'text-danger' : r.grossDiff < 0 ? 'text-course' : 'text-inkMuted'}>
+                    Brutto {r.grossDiff === 0 ? 'E' : r.grossDiff > 0 ? `+${r.grossDiff}` : r.grossDiff}
+                  </span>
+                  {r.hasHcp && r.netDiff != null && (
+                    <>
+                      {' · '}
+                      <span className={r.netDiff > 0 ? 'text-danger' : r.netDiff < 0 ? 'text-course' : 'text-inkMuted'}>
+                        Netto {r.netDiff === 0 ? 'E' : r.netDiff > 0 ? `+${r.netDiff}` : r.netDiff}
+                      </span>
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {matchPlay && matchPlay.played > 0 && (
+        <div className="px-3 py-2 border-t border-line bg-bg/40">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Match Play (Netto)</p>
+            <p className="text-[11px] tabular-nums text-inkDim">
+              {matchPlay.played}/18{matchPlay.remaining > 0 ? ` · ${matchPlay.remaining} offen` : ''}
+            </p>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-ink truncate">
+                {matchPlay.leader === 'A' ? playersList[0].display_name
+                 : matchPlay.leader === 'B' ? playersList[1].display_name
+                 : 'All Square'}
+              </span>
+              {matchPlay.leader !== 'AS' && (
+                <span className="px-2 py-0.5 rounded-md bg-accent/20 text-accent text-[11px] font-bold tracking-wider">
+                  {matchPlay.label}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-inkMuted tabular-nums">
+              {matchPlay.upA}↑ · {matchPlay.upB}↓ · {matchPlay.halved}↔
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Scorecard ──────────────────────────────────────────────────────────────
 function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : Array(18).fill(0)
+  const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
   const totalPar = pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0)
+  const hasPars = pars.some(x => x > 0)
 
   function strokesFor(playerIdx, hole) {
     const r = scores.find(s => s.player_idx === playerIdx && s.hole_number === hole)
@@ -252,7 +461,6 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
 
   return (
     <div className="rounded-card bg-surface border border-line overflow-hidden">
-      {/* Front 9 + Back 9 in two rows per player */}
       {playersList.map(p => {
         const total = totalFor(p.idx)
         const played = countFor(p.idx)
@@ -260,6 +468,8 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
           ? scores.filter(s => s.player_idx === p.idx)
               .reduce((d, s) => d + (s.strokes - (pars[s.hole_number - 1] || 0)), 0)
           : null
+        const playerStrokes = strokesPerHole(p.handicap, hcps)
+        const hasVorgabe = hcps && p.handicap > 0
         return (
           <div key={p.idx} className="border-b border-lineSoft last:border-b-0">
             <div className="px-3 py-2 flex items-center justify-between bg-bg/40">
@@ -295,7 +505,7 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
                       </td>
                     ))}
                   </tr>
-                  {pars.some(x => x > 0) && (
+                  {hasPars && (
                     <tr>
                       <td className="text-[10px] text-inkDim uppercase tracking-wider pr-2 w-12">Par</td>
                       {HOLES.map(h => (
@@ -303,6 +513,33 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
                           {pars[h - 1] || '—'}
                         </td>
                       ))}
+                    </tr>
+                  )}
+                  {hcps && (
+                    <tr>
+                      <td className="text-[10px] text-inkDim uppercase tracking-wider pr-2 w-12">SI</td>
+                      {HOLES.map(h => (
+                        <td key={h} className="w-12 text-center text-[10px] text-inkDim tabular-nums">
+                          {hcps[h - 1] || '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  )}
+                  {hasVorgabe && (
+                    <tr>
+                      <td className="text-[10px] text-accent uppercase tracking-wider pr-2 w-12">Vor</td>
+                      {HOLES.map(h => {
+                        const add = playerStrokes[h - 1]
+                        return (
+                          <td key={h} className="w-12 text-center text-[10px] tabular-nums">
+                            {add > 0 ? (
+                              <span className="text-accent">
+                                {add === 1 ? '•' : add === 2 ? '••' : add === 3 ? '•••' : `${add}×`}
+                              </span>
+                            ) : <span className="text-inkDim">—</span>}
+                          </td>
+                        )
+                      })}
                     </tr>
                   )}
                   <tr>
@@ -332,6 +569,7 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
 export default function CasualScreen() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { roundId: roundIdParam } = useParams()
   const { user, profile } = useAuth()
   if (typeof window !== 'undefined') window.__caUid__ = user?.id || null
 
@@ -351,6 +589,7 @@ export default function CasualScreen() {
   const [showCoursePicker, setShowCoursePicker] = useState(false)
   const [showFriendPicker, setShowFriendPicker] = useState(false)
   const [showGuestSheet, setShowGuestSheet] = useState(false)
+  const [showSetupSheet, setShowSetupSheet] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
 
@@ -368,6 +607,23 @@ export default function CasualScreen() {
       openCreate()
     }
   }, [searchParams, view])
+
+  // Deeplink: /casual/:roundId direkt in den Detail-View
+  useEffect(() => {
+    if (!user || !roundIdParam) return
+    if (active?.id === roundIdParam) return
+    let cancelled = false
+    async function load() {
+      const { data: r } = await supabase.from('casual_rounds').select('*').eq('id', roundIdParam).maybeSingle()
+      if (cancelled || !r) return
+      setActive(r)
+      setView('detail')
+      await loadDetail(r.id)
+      subscribeRealtime(r.id)
+    }
+    load()
+    return () => { cancelled = true }
+  }, [user?.id, roundIdParam])
 
   async function loadRounds() {
     setLoading(true)
@@ -424,6 +680,7 @@ export default function CasualScreen() {
     if (chRef.current) { supabase.removeChannel(chRef.current); chRef.current = null }
     setActive(null); setPlayers([]); setScores([])
     setView('list'); loadRounds()
+    if (roundIdParam) navigate('/casual', { replace: true })
   }
 
   function removeSlot(idx) {
@@ -506,6 +763,20 @@ export default function CasualScreen() {
     setDeleteId(null)
     if (active?.id === id) backToList()
     else loadRounds()
+  }
+
+  async function saveCourseSetup({ pars, hcps }) {
+    if (!active) return
+    const { error } = await supabase.from('casual_rounds').update({
+      hole_pars: pars,
+      hole_handicaps: hcps,
+    }).eq('id', active.id)
+    if (error) {
+      alert('Speichern fehlgeschlagen: ' + (error.message || 'unbekannt'))
+      return
+    }
+    setActive(a => ({ ...a, hole_pars: pars, hole_handicaps: hcps }))
+    setShowSetupSheet(false)
   }
 
   // ─────────────────────────── List view ───────────────────────────────────
@@ -700,11 +971,49 @@ export default function CasualScreen() {
       </div>
 
       {active?.course_name && (
-        <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted">
-          {active.course_name}
-          {active.hole_pars?.length === 18 &&
-            <> · Par {active.hole_pars.reduce((s, p) => s + (p || 0), 0)}</>}
+        <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted flex items-center gap-2 flex-wrap">
+          <span>{active.course_name}</span>
+          {active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0) && (
+            <span>· Par {active.hole_pars.reduce((s, p) => s + (p || 0), 0)}</span>
+          )}
+          {isOwner && (
+            <button onClick={() => setShowSetupSheet(true)}
+              className="ml-auto text-[10px] font-bold tracking-wider uppercase text-accent active:scale-95">
+              Loch-Setup
+            </button>
+          )}
         </p>
+      )}
+
+      {active && players.length > 0 && (() => {
+        const hasPars = active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0)
+        const hasHcps = active.hole_handicaps?.length === 18
+        if (hasPars && hasHcps) return null
+        return (
+          <div className="mx-4 mb-3 p-3 rounded-card border border-accent/40 bg-accent/5 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-ink">
+                {!hasPars && !hasHcps ? 'Par und Vorgabe-Rang fehlen' :
+                 !hasPars ? 'Par fehlt' : 'Vorgabe-Rang (SI) fehlt'}
+              </p>
+              <p className="text-[10px] text-inkMuted mt-0.5">
+                Ohne diese Werte kein Live-Stand, keine Pro-Loch-Vorgabe.
+              </p>
+            </div>
+            {isOwner && (
+              <button onClick={() => setShowSetupSheet(true)}
+                className="px-3 py-2 rounded-lg text-[11px] font-bold bg-accent text-brandDark active:scale-[0.97] transition-transform whitespace-nowrap">
+                Nachtragen
+              </button>
+            )}
+          </div>
+        )
+      })()}
+
+      {active && players.length > 0 && (
+        <div className="px-4">
+          <LiveStanding round={active} playersList={players} scores={scores} />
+        </div>
       )}
 
       <div className="px-4 pb-4">
@@ -739,6 +1048,15 @@ export default function CasualScreen() {
           confirmText="Löschen"
           onConfirm={() => deleteRound(deleteId)}
           onCancel={() => setDeleteId(null)}
+        />
+      )}
+
+      {showSetupSheet && active && (
+        <CourseSetupSheet
+          initialPars={active.hole_pars}
+          initialHcps={active.hole_handicaps}
+          onSave={saveCourseSetup}
+          onClose={() => setShowSetupSheet(false)}
         />
       )}
     </div>
