@@ -93,3 +93,27 @@ a { color: inherit; text-decoration: none; }
 }
 .legal-footer a { color: rgba(255,255,255,0.7); }
 .legal-footer a:hover { color: var(--green); }
+
+.legal-page a.cta-inline {
+  display: inline-block; text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  font-size: 0.9rem;
+  padding: 0.7rem 1.3rem; border-radius: 999px;
+  background: var(--green); color: var(--brand-dark);
+}
+.legal-page a.cta-inline:hover { color: var(--brand-dark); background: #b3e02a; }
+
+.legal-page .highlight {
+  margin-top: 1rem; padding: 1.2rem 1.3rem;
+  background: var(--green-soft);
+  border: 2px solid var(--green-edge); border-radius: 14px;
+}
+.legal-page .highlight h2 { margin-top: 0; }
+.legal-page pre {
+  white-space: pre-wrap; font-family: 'Barlow', monospace;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.1rem; margin-top: 0.6rem;
+  font-size: 0.85rem; color: var(--ink); line-height: 1.7;
+}
