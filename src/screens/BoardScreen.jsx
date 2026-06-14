@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
+import { fmtPts, formatCupDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import { isUnlocked } from '../lib/tournamentGate'
@@ -9,8 +10,6 @@ import { isUnlocked } from '../lib/tournamentGate'
 const TEAM_A = '#60a5fa'
 const TEAM_B = '#fb7185'
 const LIVE   = '#D9C9A8'
-
-function fmtPts(v) { return v % 1 === 0 ? String(v) : v.toFixed(1) }
 
 export default function BoardScreen() {
   const navigate = useNavigate()
@@ -198,7 +197,7 @@ export default function BoardScreen() {
       {/* ── tournament header ── */}
       <div className="text-center pt-6 pb-3 px-4">
         <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-inkDim">
-          {new Date(tournament.date + 'T12:00:00').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
+          {formatCupDate(tournament.date, { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
         <h1 className="font-condensed text-3xl font-bold tracking-wide mt-1 text-ink">{tournament.name}</h1>
 

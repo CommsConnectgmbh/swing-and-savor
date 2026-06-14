@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { relTime } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function MessagesScreen() {
@@ -139,13 +140,3 @@ function Avatar({ profile }) {
   )
 }
 
-function relTime(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const diff = (Date.now() - d.getTime()) / 1000
-  if (diff < 60)        return 'jetzt'
-  if (diff < 3600)      return `${Math.floor(diff / 60)} min`
-  if (diff < 86400)     return `${Math.floor(diff / 3600)} h`
-  if (diff < 7 * 86400) return `${Math.floor(diff / 86400)} d`
-  return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
-}

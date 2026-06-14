@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
+import { formatCupDate } from '../lib/format'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
@@ -20,10 +21,6 @@ function cupColor(id) {
   let h = 0
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
   return CUP_HUES[h % CUP_HUES.length]
-}
-function fmtCupDate(d) {
-  if (!d) return ''
-  try { return new Date(d + 'T12:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) } catch { return '' }
 }
 
 const FILTERS = [
@@ -435,7 +432,7 @@ function CasualSection({ rounds, userId, onOpen }) {
 
 function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst, isOwner, sponsor, coverOverride, onCoverFile, onCupShare, onOpen, onCommentClick, onShareClick }) {
   const cupName  = tournament?.name || 'Lose Matches'
-  const cupDate  = fmtCupDate(tournament?.date)
+  const cupDate  = formatCupDate(tournament?.date, { day: '2-digit', month: 'short' })
   const cupAccent = cupColor(tournament?.id)
   const cover    = coverOverride || tournament?.cover_url
   const matchCount = matches.length
