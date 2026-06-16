@@ -5,8 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-invitational`
+import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 function Initials({ name }) {
   const parts = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
@@ -55,8 +54,8 @@ export default function InvitationalScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${FUNCTIONS_URL}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+    fetch(`${functionUrl('public-invitational')}?invite=${encodeURIComponent(inviteCode)}`, {
+      headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))

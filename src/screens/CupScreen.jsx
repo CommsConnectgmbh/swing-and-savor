@@ -12,6 +12,7 @@ import CupExtrasSheet from '../components/CupExtrasSheet'
 import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
 import { isUnlocked } from '../lib/tournamentGate'
+import { functionUrl, authFunctionHeaders } from '../lib/functions'
 
 const emptyForm = {
   name: '', date: '',
@@ -127,13 +128,9 @@ export default function CupScreen() {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
       if (!jwt) throw new Error('no_session')
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-premium-checkout`, {
+      const res = await fetch(functionUrl('create-premium-checkout'), {
         method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
         body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium', instant_execution_consent: true }),
       })
       const j = await res.json().catch(() => ({}))

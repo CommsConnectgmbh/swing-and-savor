@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { functionUrl, authFunctionHeaders } from '../lib/functions'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -121,13 +122,9 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
 
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scorecard-ocr`, {
+      const res = await fetch(functionUrl('scorecard-ocr'), {
         method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
         body: JSON.stringify({ upload_id: row.id }),
       })
       const j = await res.json()

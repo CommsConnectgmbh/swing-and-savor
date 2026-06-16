@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
+import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 export default function SignInScreen() {
   const { t } = useTranslation()
@@ -44,13 +45,10 @@ export default function SignInScreen() {
         lowered === 'play-review@swingandsavor.at') {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reviewer-bypass`,
+          functionUrl('reviewer-bypass'),
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
+            headers: { ...publicFunctionHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: lowered, code: code.trim() }),
           },
         )
