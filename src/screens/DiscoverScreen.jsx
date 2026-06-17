@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { formatCupDate } from '../lib/format'
+import { fetchProfileMap } from '../lib/profiles'
 import LoadingSpinner from '../components/LoadingSpinner'
 import JoinTournamentSheet from '../components/JoinTournamentSheet'
 
@@ -37,13 +38,7 @@ export default function DiscoverScreen() {
       if (b.status === 'active' && a.status !== 'active') return 1
       return new Date(b.date) - new Date(a.date)
     })
-    const ownerIds = [...new Set(list.map(t => t.owner_id).filter(Boolean))]
-    let byOwner = {}
-    if (ownerIds.length) {
-      const { data: owners } = await supabase
-        .from('profiles').select('id, handle, display_name').in('id', ownerIds)
-      byOwner = Object.fromEntries((owners ?? []).map(p => [p.id, p]))
-    }
+    const byOwner = await fetchProfileMap(list.map(t => t.owner_id), 'id, handle, display_name')
     setFeed(list.map(t => ({ ...t, owner: byOwner[t.owner_id] })))
     setLoading(false)
   }

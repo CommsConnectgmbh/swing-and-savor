@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
+import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { formatCupDate } from '../lib/format'
 import SocialBar from '../components/SocialBar'
@@ -135,17 +136,14 @@ export default function HomeScreen() {
     if (allPlayerIds.size > 0) {
       const { data: pls } = await supabase
         .from('players').select('id,name,handicap').in('id', [...allPlayerIds])
-      nameById = Object.fromEntries((pls || []).map(p => [p.id, p]))
+      nameById = indexById(pls)
     }
 
     // Owner-Handles für „von @owner"
-    const ownerIds = [...new Set(list.map(m => m.tournament?.owner_id).filter(Boolean))]
-    let ownerById = {}
-    if (ownerIds.length > 0) {
-      const { data: ow } = await supabase
-        .from('profiles').select('id,handle,display_name,avatar_url').in('id', ownerIds)
-      ownerById = Object.fromEntries((ow || []).map(p => [p.id, p]))
-    }
+    const ownerById = await fetchProfileMap(
+      list.map(m => m.tournament?.owner_id),
+      'id,handle,display_name,avatar_url',
+    )
 
     const enriched = list.map(m => {
       const aIds = m.team_a_player_ids?.length ? m.team_a_player_ids

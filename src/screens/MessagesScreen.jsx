@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { relTime } from '../lib/format'
+import { indexById } from '../lib/profiles'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function MessagesScreen() {
@@ -43,7 +44,7 @@ export default function MessagesScreen() {
         .in('conversation_id', ids).neq('sender_id', user.id).is('read_at', null),
     ])
 
-    const profById = Object.fromEntries((profs || []).map(p => [p.id, p]))
+    const profById = indexById(profs)
     const lastByConv = {}
     for (const m of (lastMsgs || [])) {
       if (!lastByConv[m.conversation_id]) lastByConv[m.conversation_id] = m

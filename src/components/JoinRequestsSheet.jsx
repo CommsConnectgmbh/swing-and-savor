@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { fetchProfileMap } from '../lib/profiles'
 
 export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
   const { t, i18n } = useTranslation()
@@ -19,10 +20,7 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
       .eq('tournament_id', cup.id)
       .order('created_at', { ascending: false })
     if (data?.length) {
-      const ids = [...new Set(data.map(r => r.profile_id))]
-      const { data: profs } = await supabase.from('profiles')
-        .select('id, handle, display_name, avatar_url, hcp').in('id', ids)
-      const byId = Object.fromEntries((profs || []).map(p => [p.id, p]))
+      const byId = await fetchProfileMap(data.map(r => r.profile_id))
       setRows(data.map(r => ({ ...r, profile: byId[r.profile_id] })))
     } else { setRows([]) }
     setLoading(false)
