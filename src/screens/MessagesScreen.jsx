@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { relTime } from '../lib/format'
 import { indexById } from '../lib/profiles'
+import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function MessagesScreen() {
@@ -133,7 +134,7 @@ function Avatar({ profile }) {
   if (profile?.avatar_url) {
     return <img src={profile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover bg-bg flex-shrink-0" />
   }
-  const letter = (profile?.display_name || profile?.handle || '?')[0]?.toUpperCase() || '?'
+  const letter = profileInitial(profile)
   return (
     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-accent/15 border border-accent/40 flex-shrink-0">
       <span className="font-condensed font-black text-base text-accent">{letter}</span>
