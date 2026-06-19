@@ -36,3 +36,21 @@ export function formatCupDate(d, opts, locale = 'de-DE') {
     return ''
   }
 }
+
+/**
+ * Format a cents amount as a localised EUR currency string.
+ */
+export function fmtEur(cents, lang = 'de') {
+  return (cents / 100).toLocaleString(lang, { style: 'currency', currency: 'EUR' })
+}
+
+/**
+ * Lower-cased file extension for storage keys.
+ * @param {File} file
+ * @param {{ fallback?: string, max?: number }} [opts]
+ */
+export function fileExt(file, { fallback = 'jpg', max } = {}) {
+  let ext = (file?.name?.split('.').pop() || fallback).toLowerCase()
+  if (max) ext = ext.slice(0, max)
+  return ext
+}

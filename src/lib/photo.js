@@ -1,10 +1,11 @@
 import { supabase } from './supabase'
+import { fileExt } from './format'
 
 const BUCKET = 'match-photos'
 
 export async function uploadMatchPhoto(matchId, file) {
   if (!file) return null
-  const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase().slice(0, 5)
+  const ext = fileExt(file, { max: 5 })
   const key = `${matchId}/${Date.now()}.${ext}`
   const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, file, {
     cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg',
@@ -25,7 +26,7 @@ export async function clearMatchPhoto(matchId) {
 
 export async function uploadCupCover(tournamentId, file) {
   if (!file) return null
-  const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase().slice(0, 5)
+  const ext = fileExt(file, { max: 5 })
   const key = `cups/${tournamentId}/${Date.now()}.${ext}`
   const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, file, {
     cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg',

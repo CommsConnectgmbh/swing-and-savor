@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { fmtEur } from '../lib/format'
 
 const TIERS = [
   { id: 'top',       icon: '↑', prices: { 3: 499, 7: 999, 14: 1499 } },
@@ -22,7 +23,6 @@ export default function BoostSheet({ cup, onClose }) {
   const tierLabel = (id) => t(`sheets.boost.tier.${id}Label`)
   const tierDesc  = (id) => t(`sheets.boost.tier.${id}Desc`)
   const lang = i18n.resolvedLanguage || 'de'
-  const fmtEur = (cents) => (cents / 100).toLocaleString(lang, { style: 'currency', currency: 'EUR' })
 
   const def = TIERS.find(t => t.id === tier)
   const amount = def?.prices?.[duration]
@@ -95,7 +95,7 @@ export default function BoostSheet({ cup, onClose }) {
                   <p className="text-[11px] text-inkMuted">{tierDesc(tdef.id)}</p>
                 </div>
                 <p className="text-sm font-bold tabular-nums text-ink">
-                  {fmtEur(tdef.prices[duration])}
+                  {fmtEur(tdef.prices[duration], lang)}
                 </p>
               </button>
             ))}
@@ -139,7 +139,7 @@ export default function BoostSheet({ cup, onClose }) {
           >
             {busy
               ? t('sheets.boost.ctaLoading')
-              : t('sheets.boost.cta', { price: amount ? fmtEur(amount) : '' })}
+              : t('sheets.boost.cta', { price: amount ? fmtEur(amount, lang) : '' })}
           </button>
           <p className="text-[10px] text-inkDim text-center">
             {t('sheets.boost.footer')}

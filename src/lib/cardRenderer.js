@@ -7,6 +7,8 @@
 //   - championCard  → 1080×1080 solid Dark-Luxury card (Feed / WhatsApp).
 //   - portraitCard  → 1080×1350 solid vertical card (WhatsApp / Pinterest).
 
+import { roundRect, loadImage } from './canvas'
+
 const CHAMPAGNE      = '#D9C9A8'
 const CHAMPAGNE_DEEP = '#A8956A'
 const BONE           = '#F4F1EA'
@@ -16,17 +18,6 @@ const HAIRLINE       = 'rgba(244,241,234,0.18)'
 function loadFont(family, weight = 500) {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve()
   try { return document.fonts.load(`${weight} 64px "${family}"`) } catch { return Promise.resolve() }
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  const rad = Math.min(r, w / 2, h / 2)
-  ctx.beginPath()
-  ctx.moveTo(x + rad, y)
-  ctx.arcTo(x + w, y,     x + w, y + h, rad)
-  ctx.arcTo(x + w, y + h, x,     y + h, rad)
-  ctx.arcTo(x,     y + h, x,     y,     rad)
-  ctx.arcTo(x,     y,     x + w, y,     rad)
-  ctx.closePath()
 }
 
 function fitText(ctx, text, maxWidth) {
@@ -354,16 +345,6 @@ function canvasToBlob(canvas) {
     canvas.toBlob((blob) => {
       resolve({ blob, dataUrl: canvas.toDataURL('image/png') })
     }, 'image/png', 0.95)
-  })
-}
-
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
   })
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { fileExt } from '../lib/format'
 import QrCodeSheet from './QrCodeSheet'
 
 const AWARD_TYPES = [
@@ -62,7 +63,7 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     if (!file) return
     setBusy(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const ext = fileExt(file)
       const path = `${cup.id}/cover-${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage
         .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
@@ -117,7 +118,7 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     if (!file) return
     setBusy(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+      const ext = fileExt(file, { fallback: 'png' })
       const path = `${user.id}/sponsor-${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage
         .from('sponsor-logos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
@@ -408,7 +409,7 @@ function TeamsTab({ cup, busy, setBusy, onChanged }) {
     if (!file) return
     setBusy(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+      const ext = fileExt(file, { fallback: 'png' })
       const path = `${cup.id}/team-${side}-${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage
         .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })

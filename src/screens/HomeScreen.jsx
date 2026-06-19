@@ -10,6 +10,7 @@ import { formatCupDate } from '../lib/format'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
+import { fileExt } from '../lib/format'
 
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
@@ -206,7 +207,7 @@ export default function HomeScreen() {
 
   async function uploadCupCover(cupId, file) {
     try {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const ext = fileExt(file)
       const path = `${cupId}/cover-${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage
         .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })

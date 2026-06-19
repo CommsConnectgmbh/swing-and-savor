@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { formatCupDate } from '../lib/format'
+import { roundRect, loadImage } from '../lib/canvas'
 
 /**
  * Editorial QR-Code-Sheet.
@@ -186,17 +187,6 @@ export default function QrCodeSheet({ open, onClose, cup }) {
   )
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-  const rad = Math.min(r, w / 2, h / 2)
-  ctx.beginPath()
-  ctx.moveTo(x + rad, y)
-  ctx.arcTo(x + w, y, x + w, y + h, rad)
-  ctx.arcTo(x + w, y + h, x, y + h, rad)
-  ctx.arcTo(x, y + h, x, y, rad)
-  ctx.arcTo(x, y, x + w, y, rad)
-  ctx.closePath()
-}
-
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(/\s+/)
   let line = ''
@@ -212,14 +202,4 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     }
   }
   if (line) ctx.fillText(line, x, yOff)
-}
-
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
-  })
 }
