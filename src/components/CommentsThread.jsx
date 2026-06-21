@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { listComments, postComment, deleteComment, reportComment } from '../lib/social'
 
@@ -17,7 +18,7 @@ export default function CommentsThread({ matchId }) {
     if (!matchId) return
     load()
     subscribe()
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+    return () => { channelRef.current?.() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId])
 
@@ -33,16 +34,11 @@ export default function CommentsThread({ matchId }) {
   }
 
   function subscribe() {
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
-    const ch = supabase.channel(`comments-${matchId}`)
-      .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'match_comments', filter: `match_id=eq.${matchId}` },
-          () => load())
-      .on('postgres_changes',
-          { event: 'DELETE', schema: 'public', table: 'match_comments', filter: `match_id=eq.${matchId}` },
-          () => load())
-      .subscribe()
-    channelRef.current = ch
+    channelRef.current?.()
+    channelRef.current = subscribeToTables(`comments-${matchId}`, [
+      { table: 'match_comments', event: 'INSERT', filter: `match_id=eq.${matchId}`, handler: () => load() },
+      { table: 'match_comments', event: 'DELETE', filter: `match_id=eq.${matchId}`, handler: () => load() },
+    ])
   }
 
   async function handlePost(e) {
