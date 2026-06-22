@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ConversationScreen() {
@@ -136,7 +137,7 @@ export default function ConversationScreen() {
           ? <img src={other.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
           : <div className="w-9 h-9 rounded-full bg-accent/15 border border-accent/40 flex items-center justify-center">
               <span className="font-condensed font-black text-sm text-accent">
-                {(other?.display_name || other?.handle || '?')[0]?.toUpperCase()}
+                {profileInitial(other)}
               </span>
             </div>
         }

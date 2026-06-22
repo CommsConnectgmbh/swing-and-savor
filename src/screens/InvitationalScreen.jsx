@@ -6,13 +6,12 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
-  const parts = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
-  const initials = parts.map((p) => p[0]?.toUpperCase() || '').join('')
   return (
     <span className="w-full h-full flex items-center justify-center font-display text-[12px] text-ink uppercase tracking-wider">
-      {initials || '·'}
+      {nameInitials(name)}
     </span>
   )
 }

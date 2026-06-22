@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const FILTERS = [
@@ -159,7 +160,7 @@ function RankAvatar({ profile }) {
     return <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover bg-bg flex-shrink-0"
                 style={{ border: '1px solid rgba(244,241,234,0.12)' }} />
   }
-  const letter = (profile?.display_name || profile?.handle || '?')[0]?.toUpperCase() || '?'
+  const letter = profileInitial(profile)
   return (
     <div className="w-9 h-9 rounded-full flex items-center justify-center bg-surface flex-shrink-0"
          style={{ border: '1px solid rgba(217,201,168,0.32)' }}>

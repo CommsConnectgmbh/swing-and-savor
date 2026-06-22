@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { listComments, postComment, deleteComment, reportComment } from '../lib/social'
 import { relTime } from '../lib/format'
 import { fetchProfileMap } from '../lib/profiles'
+import { profileInitial } from '../lib/names'
 
 export default function CommentsThread({ matchId }) {
   const { user } = useAuth()
@@ -89,7 +90,7 @@ export default function CommentsThread({ matchId }) {
                 {p?.avatar_url
                   ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                   : <span className="font-condensed font-black text-sm text-accent">
-                      {(p?.display_name || p?.handle || '?')[0]?.toUpperCase()}
+                      {profileInitial(p)}
                     </span>}
               </Link>
               <div className="flex-1 min-w-0">

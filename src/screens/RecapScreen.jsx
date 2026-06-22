@@ -6,10 +6,10 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 32 }) {
-  const initials = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() || '').join('') || '·'
+  const initials = nameInitials(name)
   return (
     <div
       className="rounded-full overflow-hidden bg-surface flex-shrink-0 flex items-center justify-center"
