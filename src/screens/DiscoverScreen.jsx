@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { formatCupDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 import JoinTournamentSheet from '../components/JoinTournamentSheet'
 
@@ -146,7 +147,7 @@ function FeedRow({ t, idx, onOpen, onJoin }) {
             {t.join_mode === 'open' && <OpenJoinBadge />}
           </div>
           <p className="text-xs text-inkMuted mt-0.5 truncate">
-            {new Date(t.date + 'T12:00:00').toLocaleDateString('de-DE')}
+            {formatCupDate(t.date)}
             {t.location_name && <> · <span className="text-inkDim">{t.location_name}</span></>}
             {t.format && <> · {t.format}</>}
             {t.owner && <span className="text-inkDim"> · @{t.owner.handle}</span>}

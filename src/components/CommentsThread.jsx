@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { listComments, postComment, deleteComment, reportComment } from '../lib/social'
+import { relTime } from '../lib/format'
 
 export default function CommentsThread({ matchId }) {
   const { user } = useAuth()
@@ -133,13 +134,3 @@ export default function CommentsThread({ matchId }) {
   )
 }
 
-function relTime(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const diff = (Date.now() - d.getTime()) / 1000
-  if (diff < 60)        return 'jetzt'
-  if (diff < 3600)      return `${Math.floor(diff / 60)} min`
-  if (diff < 86400)     return `${Math.floor(diff / 3600)} h`
-  if (diff < 7 * 86400) return `${Math.floor(diff / 86400)} d`
-  return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
-}

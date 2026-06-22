@@ -13,6 +13,7 @@ import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
+import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -42,8 +43,6 @@ function calcWinner(sa, sb) {
   if (b < a) return 'B'
   return 'halved'
 }
-
-function fmtPts(v) { return v % 1 === 0 ? String(v) : v.toFixed(1) }
 
 function fmtDelta(v) {
   if (v === null) return null
@@ -962,8 +961,7 @@ export default function MatchDetailScreen() {
           cupName:      match?.tournament?.name,
           courseName:   course?.name,
           dateLabel:    match?.tournament?.date
-                          ? new Date(match.tournament.date + 'T12:00:00').toLocaleDateString('de-DE',
-                              { day: '2-digit', month: 'short', year: 'numeric' })
+                          ? formatCupDate(match.tournament.date, { day: '2-digit', month: 'short', year: 'numeric' })
                           : null,
           score:        `${fmtPts(ptsA)} – ${fmtPts(ptsB)}`,
           scoreLabel:   'Final Score',
