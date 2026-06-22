@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { relTime } from '../lib/format'
 import { indexById } from '../lib/profiles'
@@ -18,7 +19,7 @@ export default function MessagesScreen() {
     if (!user?.id) return
     load()
     subscribe()
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+    return () => { channelRef.current?.() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
@@ -69,12 +70,11 @@ export default function MessagesScreen() {
   }
 
   function subscribe() {
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
-    const ch = supabase.channel('messages-list')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => load())
-      .subscribe()
-    channelRef.current = ch
+    channelRef.current?.()
+    channelRef.current = subscribeToTables('messages-list', [
+      { table: 'messages', handler: () => load() },
+      { table: 'conversations', handler: () => load() },
+    ])
   }
 
   if (loading) return <LoadingSpinner />

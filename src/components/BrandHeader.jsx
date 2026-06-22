@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import ModeSwitch from './ModeSwitch'
 
@@ -54,7 +55,6 @@ export default function BrandHeader({ title }) {
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-    let ch = null
 
     async function loadUnread() {
       const { data: convs } = await supabase.from('conversations')
@@ -70,13 +70,13 @@ export default function BrandHeader({ title }) {
     }
 
     loadUnread()
-    ch = supabase.channel(`unread-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadUnread)
-      .subscribe()
+    const teardown = subscribeToTables(`unread-${user.id}`, [
+      { table: 'messages', handler: loadUnread },
+    ])
 
     return () => {
       cancelled = true
-      if (ch) supabase.removeChannel(ch)
+      teardown()
     }
   }, [user?.id])
 

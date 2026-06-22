@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { challengeFriendOnDealBuddy } from '../lib/dealbuddy'
 import { pushToast } from '../lib/toast'
@@ -28,15 +29,14 @@ export default function FriendsScreen() {
     if (!user) return
     load()
     // Live aktualisieren, wenn die Gegenseite annimmt/anfragt/entfreundet.
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
-    const ch = supabase.channel(`friendships-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, (payload) => {
+    channelRef.current?.()
+    channelRef.current = subscribeToTables(`friendships-${user.id}`, [
+      { table: 'friendships', handler: (payload) => {
         const row = payload.new ?? payload.old
         if (row && (row.user_a === user.id || row.user_b === user.id)) load()
-      })
-      .subscribe()
-    channelRef.current = ch
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+      } },
+    ])
+    return () => { channelRef.current?.() }
   }, [user])
 
   async function load() {

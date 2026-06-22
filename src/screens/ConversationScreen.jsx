@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -25,7 +26,7 @@ export default function ConversationScreen() {
     if (!user?.id || !conversationId) return
     load()
     subscribe()
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+    return () => { channelRef.current?.() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, conversationId])
 
@@ -62,19 +63,21 @@ export default function ConversationScreen() {
   }
 
   function subscribe() {
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
-    const ch = supabase.channel(`conv-${conversationId}`)
-      .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-          (payload) => {
-            const newMsg = payload.new
-            setMessages(prev => prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
-            if (newMsg.sender_id !== user.id) {
-              supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('id', newMsg.id)
-            }
-          })
-      .subscribe()
-    channelRef.current = ch
+    channelRef.current?.()
+    channelRef.current = subscribeToTables(`conv-${conversationId}`, [
+      {
+        table: 'messages',
+        event: 'INSERT',
+        filter: `conversation_id=eq.${conversationId}`,
+        handler: (payload) => {
+          const newMsg = payload.new
+          setMessages(prev => prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
+          if (newMsg.sender_id !== user.id) {
+            supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('id', newMsg.id)
+          }
+        },
+      },
+    ])
   }
 
   async function send(e) {

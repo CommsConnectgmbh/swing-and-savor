@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -24,7 +25,7 @@ export default function BoardScreen() {
 
   useEffect(() => {
     loadTournaments()
-    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+    return () => { channelRef.current?.() }
   }, [])
 
   async function loadTournaments() {
@@ -108,16 +109,15 @@ export default function BoardScreen() {
   }
 
   function subscribeRealtime(tournamentId) {
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
-    const channel = supabase.channel(`board-${tournamentId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, () => {
+    channelRef.current?.()
+    channelRef.current = subscribeToTables(`board-${tournamentId}`, [
+      { table: 'hole_results', handler: () => {
         if (selectedIdRef.current === tournamentId) loadMatchData(tournamentId)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
+      } },
+      { table: 'matches', handler: () => {
         if (selectedIdRef.current === tournamentId) loadMatchData(tournamentId)
-      })
-      .subscribe()
-    channelRef.current = channel
+      } },
+    ])
   }
 
   if (loading) return <LoadingSpinner />

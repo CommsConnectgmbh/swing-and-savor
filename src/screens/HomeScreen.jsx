@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
@@ -55,7 +56,7 @@ export default function HomeScreen() {
     load()
     subscribe()
     return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current)
+      channelRef.current?.()
       debouncedLoad.cancel()
       debouncedSocial.cancel()
     }
@@ -241,19 +242,18 @@ export default function HomeScreen() {
   }
 
   function subscribe() {
-    if (channelRef.current) supabase.removeChannel(channelRef.current)
+    channelRef.current?.()
     // Globaler Feed (alle RLS-sichtbaren Matches) lässt sich nicht auf einen
     // festen id-Filter eingrenzen — daher Debounce, damit ein Tastatur-Schwall
     // irgendeines Users nicht pro Tastenanschlag einen Voll-Reload auslöst.
-    const ch = supabase.channel('home-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, debouncedLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'hole_results' }, debouncedLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'casual_rounds' }, debouncedLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'casual_scores' }, debouncedLoad)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reactions' }, debouncedSocial)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_comments' }, debouncedSocial)
-      .subscribe()
-    channelRef.current = ch
+    channelRef.current = subscribeToTables('home-feed', [
+      { table: 'matches', handler: debouncedLoad },
+      { table: 'hole_results', handler: debouncedLoad },
+      { table: 'casual_rounds', handler: debouncedLoad },
+      { table: 'casual_scores', handler: debouncedLoad },
+      { table: 'match_reactions', handler: debouncedSocial },
+      { table: 'match_comments', handler: debouncedSocial },
+    ])
   }
 
   async function refreshSocial() {
