@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { fileExt } from '../lib/format'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -107,7 +108,7 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
     if (!file || !user) return
     setUploading(true); setOcrErr(null); setOcrPreview(null)
     try {
-      const ext = (file.name?.split('.').pop() || 'jpg').toLowerCase()
+      const ext = fileExt(file)
       const path = `${match.id}/${Date.now()}.${ext}`
       const up = await supabase.storage.from('scorecard-photos')
         .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false })

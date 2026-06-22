@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { loadWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { fmtEur } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Online-Widerrufsfunktion gemäß Art. 11a Verbraucherrechte-RL (verpflichtend ab 19.06.2026).
@@ -14,7 +15,6 @@ export default function WiderrufScreen() {
   const navigate = useNavigate()
   const { user, profile } = useAuth()
   const lang = i18n.resolvedLanguage || 'de'
-  const fmtEur = (cents) => (cents / 100).toLocaleString(lang, { style: 'currency', currency: 'EUR' })
 
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])
@@ -96,7 +96,7 @@ export default function WiderrufScreen() {
           <p className="mt-2 text-sm text-ink leading-relaxed">{t('widerruf.doneBody')}</p>
           {result?.refund_amount_cents > 0 && (
             <p className="mt-2 text-sm text-inkMuted">
-              {t('widerruf.refundLine', { amount: fmtEur(result.refund_amount_cents) })}
+              {t('widerruf.refundLine', { amount: fmtEur(result.refund_amount_cents, lang) })}
             </p>
           )}
           <button onClick={() => navigate('/me')}
@@ -123,7 +123,7 @@ export default function WiderrufScreen() {
                     {t('widerruf.daysLeft', { count: it.days_remaining })}
                   </p>
                 </div>
-                <p className="text-sm font-bold tabular-nums text-ink whitespace-nowrap">{fmtEur(it.amount_eur_cents)}</p>
+                <p className="text-sm font-bold tabular-nums text-ink whitespace-nowrap">{fmtEur(it.amount_eur_cents, lang)}</p>
               </div>
             </button>
           ))}
@@ -133,7 +133,7 @@ export default function WiderrufScreen() {
           <div className="rounded-xl border border-line bg-surface p-4">
             <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-inkMuted mb-2">{t('widerruf.summaryLabel')}</p>
             <Row label={t('widerruf.contract')} value={selected.label} />
-            <Row label={t('widerruf.amount')} value={fmtEur(selected.amount_eur_cents)} />
+            <Row label={t('widerruf.amount')} value={fmtEur(selected.amount_eur_cents, lang)} />
             <Row label={t('widerruf.paidLabel')} value={new Date(selected.paid_at).toLocaleString(lang)} />
           </div>
 

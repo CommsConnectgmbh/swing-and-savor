@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate } from './format'
+import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -55,5 +55,31 @@ describe('formatCupDate', () => {
 
   it('passes the locale through', () => {
     expect(formatCupDate('2026-06-14', { month: 'long' }, 'en-US')).toBe('June')
+  })
+})
+
+describe('fmtEur', () => {
+  it('formats cents as a EUR currency string (de default)', () => {
+    // Non-breaking spaces vary by ICU build, so assert on the meaningful parts.
+    expect(fmtEur(499)).toMatch(/4,99/)
+    expect(fmtEur(499)).toMatch(/€/)
+  })
+})
+
+describe('fileExt', () => {
+  it('extracts a lower-cased extension', () => {
+    expect(fileExt({ name: 'Scorecard.JPG' })).toBe('jpg')
+    expect(fileExt({ name: 'photo.png' })).toBe('png')
+  })
+
+  it('uses the fallback when there is no extension', () => {
+    expect(fileExt({ name: 'noext' })).toBe('noext')
+    expect(fileExt({ name: '' })).toBe('jpg')
+    expect(fileExt(null)).toBe('jpg')
+    expect(fileExt({ name: '' }, { fallback: 'png' })).toBe('png')
+  })
+
+  it('truncates to max when requested', () => {
+    expect(fileExt({ name: 'a.jpeg2000' }, { max: 5 })).toBe('jpeg2')
   })
 })
