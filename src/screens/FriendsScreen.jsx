@@ -5,6 +5,11 @@ import { useAuth } from '../lib/auth'
 import { challengeFriendOnDealBuddy } from '../lib/dealbuddy'
 import { pushToast } from '../lib/toast'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { fetchFriendships, otherUserId } from '../lib/friendships'
+import { fetchProfileMap, searchProfiles } from '../lib/profiles'
+
+// FriendsScreen additionally renders the friend's home club.
+const FRIEND_LIST_COLUMNS = 'id, handle, display_name, hcp, home_club, avatar_url'
 
 export default function FriendsScreen() {
   const { user, profile } = useAuth()
@@ -36,23 +41,18 @@ export default function FriendsScreen() {
 
   async function load() {
     setLoading(true)
-    const { data: rows } = await supabase.from('friendships').select('*')
-      .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
+    const rows = await fetchFriendships(user.id)
 
-    const accepted = rows?.filter(r => r.status === 'accepted') ?? []
-    const pending  = rows?.filter(r => r.status === 'pending')  ?? []
+    const accepted = rows.filter(r => r.status === 'accepted')
+    const pending  = rows.filter(r => r.status === 'pending')
 
-    const friendIds  = accepted.map(r => r.user_a === user.id ? r.user_b : r.user_a)
+    const friendIds  = accepted.map(r => otherUserId(r, user.id))
     const incomingPending = pending.filter(r => r.requested_by !== user.id)
     const outgoingPending = pending.filter(r => r.requested_by === user.id)
-    const incIds = incomingPending.map(r => r.user_a === user.id ? r.user_b : r.user_a)
-    const outIds = outgoingPending.map(r => r.user_a === user.id ? r.user_b : r.user_a)
+    const incIds = incomingPending.map(r => otherUserId(r, user.id))
+    const outIds = outgoingPending.map(r => otherUserId(r, user.id))
 
-    const allIds = [...friendIds, ...incIds, ...outIds]
-    const { data: profs } = allIds.length
-      ? await supabase.from('profiles').select('id, handle, display_name, hcp, home_club, avatar_url').in('id', allIds)
-      : { data: [] }
-    const byId = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+    const byId = await fetchProfileMap([...friendIds, ...incIds, ...outIds], FRIEND_LIST_COLUMNS)
 
     setFriends(friendIds.map(id => byId[id]).filter(Boolean))
     setIncoming(incIds.map(id => byId[id]).filter(Boolean))
@@ -64,13 +64,8 @@ export default function FriendsScreen() {
     setQuery(q)
     if (q.length < 2) { setSearchResults([]); return }
     setSearching(true)
-    const term = q.toLowerCase().replace(/^@/, '')
-    const { data } = await supabase.from('profiles')
-      .select('id, handle, display_name, hcp, home_club, avatar_url')
-      .or(`handle.ilike.${term}%,display_name.ilike.%${term}%`)
-      .neq('id', user.id)
-      .limit(20)
-    setSearchResults(data ?? [])
+    const data = await searchProfiles(q, { excludeId: user.id, limit: 20, columns: FRIEND_LIST_COLUMNS })
+    setSearchResults(data)
     setSearching(false)
   }
 

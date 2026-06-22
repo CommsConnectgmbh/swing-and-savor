@@ -8,6 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import CoursePicker from '../components/CoursePicker'
 import { isUnlocked } from '../lib/tournamentGate'
+import { fetchFriendProfiles } from '../lib/friendships'
 
 function PencilIcon() {
   return (
@@ -902,15 +903,9 @@ function PlayerPickSheet({
       setLoadingFriends(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoadingFriends(false); return }
-      const { data: rows } = await supabase.from('friendships').select('*')
-        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-      const accepted = (rows || []).filter(r => r.status === 'accepted')
-      const ids = accepted.map(r => r.user_a === user.id ? r.user_b : r.user_a)
-      if (!ids.length) { if (!cancelled) { setFriends([]); setLoadingFriends(false) }; return }
-      const { data: profs } = await supabase.from('profiles')
-        .select('id, handle, display_name, hcp, avatar_url').in('id', ids)
+      const profs = await fetchFriendProfiles(user.id)
       if (!cancelled) {
-        setFriends((profs || []).sort((a, b) => a.display_name.localeCompare(b.display_name)))
+        setFriends(profs)
         setLoadingFriends(false)
       }
     }

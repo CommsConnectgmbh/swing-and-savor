@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { openDealBuddyChallenge, challengeFriendOnDealBuddy } from '../lib/dealbuddy'
+import { fetchProfileMap, searchProfiles } from '../lib/profiles'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChallengesScreen() {
@@ -70,9 +71,7 @@ export default function ChallengesScreen() {
       ;(c.opponent_team   || []).forEach(i => ids.add(i))
     })
     if (ids.size) {
-      const { data: profs } = await supabase.from('profiles')
-        .select('id, handle, display_name, avatar_url, hcp').in('id', Array.from(ids))
-      setProfilesById(Object.fromEntries((profs ?? []).map(p => [p.id, p])))
+      setProfilesById(await fetchProfileMap(ids))
     }
     setLoading(false)
   }
@@ -255,12 +254,8 @@ function CreateForm({ onCreated, onClose, presetOpponent }) {
 
   async function searchOpponents() {
     if (opponentQuery.length < 2) { setOpponents([]); return }
-    const term = opponentQuery.toLowerCase().replace(/^@/, '')
-    const { data } = await supabase.from('profiles')
-      .select('id, handle, display_name, avatar_url, hcp')
-      .or(`handle.ilike.${term}%,display_name.ilike.%${term}%`)
-      .neq('id', user.id).limit(8)
-    setOpponents(data ?? [])
+    const data = await searchProfiles(opponentQuery, { excludeId: user.id, limit: 8 })
+    setOpponents(data)
   }
 
   async function submit(e) {

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { listComments, postComment, deleteComment, reportComment } from '../lib/social'
 import { relTime } from '../lib/format'
+import { fetchProfileMap } from '../lib/profiles'
 
 export default function CommentsThread({ matchId }) {
   const { user } = useAuth()
@@ -25,11 +26,9 @@ export default function CommentsThread({ matchId }) {
   async function load() {
     const list = await listComments(matchId)
     setComments(list)
-    const ids = [...new Set(list.map(c => c.user_id))]
+    const ids = list.map(c => c.user_id)
     if (ids.length) {
-      const { data: profs } = await supabase.from('profiles')
-        .select('id,handle,display_name,avatar_url').in('id', ids)
-      setProfiles(Object.fromEntries((profs || []).map(p => [p.id, p])))
+      setProfiles(await fetchProfileMap(ids, 'id,handle,display_name,avatar_url'))
     }
   }
 

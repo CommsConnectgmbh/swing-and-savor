@@ -6,6 +6,7 @@ import { strokesPerHole, calcCasualMatchStanding } from '../lib/scoring'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { fetchFriendProfiles } from '../lib/friendships'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
@@ -48,15 +49,9 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      const { data: rows } = await supabase.from('friendships').select('*')
-        .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-      const accepted = (rows || []).filter(r => r.status === 'accepted')
-      const ids = accepted.map(r => r.user_a === user.id ? r.user_b : r.user_a)
-      if (!ids.length) { if (!cancelled) { setFriends([]); setLoading(false) }; return }
-      const { data: profs } = await supabase.from('profiles')
-        .select('id, handle, display_name, hcp, avatar_url').in('id', ids)
+      const profs = await fetchFriendProfiles(user.id)
       if (!cancelled) {
-        setFriends((profs || []).sort((a, b) => a.display_name.localeCompare(b.display_name)))
+        setFriends(profs)
         setLoading(false)
       }
     }
