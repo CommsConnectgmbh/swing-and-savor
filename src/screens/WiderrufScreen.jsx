@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { loadWiderrufbareKaeufe } from '../lib/widerruf'
+import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Online-Widerrufsfunktion gemäß Art. 11a Verbraucherrechte-RL (verpflichtend ab 19.06.2026).
@@ -57,13 +58,9 @@ export default function WiderrufScreen() {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
       if (!jwt) throw new Error(t('widerruf.mustLogin'))
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/widerruf`, {
+      const res = await fetch(functionUrl('widerruf'), {
         method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           purchase_table: selected.table,
           purchase_id: selected.id,

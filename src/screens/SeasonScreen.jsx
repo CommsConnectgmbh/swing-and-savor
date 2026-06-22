@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-season`
+import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
@@ -42,8 +41,8 @@ export default function SeasonScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr(null)
-    fetch(`${FUNCTIONS_URL}?slug=${encodeURIComponent(slug)}`, {
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+    fetch(`${functionUrl('public-season')}?slug=${encodeURIComponent(slug)}`, {
+      headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))

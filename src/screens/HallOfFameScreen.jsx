@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-hall`
-const RIVALRIES_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-rivalries`
+import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 function Avatar({ src, name, size = 80 }) {
   const initials = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2)
@@ -62,8 +60,8 @@ export default function HallOfFameScreen() {
 
   useEffect(() => {
     if (!handle) return
-    fetch(`${RIVALRIES_URL}?handle=${encodeURIComponent(handle)}`, {
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+    fetch(`${functionUrl('public-rivalries')}?handle=${encodeURIComponent(handle)}`, {
+      headers: publicFunctionHeaders(),
     })
       .then(async (r) => r.ok ? r.json() : null)
       .then((j) => { if (j?.rivalries) setRivalries(j.rivalries) })
@@ -74,8 +72,8 @@ export default function HallOfFameScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${FUNCTIONS_URL}?handle=${encodeURIComponent(handle)}`, {
-      headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+    fetch(`${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`, {
+      headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))
