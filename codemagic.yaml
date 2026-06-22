@@ -1,0 +1,187 @@
+workflows:
+  ios-swingsavor-testflight:
+    name: iOS — Swing & Savor (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+
+    # MANUAL ONLY. No automatic triggers on push/PR/tag — start builds from the
+    # Codemagic UI (or API). Re-enabling auto-builds would require adding entries
+    # under `events:` (e.g. - push) and a branch pattern. Leave empty to keep
+    # builds manual, including pushes to main.
+    triggering:
+      events: []
+
+    environment:
+      groups:
+        # Create this env-var group in the Codemagic UI
+        # (swing-and-savor -> Settings -> Environment variables), mirroring the
+        # GitHub Actions secrets in .github/workflows/ios-release.yml:
+        #   IOS_DIST_CERT_P12_BASE64        (base64 of the distribution .p12)
+        #   IOS_DIST_CERT_PASSWORD          (the .p12 password)
+        #   IOS_PROVISIONING_PROFILE_BASE64 (base64 of the App Store .mobileprovision)
+        #   APPLE_TEAM_ID                   (CommsConnect GmbH team id)
+        #   ASC_API_KEY_P8_BASE64           (base64 of the App Store Connect .p8)  [TestFlight only]
+        #   ASC_API_KEY_ID                  (ASC key id)                            [TestFlight only]
+        #   ASC_API_ISSUER_ID               (ASC issuer id)                         [TestFlight only]
+        #   GLM_REPO_TOKEN                  (GitHub PAT with read access to the
+        #                                    private olihoffmann/GolfLaunchMonitor
+        #                                    repo, so SPM can resolve QuickLaunchKit)
+        - swingsavor_signing
+      vars:
+        BUNDLE_ID: "de.commsconnect.swingandsavor"
+        PROFILE_NAME: "Swing and Savor v1.0 App Store"
+        SCHEME: "App"
+        CONFIG: "Release"
+        # Flip to "false" to build/export an IPA without shipping to TestFlight.
+        UPLOAD_TO_TESTFLIGHT: "true"
+      node: 20
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Allow SPM to resolve the private QuickLaunchKit repo
+        script: |
+          set -e
+          # QuickLaunchKit lives in a SEPARATE private repo
+          # (github.com/olihoffmann/GolfLaunchMonitor). It is added to
+          # native/ios/App/App.xcodeproj as a Swift Package dependency (see
+          # INTEGRATION_LAUNCH_MONITOR.md §4 / §CI — this is a one-time Xcode step).
+          # Give git a credential so `xcodebuild -resolvePackageDependencies` can
+          # clone it non-interactively.
+          if [ -n "${GLM_REPO_TOKEN:-}" ]; then
+            git config --global url."https://${GLM_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
+            echo "Configured token-based github.com access for SPM resolution."
+          else
+            echo "WARNING: GLM_REPO_TOKEN not set — SPM resolution of QuickLaunchKit will fail"
+            echo "         unless the package is referenced by a public URL or local path."
+          fi
+
+      - name: Install JS deps (Capacitor)
+        working_directory: native
+        script: |
+          set -e
+          npm ci --no-audit --no-fund
+
+      - name: Generate icons + splash
+        working_directory: native
+        script: |
+          set -e
+          npx capacitor-assets generate --ios \
+            --iconBackgroundColor "#1f3f2c" --iconBackgroundColorDark "#0d271e" \
+            --splashBackgroundColor "#0d271e" --splashBackgroundColorDark "#0d271e"
+
+      - name: Capacitor sync iOS
+        working_directory: native
+        script: |
+          set -e
+          npx cap sync ios
+
+      - name: Patch iOS project (privacy manifest + manual signing + location)
+        working_directory: native
+        script: |
+          set -e
+          export APPLE_TEAM_ID="$APPLE_TEAM_ID"
+          export IOS_PROFILE_NAME="$PROFILE_NAME"
+          node scripts/patch-ios-project.mjs
+
+      - name: CocoaPods install
+        working_directory: native/ios/App
+        script: |
+          set -e
+          pod install --repo-update
+
+      - name: Import distribution certificate
+        script: |
+          set -e
+          keychain initialize
+          P12_PATH="$CM_BUILD_DIR/dist.p12"
+          echo "$IOS_DIST_CERT_P12_BASE64" | base64 --decode > "$P12_PATH"
+          keychain add-certificates --certificate "$P12_PATH" --certificate-password "$IOS_DIST_CERT_PASSWORD"
+
+      - name: Install provisioning profile
+        script: |
+          set -e
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_DIR/SwingSavor_AppStore.mobileprovision"
+          ls -la "$PROFILE_DIR"
+
+      - name: Resolve Swift packages (incl. QuickLaunchKit)
+        working_directory: native/ios/App
+        script: |
+          set -e
+          # Resolves all SPM deps declared in the App project, including the
+          # embedded QuickLaunchKit launch-monitor engine. This is the step that
+          # surfaces any cross-repo / version-pin issues early.
+          xcodebuild -resolvePackageDependencies \
+            -workspace App.xcworkspace \
+            -scheme "$SCHEME"
+
+      - name: Generate ExportOptions.plist
+        script: |
+          set -e
+          cat > "$CM_BUILD_DIR/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>            <string>app-store</string>
+            <key>destination</key>       <string>export</string>
+            <key>teamID</key>            <string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key>      <string>manual</string>
+            <key>stripSwiftSymbols</key> <true/>
+            <key>uploadSymbols</key>     <true/>
+            <key>compileBitcode</key>    <false/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+          cat "$CM_BUILD_DIR/ExportOptions.plist"
+
+      - name: Archive
+        working_directory: native/ios/App
+        script: |
+          set -e
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIG" \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$CM_BUILD_DIR/SwingSavor.xcarchive" \
+            archive
+          test -d "$CM_BUILD_DIR/SwingSavor.xcarchive"
+
+      - name: Export IPA
+        script: |
+          set -e
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/SwingSavor.xcarchive" \
+            -exportOptionsPlist "$CM_BUILD_DIR/ExportOptions.plist" \
+            -exportPath "$CM_BUILD_DIR/export"
+          ls -la "$CM_BUILD_DIR/export"
+
+      - name: Upload to TestFlight
+        script: |
+          set -e
+          if [ "$UPLOAD_TO_TESTFLIGHT" != "true" ]; then
+            echo "UPLOAD_TO_TESTFLIGHT != true — skipping TestFlight upload."
+            exit 0
+          fi
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
+          IPA=$(ls "$CM_BUILD_DIR"/export/*.ipa | head -1)
+          echo "Uploading $IPA"
+          xcrun altool --upload-app \
+            -f "$IPA" \
+            -t ios \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_API_ISSUER_ID"
+
+    artifacts:
+      - $CM_BUILD_DIR/export/*.ipa
+      - $CM_BUILD_DIR/SwingSavor.xcarchive/**/*.dSYM
+      - /tmp/xcodebuild_logs/*.log
