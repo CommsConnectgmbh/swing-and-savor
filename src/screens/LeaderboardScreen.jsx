@@ -18,7 +18,7 @@ export default function LeaderboardScreen() {
   const [me, setMe]           = useState(null)
   const [myRank, setMyRank]   = useState(0)
 
-  useEffect(() => { load() /* eslint-disable-next-line */ }, [filter, user?.id])
+  useEffect(() => { load() }, [filter, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load() {
     setLoading(true)
