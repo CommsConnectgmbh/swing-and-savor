@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import LoadingSpinner from '../components/LoadingSpinner'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
+import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
 
 const CATEGORY_META = {
   tee_times:   { label: 'Tee Times',   blurb: 'Kuratierte Greenfees und Flights.' },
@@ -11,12 +10,6 @@ const CATEGORY_META = {
   apparel:     { label: 'Apparel',     blurb: 'Polos, Caps, Knit & Outerwear.' },
   travel:      { label: 'Travel',      blurb: 'Golfreisen, Luxus-Resorts und Trip Cups.' },
   equipment:   { label: 'Equipment',   blurb: 'Schläger, Bags, Bälle & Pro-Shop-Picks.' },
-}
-
-function priceLabel(o) {
-  if (o.price_label) return o.price_label
-  if (o.price_eur_cents) return `${(o.price_eur_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 0 })} €`
-  return 'Auf Anfrage'
 }
 
 export default function SavorCategoryScreen() {
@@ -32,7 +25,7 @@ export default function SavorCategoryScreen() {
     setLoading(true)
     const params = new URLSearchParams({ mode: 'category', category })
     if (city) params.set('city', city)
-    fetch(`${FUNCTIONS_URL}?${params}`, {
+    fetch(`${SAVOR_FUNCTIONS_URL}?${params}`, {
       headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
     })
       .then(async (r) => r.ok ? r.json() : { offers: [] })
@@ -127,7 +120,7 @@ export default function SavorCategoryScreen() {
                     {o.partner?.name || ''}
                   </span>
                   <span className="text-[11px] text-accent tracking-wider tabular-nums">
-                    {priceLabel(o)}
+                    {formatOfferPrice(o)}
                   </span>
                 </div>
               </Link>

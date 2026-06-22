@@ -4,15 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ShareSheet from '../components/ShareSheet'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
-
-function priceLabel(o) {
-  if (!o) return ''
-  if (o.price_label) return o.price_label
-  if (o.price_eur_cents) return `${(o.price_eur_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 0 })} €`
-  return 'Auf Anfrage'
-}
+import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
 
 export default function SavorOfferScreen() {
   const { user } = useAuth()
@@ -27,7 +19,7 @@ export default function SavorOfferScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr(null)
-    fetch(`${FUNCTIONS_URL}?mode=offer&slug=${encodeURIComponent(slug)}`, {
+    fetch(`${SAVOR_FUNCTIONS_URL}?mode=offer&slug=${encodeURIComponent(slug)}`, {
       headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
     })
       .then(async (r) => {
@@ -116,7 +108,7 @@ export default function SavorOfferScreen() {
         <div>
           <p className="text-[9px] tracking-[0.32em] uppercase text-inkDim">Price</p>
           <p className="font-display text-accent mt-1" style={{ fontSize: 20, fontWeight: 500 }}>
-            {priceLabel(offer)}
+            {formatOfferPrice(offer)}
           </p>
         </div>
         {offer.city && (
@@ -207,7 +199,7 @@ export default function SavorOfferScreen() {
 
       <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)}
         url={shareUrl}
-        text={`${offer.title} · ${priceLabel(offer)} · Savor by Swing & Savor — ${shareUrl}`}
+        text={`${offer.title} · ${formatOfferPrice(offer)} · Savor by Swing & Savor — ${shareUrl}`}
         title="Share offer" />
     </div>
   )

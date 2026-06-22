@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoadingSpinner from '../components/LoadingSpinner'
-
-const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
+import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
 
 const DISCORD_INVITE = 'https://discord.gg/jT2GpZqZVE'
 
@@ -79,12 +78,6 @@ const CATEGORIES = [
   { key: 'equipment',   label: 'Equipment',   blurb: 'Schläger, Bags, Bälle & Pro-Shop-Picks.' },
 ]
 
-function priceLabel(o) {
-  if (o.price_label) return o.price_label
-  if (o.price_eur_cents) return `${(o.price_eur_cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 0 })} €`
-  return 'Auf Anfrage'
-}
-
 function OfferTile({ offer, compact = false }) {
   return (
     <Link to={`/savor/o/${offer.slug}`}
@@ -124,7 +117,7 @@ function OfferTile({ offer, compact = false }) {
           {offer.partner?.name || ''}
         </span>
         <span className="text-[11px] text-accent tracking-wider tabular-nums">
-          {priceLabel(offer)}
+          {formatOfferPrice(offer)}
         </span>
       </div>
     </Link>
@@ -138,7 +131,7 @@ export default function SavorScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetch(`${FUNCTIONS_URL}?mode=home`, {
+    fetch(`${SAVOR_FUNCTIONS_URL}?mode=home`, {
       headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
     })
       .then(async (r) => r.ok ? r.json() : { featured: [], counts: {}, preview_by_category: {} })
