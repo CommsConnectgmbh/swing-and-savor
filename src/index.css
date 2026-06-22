@@ -94,6 +94,15 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=number] { -moz-appearance: textfield; }
 
+/* iOS Safari auto-zooms into any focused form control with a font-size below
+   16px and — because our viewport meta intentionally allows pinch-zoom (no
+   maximum-scale) — never zooms back out, leaving the layout stuck and off.
+   Forcing ≥16px on form controls suppresses the zoom. Scoped to WebKit/iOS so
+   the smaller `text-sm`/`text-xs` field styling is preserved on desktop. */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
