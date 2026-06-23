@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { uploadToBucket } from './storage'
 
 const BUCKET = 'avatars'
 const MAX_DIM = 512
@@ -31,15 +31,10 @@ export async function uploadAvatar(userId, file) {
   const blob = await maybeDownscale(file)
   const ext = (blob.type === 'image/png') ? 'png' : 'jpg'
   const path = `${userId}/avatar-${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
-    contentType: blob.type || 'image/jpeg',
-    upsert: true,
-    cacheControl: '3600',
-  })
-  if (error) {
+  try {
+    return await uploadToBucket(BUCKET, path, blob, { upsert: true })
+  } catch (error) {
     console.error('[avatar] upload error:', error)
     throw error
   }
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return data.publicUrl
 }
