@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { fetchPublicFunction } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -53,15 +53,12 @@ export default function InvitationalScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${functionUrl('public-invitational')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+    fetchPublicFunction('public-invitational', { invite: inviteCode })
+      .then(({ ok, body }) => {
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.cup.name} · Swing & Savor`
+        if (!ok) { setErr(body?.error || 'error'); setLoading(false); return }
+        setData(body)
+        document.title = `${body.cup.name} · Swing & Savor`
         setLoading(false)
       })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })

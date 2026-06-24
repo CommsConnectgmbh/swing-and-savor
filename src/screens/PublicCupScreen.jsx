@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { fetchPublicFunction } from '../lib/functions'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
@@ -17,17 +17,14 @@ export default function PublicCupScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetch(`${functionUrl('public-cup')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+    fetchPublicFunction('public-cup', { invite: inviteCode })
+      .then(({ ok, body }) => {
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setCup(j.cup)
+        if (!ok) { setErr(body?.error || 'error'); setLoading(false); return }
+        setCup(body.cup)
         setLoading(false)
         // OG-Meta-Tags client-side patchen (für Share-Previews wenn Crawler JS rendert)
-        document.title = `${j.cup.name} · Swing & Savor`
+        document.title = `${body.cup.name} · Swing & Savor`
       })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
     return () => { cancelled = true }
