@@ -7,6 +7,7 @@ import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '../lib/dealbuddy'
 import { buildReferralLink } from '../lib/referral'
 import { profileInitial } from '../lib/names'
+import { fetchProfileList } from '../lib/profiles'
 import { SUPPORTED_LANGUAGES } from '../lib/i18n'
 import AvatarPicker from '../components/AvatarPicker'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -74,9 +75,7 @@ export default function ProfileScreen() {
       .select('blocked_id, created_at').order('created_at', { ascending: false })
     const ids = (blocks || []).map(b => b.blocked_id)
     if (ids.length === 0) { setBlockedUsers([]); return }
-    const { data: profs } = await supabase.from('profiles')
-      .select('id,handle,display_name,avatar_url').in('id', ids)
-    setBlockedUsers(profs || [])
+    setBlockedUsers(await fetchProfileList(ids, 'id,handle,display_name,avatar_url'))
   }
 
   useEffect(() => { if (isSelf) loadBlocked() }, [me?.id, isSelf])
