@@ -17,6 +17,21 @@ export function calcMatchStanding(holeResults) {
   return { holesUp, leader, label, holesPlayed: holeResults.length }
 }
 
+// Live-Lochspiel-Status für die Match-Detailansicht. Anders als calcMatchStanding
+// (nur Stand) liefert dies zusätzlich die noch offenen Löcher und ob das Match
+// damit bereits "dormie" (Vorsprung = Rest) oder entschieden (Vorsprung > Rest)
+// ist — genau das, was man braucht, um auf einen Blick zu sehen, wer führt.
+// holes = UI-Holes mit .winner ('A' | 'B' | 'halved' | null), totalHoles default 18.
+export function calcMatchPlayStatus(holes, totalHoles = 18) {
+  const played = (holes || []).filter((h) => h && h.winner !== null)
+  const { holesUp, leader } = calcMatchStanding(played)
+  const holesPlayed = played.length
+  const remaining = Math.max(0, totalHoles - holesPlayed)
+  const decided = leader !== 'none' && holesUp > remaining
+  const dormie = leader !== 'none' && !decided && holesUp === remaining && remaining > 0
+  return { leader, holesUp, holesPlayed, remaining, decided, dormie }
+}
+
 // Punktefaktoren pro Team. Default 1.0. Bei Flight-Matches mit asymmetrischer
 // Spielerzahl gleicht der Faktor die personelle Überzahl aus (z.B. 4v3 → 3er-Team
 // Faktor 1.0, 4er-Team Faktor 0.75 = 3/4).
@@ -113,6 +128,76 @@ export function calcCasualMatchStanding(scoresByHole, strokesA, strokesB) {
     label = (up > remaining && played === 18) ? `${up}&${remaining}` : `${up} Up`
   }
   return { upA, upB, halved, played, leader, label, remaining }
+}
+
+// Brutto-Lochspiel-Stand einer Casual-Runde direkt aus Spielerliste + Scores —
+// für einen prominenten "wer führt"-Banner über der Scorecard. Nur bei genau 2
+// Spielern sinnvoll, sonst null. playersList = [{idx, display_name, …}],
+// scores = [{player_idx, hole_number, strokes}].
+export function casualGrossStanding(playersList, scores) {
+  if (!Array.isArray(playersList) || playersList.length !== 2) return null
+  const [a, b] = playersList
+  const byHole = {}
+  for (const s of (scores || [])) {
+    if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
+    byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+  }
+  const zero = Array(18).fill(0)
+  return { a, b, ...calcCasualMatchStanding(byHole, zero, zero) }
+}
+
+// Loch-für-Loch-Verlauf einer 2-Spieler-Casual-Runde (Brutto). Liefert für jedes
+// gespielte Loch wer gewonnen hat und den laufenden Lochspiel-Stand danach —
+// Grundlage für eine "wer hat welches Loch geholt"-Übersicht.
+// Rückgabe: [{ hole, a, b, winner: 'A'|'B'|'halved', diff, running }] nur für
+// Löcher, auf denen beide einen Score haben. diff = A-Vorsprung (negativ = B),
+// running = Label wie "2 Up" / "AS" aus Sicht nach diesem Loch.
+export function casualHoleResults(playersList, scores) {
+  if (!Array.isArray(playersList) || playersList.length !== 2) return []
+  const [a, b] = playersList
+  const byHole = {}
+  for (const s of (scores || [])) {
+    if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
+    byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+  }
+  const out = []
+  let diff = 0 // + = A führt, − = B führt
+  for (let h = 1; h <= 18; h++) {
+    const s = byHole[h]
+    const aS = Number.isFinite(s?.a) ? s.a : null
+    const bS = Number.isFinite(s?.b) ? s.b : null
+    if (aS === null || bS === null) continue
+    const winner = aS < bS ? 'A' : bS < aS ? 'B' : 'halved'
+    if (winner === 'A') diff++
+    else if (winner === 'B') diff--
+    const running = diff === 0 ? 'AS' : `${Math.abs(diff)} Up`
+    out.push({ hole: h, a: aS, b: bS, winner, diff, running })
+  }
+  return out
+}
+
+// Loch-für-Loch-Verlauf aus bereits bestimmten Loch-Siegern (Turnier-Match-Play).
+// holes = [{ hole_number, winner: 'A'|'B'|'halved'|null, strokes_a, strokes_b }].
+// Liefert nur gewertete Löcher mit laufendem Stand — Pendant zu casualHoleResults,
+// nur dass der Sieger hier schon feststeht (Team A vs Team B).
+export function matchPlayHoleRun(holes) {
+  const toInt = (v) => (v === '' || v == null ? null : (Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : null))
+  const out = []
+  let diff = 0 // + = Team A führt, − = Team B führt
+  for (const h of (holes || [])) {
+    if (h.winner !== 'A' && h.winner !== 'B' && h.winner !== 'halved') continue
+    if (h.winner === 'A') diff++
+    else if (h.winner === 'B') diff--
+    out.push({
+      hole: h.hole_number,
+      a: toInt(h.strokes_a),
+      b: toInt(h.strokes_b),
+      winner: h.winner,
+      diff,
+      running: diff === 0 ? 'AS' : `${Math.abs(diff)} Up`,
+    })
+  }
+  return out
 }
 
 export function calcStablefordTotals(holes) {

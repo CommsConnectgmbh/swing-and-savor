@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -29,6 +29,130 @@ describe('calcMatchStanding', () => {
   it('returns all square when tied', () => {
     const holes = [{ winner: 'A' }, { winner: 'B' }]
     expect(calcMatchStanding(holes)).toEqual({ holesUp: 0, leader: 'none', label: 'ALL SQ', holesPlayed: 2 })
+  })
+})
+
+describe('calcMatchPlayStatus', () => {
+  it('ignores unplayed holes when counting remaining', () => {
+    const holes = [{ winner: 'A' }, { winner: 'halved' }, ...Array(16).fill({ winner: null })]
+    expect(calcMatchPlayStatus(holes)).toEqual({
+      leader: 'A', holesUp: 1, holesPlayed: 2, remaining: 16, decided: false, dormie: false,
+    })
+  })
+
+  it('reports all square with no leader', () => {
+    const holes = [{ winner: 'A' }, { winner: 'B' }, ...Array(16).fill({ winner: null })]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'none', holesUp: 0, decided: false, dormie: false })
+  })
+
+  it('flags dormie when lead equals holes remaining', () => {
+    // B leads by 2 after 16 holes → 2 remaining → dormie, not yet decided
+    const holes = [
+      ...Array(2).fill({ winner: 'B' }),
+      ...Array(14).fill({ winner: 'halved' }),
+      ...Array(2).fill({ winner: null }),
+    ]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'B', holesUp: 2, remaining: 2, dormie: true, decided: false })
+  })
+
+  it('flags decided when lead exceeds holes remaining', () => {
+    // A leads by 3 after 16 holes → 2 remaining → mathematically decided (3&2)
+    const holes = [
+      ...Array(3).fill({ winner: 'A' }),
+      ...Array(13).fill({ winner: 'halved' }),
+      ...Array(2).fill({ winner: null }),
+    ]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'A', holesUp: 3, remaining: 2, decided: true, dormie: false })
+  })
+
+  it('handles empty input', () => {
+    expect(calcMatchPlayStatus([])).toEqual({
+      leader: 'none', holesUp: 0, holesPlayed: 0, remaining: 18, decided: false, dormie: false,
+    })
+  })
+})
+
+describe('casualGrossStanding', () => {
+  const players = [{ idx: 1, display_name: 'Rainer' }, { idx: 2, display_name: 'Oli Hoffmann' }]
+
+  it('names the leader from real 2-player scores (Oli 2 up after 5)', () => {
+    // Loch1 4:3(Oli), 2 3:3, 3 4:4, 4 6:5(Oli), 5 4:4 → Oli 2 auf
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 3 }, { player_idx: 2, hole_number: 2, strokes: 3 },
+      { player_idx: 1, hole_number: 3, strokes: 4 }, { player_idx: 2, hole_number: 3, strokes: 4 },
+      { player_idx: 1, hole_number: 4, strokes: 6 }, { player_idx: 2, hole_number: 4, strokes: 5 },
+      { player_idx: 1, hole_number: 5, strokes: 4 }, { player_idx: 2, hole_number: 5, strokes: 4 },
+    ]
+    const st = casualGrossStanding(players, scores)
+    expect(st).toMatchObject({ leader: 'B', label: '2 Up', played: 5, remaining: 13 })
+    expect(st.b.display_name).toBe('Oli Hoffmann')
+  })
+
+  it('ignores holes only one player has scored', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 5 }, // nur Rainer → zählt nicht
+    ]
+    expect(casualGrossStanding(players, scores)).toMatchObject({ leader: 'B', played: 1 })
+  })
+
+  it('returns null when not exactly two players', () => {
+    expect(casualGrossStanding([{ idx: 1 }], [])).toBe(null)
+    expect(casualGrossStanding([{ idx: 1 }, { idx: 2 }, { idx: 3 }], [])).toBe(null)
+  })
+})
+
+describe('casualHoleResults', () => {
+  const players = [{ idx: 1, display_name: 'Rainer' }, { idx: 2, display_name: 'Oli Hoffmann' }]
+
+  it('returns per-hole winner and running standing on real data', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 3 }, { player_idx: 2, hole_number: 2, strokes: 3 },
+      { player_idx: 1, hole_number: 3, strokes: 4 }, { player_idx: 2, hole_number: 3, strokes: 4 },
+      { player_idx: 1, hole_number: 4, strokes: 6 }, { player_idx: 2, hole_number: 4, strokes: 5 },
+      { player_idx: 1, hole_number: 5, strokes: 4 }, { player_idx: 2, hole_number: 5, strokes: 4 },
+    ]
+    const r = casualHoleResults(players, scores)
+    expect(r.map(h => h.winner)).toEqual(['B', 'halved', 'halved', 'B', 'halved'])
+    expect(r.map(h => h.running)).toEqual(['1 Up', '1 Up', '1 Up', '2 Up', '2 Up'])
+    expect(r[3]).toMatchObject({ hole: 4, a: 6, b: 5, winner: 'B', diff: -2 })
+  })
+
+  it('skips holes only one player scored', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 5 },
+      { player_idx: 1, hole_number: 2, strokes: 4 }, // nur Rainer
+    ]
+    const r = casualHoleResults(players, scores)
+    expect(r).toHaveLength(1)
+    expect(r[0]).toMatchObject({ hole: 1, winner: 'A', running: '1 Up' })
+  })
+
+  it('returns empty when not exactly two players', () => {
+    expect(casualHoleResults([{ idx: 1 }], [])).toEqual([])
+  })
+})
+
+describe('matchPlayHoleRun', () => {
+  it('builds running standing from precomputed winners', () => {
+    const holes = [
+      { hole_number: 1, winner: 'A', strokes_a: '4', strokes_b: '5' },
+      { hole_number: 2, winner: 'halved', strokes_a: '4', strokes_b: '4' },
+      { hole_number: 3, winner: 'B', strokes_a: '6', strokes_b: '4' },
+      { hole_number: 4, winner: 'B', strokes_a: '5', strokes_b: '4' },
+      { hole_number: 5, winner: null, strokes_a: '', strokes_b: '' },
+    ]
+    const r = matchPlayHoleRun(holes)
+    expect(r).toHaveLength(4)
+    expect(r.map(h => h.running)).toEqual(['1 Up', '1 Up', 'AS', '1 Up'])
+    expect(r[3]).toMatchObject({ hole: 4, a: 5, b: 4, winner: 'B', diff: -1 })
+  })
+
+  it('skips unplayed holes and handles empty input', () => {
+    expect(matchPlayHoleRun([{ hole_number: 1, winner: null, strokes_a: '', strokes_b: '' }])).toEqual([])
+    expect(matchPlayHoleRun([])).toEqual([])
   })
 })
 
