@@ -12,7 +12,7 @@ import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus } from '../lib/scoring'
+import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
@@ -72,6 +72,71 @@ function StablefordPill({ a, b }) {
     <div className="flex flex-col items-center gap-0.5 text-[10px] font-black tabular-nums leading-none">
       <span style={{ color: TEAM_A }}>{a ?? '–'}</span>
       <span style={{ color: TEAM_B }}>{b ?? '–'}</span>
+    </div>
+  )
+}
+
+// Loch-für-Loch-Übersicht (wer hat welches Loch geholt) — analog zu Casual,
+// hier in Team-Farben. labelA/labelB sind die kurzen Team-/Spielernamen.
+function firstWord(n) { return (n || '').trim().split(/[ ·]/)[0] }
+
+function HoleByHole({ holes, labelA, labelB }) {
+  const rows = matchPlayHoleRun(holes)
+  if (rows.length === 0) return null
+  const upA = rows.filter(r => r.winner === 'A').length
+  const upB = rows.filter(r => r.winner === 'B').length
+  const halved = rows.filter(r => r.winner === 'halved').length
+
+  return (
+    <div className="mx-3 mt-2 rounded-card bg-surface border border-line overflow-hidden">
+      <div className="px-3 py-2 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Loch für Loch</p>
+        <div className="flex items-center gap-2.5 text-[11px] tabular-nums flex-shrink-0">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: TEAM_A }} />
+            <span className="text-ink font-semibold">{firstWord(labelA) || 'A'} {upA}</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: TEAM_B }} />
+            <span className="text-ink font-semibold">{firstWord(labelB) || 'B'} {upB}</span>
+          </span>
+          <span className="text-inkDim">½ {halved}</span>
+        </div>
+      </div>
+
+      <div className="px-2 pb-2 overflow-x-auto">
+        <div className="flex gap-1.5" style={{ minWidth: 'min-content' }}>
+          {rows.map(r => {
+            const col = r.winner === 'A' ? TEAM_A : r.winner === 'B' ? TEAM_B : null
+            const winnerLabel = r.winner === 'A' ? labelA : r.winner === 'B' ? labelB : null
+            return (
+              <div key={r.hole} className="flex flex-col items-center gap-1 w-11 flex-shrink-0">
+                <span className="text-[10px] text-inkDim tabular-nums">L{r.hole}</span>
+                <div className="w-full rounded-lg bg-bg border border-lineSoft py-1 flex flex-col items-center gap-0.5">
+                  <span className="text-[12px] font-bold tabular-nums leading-none"
+                    style={{ color: r.winner === 'A' ? TEAM_A : '#8a857c' }}>{r.a ?? '–'}</span>
+                  <span className="w-3.5 h-px bg-lineSoft" />
+                  <span className="text-[12px] font-bold tabular-nums leading-none"
+                    style={{ color: r.winner === 'B' ? TEAM_B : '#8a857c' }}>{r.b ?? '–'}</span>
+                </div>
+                {col ? (
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-brandDark"
+                    style={{ background: col }} title={`${winnerLabel} +1`}>
+                    {(firstWord(winnerLabel)[0] || '•').toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-warn flex items-center justify-center text-[12px] font-black text-brandDark"
+                    title="geteilt">½</span>
+                )}
+                <span className="text-[9px] font-bold tabular-nums leading-none"
+                  style={{ color: r.diff === 0 ? '#8a857c' : r.diff > 0 ? TEAM_A : TEAM_B }}>
+                  {r.diff === 0 ? 'AS' : `${Math.abs(r.diff)}↑`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
@@ -672,6 +737,9 @@ export default function MatchDetailScreen() {
           </div>
         )
       )}
+
+      {/* ── Loch-für-Loch: wer hat welches Loch geholt ── */}
+      {mpStatus && <HoleByHole holes={holes} labelA={nameA || tA} labelB={nameB || tB} />}
 
       {/* ── team names ── */}
       <div className="grid mx-3 my-3 rounded-card overflow-hidden bg-surface border border-line"

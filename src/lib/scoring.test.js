@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -132,6 +132,27 @@ describe('casualHoleResults', () => {
 
   it('returns empty when not exactly two players', () => {
     expect(casualHoleResults([{ idx: 1 }], [])).toEqual([])
+  })
+})
+
+describe('matchPlayHoleRun', () => {
+  it('builds running standing from precomputed winners', () => {
+    const holes = [
+      { hole_number: 1, winner: 'A', strokes_a: '4', strokes_b: '5' },
+      { hole_number: 2, winner: 'halved', strokes_a: '4', strokes_b: '4' },
+      { hole_number: 3, winner: 'B', strokes_a: '6', strokes_b: '4' },
+      { hole_number: 4, winner: 'B', strokes_a: '5', strokes_b: '4' },
+      { hole_number: 5, winner: null, strokes_a: '', strokes_b: '' },
+    ]
+    const r = matchPlayHoleRun(holes)
+    expect(r).toHaveLength(4)
+    expect(r.map(h => h.running)).toEqual(['1 Up', '1 Up', 'AS', '1 Up'])
+    expect(r[3]).toMatchObject({ hole: 4, a: 5, b: 4, winner: 'B', diff: -1 })
+  })
+
+  it('skips unplayed holes and handles empty input', () => {
+    expect(matchPlayHoleRun([{ hole_number: 1, winner: null, strokes_a: '', strokes_b: '' }])).toEqual([])
+    expect(matchPlayHoleRun([])).toEqual([])
   })
 })
 

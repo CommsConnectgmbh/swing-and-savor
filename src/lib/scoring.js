@@ -176,6 +176,30 @@ export function casualHoleResults(playersList, scores) {
   return out
 }
 
+// Loch-für-Loch-Verlauf aus bereits bestimmten Loch-Siegern (Turnier-Match-Play).
+// holes = [{ hole_number, winner: 'A'|'B'|'halved'|null, strokes_a, strokes_b }].
+// Liefert nur gewertete Löcher mit laufendem Stand — Pendant zu casualHoleResults,
+// nur dass der Sieger hier schon feststeht (Team A vs Team B).
+export function matchPlayHoleRun(holes) {
+  const toInt = (v) => (v === '' || v == null ? null : (Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : null))
+  const out = []
+  let diff = 0 // + = Team A führt, − = Team B führt
+  for (const h of (holes || [])) {
+    if (h.winner !== 'A' && h.winner !== 'B' && h.winner !== 'halved') continue
+    if (h.winner === 'A') diff++
+    else if (h.winner === 'B') diff--
+    out.push({
+      hole: h.hole_number,
+      a: toInt(h.strokes_a),
+      b: toInt(h.strokes_b),
+      winner: h.winner,
+      diff,
+      running: diff === 0 ? 'AS' : `${Math.abs(diff)} Up`,
+    })
+  }
+  return out
+}
+
 export function calcStablefordTotals(holes) {
   let a = 0, b = 0
   for (const h of (holes || [])) {
