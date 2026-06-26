@@ -1064,20 +1064,30 @@ export default function CasualScreen() {
         )
       })()}
 
-      {active?.course_name && (
-        <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted flex items-center gap-2 flex-wrap">
-          <span>{active.course_name}</span>
-          {active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0) && (
-            <span>· Par {active.hole_pars.reduce((s, p) => s + (p || 0), 0)}</span>
-          )}
-          {isOwner && (
-            <button onClick={() => setShowSetupSheet(true)}
-              className="ml-auto text-[10px] font-bold tracking-wider uppercase text-accent active:scale-95">
-              Loch-Setup
-            </button>
-          )}
-        </p>
-      )}
+      {active && (active.course_name || isOwner) && (() => {
+        // Owner kann das Loch-Setup immer öffnen — auch ohne gewählten Platz.
+        // Sonst stünde überall das Standard-Par (4) und ließe sich nie anpassen.
+        const parsSet = active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0)
+        const totalPar = parsSet ? active.hole_pars.reduce((s, p) => s + (p || 0), 0) : 0
+        const isDefaultSetup =
+          active.hole_pars?.length === 18 && active.hole_pars.every(p => p === 4) &&
+          active.hole_handicaps?.length === 18 && active.hole_handicaps.every((h, i) => h === i + 1)
+        return (
+          <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted flex items-center gap-2 flex-wrap">
+            <span className={active.course_name ? '' : 'text-inkDim'}>
+              {active.course_name || 'Ohne Platz'}
+            </span>
+            {totalPar > 0 && <span>· Par {totalPar}</span>}
+            {isOwner && isDefaultSetup && <span className="text-inkDim">· Standard</span>}
+            {isOwner && (
+              <button onClick={() => setShowSetupSheet(true)}
+                className="ml-auto text-[10px] font-bold tracking-wider uppercase text-accent active:scale-95">
+                {isDefaultSetup ? 'Par eintragen' : 'Loch-Setup'}
+              </button>
+            )}
+          </p>
+        )
+      })()}
 
       {active && players.length > 0 && (() => {
         const hasPars = active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0)
