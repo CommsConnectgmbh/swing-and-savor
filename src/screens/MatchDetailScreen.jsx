@@ -12,7 +12,7 @@ import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { calcStablefordTotals, stablefordPoints } from '../lib/scoring'
+import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
@@ -532,6 +532,12 @@ export default function MatchDetailScreen() {
   }
 
   const played     = holes.filter(h => h.winner !== null)
+  // Lochspiel-Live-Stand (wer führt, um wie viel, Dormie/entschieden) — nur für
+  // Match Play sinnvoll, bei Stableford zählen Punkte statt Loch-Vorsprung.
+  const mpStatus   = !isStableford ? calcMatchPlayStatus(holes) : null
+  const mpLeaderName = mpStatus
+    ? (mpStatus.leader === 'A' ? (nameA || tA) : mpStatus.leader === 'B' ? (nameB || tB) : null)
+    : null
   const totalPar   = holes.reduce((s, h) => s + h.par, 0)
   const playedPar  = played.reduce((s, h) => s + h.par, 0)
   const totA       = holes.reduce((s, h) => s + (parseInt(h.strokes_a) || 0), 0)
@@ -618,6 +624,54 @@ export default function MatchDetailScreen() {
           : <div className="w-12 flex-shrink-0" />
         }
       </div>
+
+      {/* ── Lochspiel-Live-Stand: wer führt, um wie viele Löcher ── */}
+      {mpStatus && (
+        mpStatus.holesPlayed === 0 ? (
+          <div className="mx-3 mt-3 rounded-card bg-surface border border-line px-4 py-3 text-center">
+            <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-inkMuted">
+              Lochspiel · noch kein Loch gespielt
+            </span>
+          </div>
+        ) : (
+          <div
+            className="mx-3 mt-3 rounded-card border px-4 py-3"
+            style={{
+              background: mpStatus.leader === 'A' ? 'rgba(155,181,201,0.12)'
+                : mpStatus.leader === 'B' ? 'rgba(217,163,142,0.12)'
+                : 'rgba(255,255,255,0.03)',
+              borderColor: mpStatus.leader === 'A' ? 'rgba(155,181,201,0.45)'
+                : mpStatus.leader === 'B' ? 'rgba(217,163,142,0.45)'
+                : 'rgba(255,255,255,0.12)',
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted mb-0.5">
+                  {done ? 'Endstand' : 'Lochspiel · Live'}
+                </p>
+                <p className="font-condensed font-black text-xl leading-tight text-ink truncate">
+                  {mpStatus.leader === 'none' ? 'Gleichstand' : `${mpLeaderName} führt`}
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p
+                  className="font-condensed font-black text-2xl leading-none tabular-nums"
+                  style={{ color: mpStatus.leader === 'A' ? TEAM_A : mpStatus.leader === 'B' ? TEAM_B : '#9ca3af' }}
+                >
+                  {mpStatus.leader === 'none' ? 'AS' : `${mpStatus.holesUp} auf`}
+                </p>
+                <p className="text-[10px] font-semibold text-inkDim mt-0.5">
+                  {done ? 'beendet'
+                    : mpStatus.decided ? 'entschieden'
+                    : mpStatus.dormie ? 'Dormie'
+                    : `noch ${mpStatus.remaining} ${mpStatus.remaining === 1 ? 'Loch' : 'Löcher'}`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
       {/* ── team names ── */}
       <div className="grid mx-3 my-3 rounded-card overflow-hidden bg-surface border border-line"

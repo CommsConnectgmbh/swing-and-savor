@@ -17,6 +17,21 @@ export function calcMatchStanding(holeResults) {
   return { holesUp, leader, label, holesPlayed: holeResults.length }
 }
 
+// Live-Lochspiel-Status für die Match-Detailansicht. Anders als calcMatchStanding
+// (nur Stand) liefert dies zusätzlich die noch offenen Löcher und ob das Match
+// damit bereits "dormie" (Vorsprung = Rest) oder entschieden (Vorsprung > Rest)
+// ist — genau das, was man braucht, um auf einen Blick zu sehen, wer führt.
+// holes = UI-Holes mit .winner ('A' | 'B' | 'halved' | null), totalHoles default 18.
+export function calcMatchPlayStatus(holes, totalHoles = 18) {
+  const played = (holes || []).filter((h) => h && h.winner !== null)
+  const { holesUp, leader } = calcMatchStanding(played)
+  const holesPlayed = played.length
+  const remaining = Math.max(0, totalHoles - holesPlayed)
+  const decided = leader !== 'none' && holesUp > remaining
+  const dormie = leader !== 'none' && !decided && holesUp === remaining && remaining > 0
+  return { leader, holesUp, holesPlayed, remaining, decided, dormie }
+}
+
 // Punktefaktoren pro Team. Default 1.0. Bei Flight-Matches mit asymmetrischer
 // Spielerzahl gleicht der Faktor die personelle Überzahl aus (z.B. 4v3 → 3er-Team
 // Faktor 1.0, 4er-Team Faktor 0.75 = 3/4).

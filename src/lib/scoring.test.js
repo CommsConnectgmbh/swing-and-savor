@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -29,6 +29,46 @@ describe('calcMatchStanding', () => {
   it('returns all square when tied', () => {
     const holes = [{ winner: 'A' }, { winner: 'B' }]
     expect(calcMatchStanding(holes)).toEqual({ holesUp: 0, leader: 'none', label: 'ALL SQ', holesPlayed: 2 })
+  })
+})
+
+describe('calcMatchPlayStatus', () => {
+  it('ignores unplayed holes when counting remaining', () => {
+    const holes = [{ winner: 'A' }, { winner: 'halved' }, ...Array(16).fill({ winner: null })]
+    expect(calcMatchPlayStatus(holes)).toEqual({
+      leader: 'A', holesUp: 1, holesPlayed: 2, remaining: 16, decided: false, dormie: false,
+    })
+  })
+
+  it('reports all square with no leader', () => {
+    const holes = [{ winner: 'A' }, { winner: 'B' }, ...Array(16).fill({ winner: null })]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'none', holesUp: 0, decided: false, dormie: false })
+  })
+
+  it('flags dormie when lead equals holes remaining', () => {
+    // B leads by 2 after 16 holes → 2 remaining → dormie, not yet decided
+    const holes = [
+      ...Array(2).fill({ winner: 'B' }),
+      ...Array(14).fill({ winner: 'halved' }),
+      ...Array(2).fill({ winner: null }),
+    ]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'B', holesUp: 2, remaining: 2, dormie: true, decided: false })
+  })
+
+  it('flags decided when lead exceeds holes remaining', () => {
+    // A leads by 3 after 16 holes → 2 remaining → mathematically decided (3&2)
+    const holes = [
+      ...Array(3).fill({ winner: 'A' }),
+      ...Array(13).fill({ winner: 'halved' }),
+      ...Array(2).fill({ winner: null }),
+    ]
+    expect(calcMatchPlayStatus(holes)).toMatchObject({ leader: 'A', holesUp: 3, remaining: 2, decided: true, dormie: false })
+  })
+
+  it('handles empty input', () => {
+    expect(calcMatchPlayStatus([])).toEqual({
+      leader: 'none', holesUp: 0, holesPlayed: 0, remaining: 18, decided: false, dormie: false,
+    })
   })
 })
 
