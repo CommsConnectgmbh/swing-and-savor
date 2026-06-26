@@ -146,6 +146,36 @@ export function casualGrossStanding(playersList, scores) {
   return { a, b, ...calcCasualMatchStanding(byHole, zero, zero) }
 }
 
+// Loch-für-Loch-Verlauf einer 2-Spieler-Casual-Runde (Brutto). Liefert für jedes
+// gespielte Loch wer gewonnen hat und den laufenden Lochspiel-Stand danach —
+// Grundlage für eine "wer hat welches Loch geholt"-Übersicht.
+// Rückgabe: [{ hole, a, b, winner: 'A'|'B'|'halved', diff, running }] nur für
+// Löcher, auf denen beide einen Score haben. diff = A-Vorsprung (negativ = B),
+// running = Label wie "2 Up" / "AS" aus Sicht nach diesem Loch.
+export function casualHoleResults(playersList, scores) {
+  if (!Array.isArray(playersList) || playersList.length !== 2) return []
+  const [a, b] = playersList
+  const byHole = {}
+  for (const s of (scores || [])) {
+    if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
+    byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+  }
+  const out = []
+  let diff = 0 // + = A führt, − = B führt
+  for (let h = 1; h <= 18; h++) {
+    const s = byHole[h]
+    const aS = Number.isFinite(s?.a) ? s.a : null
+    const bS = Number.isFinite(s?.b) ? s.b : null
+    if (aS === null || bS === null) continue
+    const winner = aS < bS ? 'A' : bS < aS ? 'B' : 'halved'
+    if (winner === 'A') diff++
+    else if (winner === 'B') diff--
+    const running = diff === 0 ? 'AS' : `${Math.abs(diff)} Up`
+    out.push({ hole: h, a: aS, b: bS, winner, diff, running })
+  }
+  return out
+}
+
 export function calcStablefordTotals(holes) {
   let a = 0, b = 0
   for (const h of (holes || [])) {

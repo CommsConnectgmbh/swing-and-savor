@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding } from '../lib/scoring'
+import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -583,6 +583,73 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
   )
 }
 
+// ─── Loch-für-Loch-Verlauf (wer hat welches Loch geholt) ───────────────────
+const CAS_A = '#9BB5C9' // Spieler 1 (blau)
+const CAS_B = '#D9A38E' // Spieler 2 (orange)
+function firstName(n) { return (n || '').trim().split(' ')[0] }
+
+function HoleByHole({ playersList, scores }) {
+  const a = playersList[0], b = playersList[1]
+  const rows = casualHoleResults(playersList, scores)
+  if (rows.length === 0) return null
+  const upA = rows.filter(r => r.winner === 'A').length
+  const upB = rows.filter(r => r.winner === 'B').length
+  const halved = rows.filter(r => r.winner === 'halved').length
+
+  return (
+    <div className="rounded-card bg-surface border border-line overflow-hidden mb-3">
+      <div className="px-3 py-2 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">Loch für Loch</p>
+        <div className="flex items-center gap-2.5 text-[11px] tabular-nums flex-shrink-0">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: CAS_A }} />
+            <span className="text-ink font-semibold">{firstName(a.display_name)} {upA}</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: CAS_B }} />
+            <span className="text-ink font-semibold">{firstName(b.display_name)} {upB}</span>
+          </span>
+          <span className="text-inkDim">½ {halved}</span>
+        </div>
+      </div>
+
+      <div className="px-2 pb-2 overflow-x-auto">
+        <div className="flex gap-1.5" style={{ minWidth: 'min-content' }}>
+          {rows.map(r => {
+            const col = r.winner === 'A' ? CAS_A : r.winner === 'B' ? CAS_B : null
+            const winnerName = r.winner === 'A' ? a.display_name : r.winner === 'B' ? b.display_name : null
+            return (
+              <div key={r.hole} className="flex flex-col items-center gap-1 w-11 flex-shrink-0">
+                <span className="text-[10px] text-inkDim tabular-nums">L{r.hole}</span>
+                <div className="w-full rounded-lg bg-bg border border-lineSoft py-1 flex flex-col items-center gap-0.5">
+                  <span className="text-[12px] font-bold tabular-nums leading-none"
+                    style={{ color: r.winner === 'A' ? CAS_A : '#8a857c' }}>{r.a}</span>
+                  <span className="w-3.5 h-px bg-lineSoft" />
+                  <span className="text-[12px] font-bold tabular-nums leading-none"
+                    style={{ color: r.winner === 'B' ? CAS_B : '#8a857c' }}>{r.b}</span>
+                </div>
+                {col ? (
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-brandDark"
+                    style={{ background: col }} title={`${winnerName} +1`}>
+                    {firstName(winnerName).slice(0, 1).toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-warn flex items-center justify-center text-[12px] font-black text-brandDark"
+                    title="geteilt">½</span>
+                )}
+                <span className="text-[9px] font-bold tabular-nums leading-none"
+                  style={{ color: r.diff === 0 ? '#8a857c' : r.diff > 0 ? CAS_A : CAS_B }}>
+                  {r.diff === 0 ? 'AS' : `${Math.abs(r.diff)}↑`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Screen ────────────────────────────────────────────────────────────
 export default function CasualScreen() {
   const navigate = useNavigate()
@@ -1102,6 +1169,7 @@ export default function CasualScreen() {
       {active && players.length > 0 && (
         <div className="px-4">
           <LiveStanding round={active} playersList={players} scores={scores} />
+          {players.length === 2 && <HoleByHole playersList={players} scores={scores} />}
         </div>
       )}
 

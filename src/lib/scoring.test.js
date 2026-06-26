@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -100,6 +100,38 @@ describe('casualGrossStanding', () => {
   it('returns null when not exactly two players', () => {
     expect(casualGrossStanding([{ idx: 1 }], [])).toBe(null)
     expect(casualGrossStanding([{ idx: 1 }, { idx: 2 }, { idx: 3 }], [])).toBe(null)
+  })
+})
+
+describe('casualHoleResults', () => {
+  const players = [{ idx: 1, display_name: 'Rainer' }, { idx: 2, display_name: 'Oli Hoffmann' }]
+
+  it('returns per-hole winner and running standing on real data', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 3 }, { player_idx: 2, hole_number: 2, strokes: 3 },
+      { player_idx: 1, hole_number: 3, strokes: 4 }, { player_idx: 2, hole_number: 3, strokes: 4 },
+      { player_idx: 1, hole_number: 4, strokes: 6 }, { player_idx: 2, hole_number: 4, strokes: 5 },
+      { player_idx: 1, hole_number: 5, strokes: 4 }, { player_idx: 2, hole_number: 5, strokes: 4 },
+    ]
+    const r = casualHoleResults(players, scores)
+    expect(r.map(h => h.winner)).toEqual(['B', 'halved', 'halved', 'B', 'halved'])
+    expect(r.map(h => h.running)).toEqual(['1 Up', '1 Up', '1 Up', '2 Up', '2 Up'])
+    expect(r[3]).toMatchObject({ hole: 4, a: 6, b: 5, winner: 'B', diff: -2 })
+  })
+
+  it('skips holes only one player scored', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 5 },
+      { player_idx: 1, hole_number: 2, strokes: 4 }, // nur Rainer
+    ]
+    const r = casualHoleResults(players, scores)
+    expect(r).toHaveLength(1)
+    expect(r[0]).toMatchObject({ hole: 1, winner: 'A', running: '1 Up' })
+  })
+
+  it('returns empty when not exactly two players', () => {
+    expect(casualHoleResults([{ idx: 1 }], [])).toEqual([])
   })
 })
 
