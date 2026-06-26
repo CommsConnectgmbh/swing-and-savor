@@ -8,6 +8,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { formatCupDate } from '../lib/format'
+import { buildInviteUrl, buildMatchUrl } from '../lib/links'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
@@ -227,7 +228,7 @@ export default function HomeScreen() {
       alert('Dieser Cup hat noch keinen Invite-Code.')
       return
     }
-    const url  = `https://swingandsavor.at/i/${tournament.invite_code}`
+    const url  = buildInviteUrl(tournament.invite_code)
     const text = `${tournament.name} — schau live mit auf Swing & Savor`
     try {
       if (navigator.share) {
@@ -279,7 +280,7 @@ export default function HomeScreen() {
       await shareOrDownload({
         blob, filename: `swingandsavor-${m.id.slice(0, 8)}.png`,
         title: 'Swing & Savor', text: 'Schau das Match!',
-        url: `https://app.swingandsavor.at/matches/${m.id}`,
+        url: buildMatchUrl(m.id),
       })
     } catch (e) { console.error('[share]', e) }
   }
