@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { strokesPerHole, calcCasualMatchStanding } from '../lib/scoring'
+import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding } from '../lib/scoring'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -1020,6 +1020,44 @@ export default function CasualScreen() {
           </button>
         ) : <div className="w-12" />}
       </div>
+
+      {/* ── Lochspiel-Banner: wer führt, prominent über allem ── */}
+      {active && players.length === 2 && (() => {
+        const st = casualGrossStanding(players, scores)
+        if (!st || st.played === 0) return null
+        const leaderName = st.leader === 'A' ? st.a.display_name
+                         : st.leader === 'B' ? st.b.display_name : null
+        const finished = active.status === 'finished' || st.played === 18
+        return (
+          <div
+            className="mx-4 mb-3 rounded-card border px-4 py-3"
+            style={{
+              borderColor: leaderName ? 'rgba(212,201,168,0.45)' : 'rgba(255,255,255,0.12)',
+              background: leaderName ? 'rgba(212,201,168,0.10)' : 'rgba(255,255,255,0.03)',
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-inkMuted mb-0.5">
+                  {finished ? 'Lochspiel · Endstand' : 'Lochspiel · Live'}
+                </p>
+                <p className="font-condensed font-black text-xl leading-tight text-ink truncate">
+                  {leaderName ? `${leaderName} ${finished ? 'gewinnt' : 'führt'}` : 'Gleichstand'}
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="font-condensed font-black text-2xl leading-none tabular-nums"
+                   style={{ color: leaderName ? '#D9C9A8' : '#9ca3af' }}>
+                  {leaderName ? st.label : 'AS'}
+                </p>
+                <p className="text-[10px] font-semibold text-inkDim mt-0.5">
+                  {st.played}/18{st.remaining > 0 ? ` · ${st.remaining} offen` : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {active?.course_name && (
         <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted flex items-center gap-2 flex-wrap">

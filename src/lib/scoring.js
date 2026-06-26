@@ -130,6 +130,22 @@ export function calcCasualMatchStanding(scoresByHole, strokesA, strokesB) {
   return { upA, upB, halved, played, leader, label, remaining }
 }
 
+// Brutto-Lochspiel-Stand einer Casual-Runde direkt aus Spielerliste + Scores —
+// für einen prominenten "wer führt"-Banner über der Scorecard. Nur bei genau 2
+// Spielern sinnvoll, sonst null. playersList = [{idx, display_name, …}],
+// scores = [{player_idx, hole_number, strokes}].
+export function casualGrossStanding(playersList, scores) {
+  if (!Array.isArray(playersList) || playersList.length !== 2) return null
+  const [a, b] = playersList
+  const byHole = {}
+  for (const s of (scores || [])) {
+    if (!byHole[s.hole_number]) byHole[s.hole_number] = {}
+    byHole[s.hole_number][s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+  }
+  const zero = Array(18).fill(0)
+  return { a, b, ...calcCasualMatchStanding(byHole, zero, zero) }
+}
+
 export function calcStablefordTotals(holes) {
   let a = 0, b = 0
   for (const h of (holes || [])) {

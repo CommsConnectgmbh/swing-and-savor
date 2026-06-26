@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -69,6 +69,37 @@ describe('calcMatchPlayStatus', () => {
     expect(calcMatchPlayStatus([])).toEqual({
       leader: 'none', holesUp: 0, holesPlayed: 0, remaining: 18, decided: false, dormie: false,
     })
+  })
+})
+
+describe('casualGrossStanding', () => {
+  const players = [{ idx: 1, display_name: 'Rainer' }, { idx: 2, display_name: 'Oli Hoffmann' }]
+
+  it('names the leader from real 2-player scores (Oli 2 up after 5)', () => {
+    // Loch1 4:3(Oli), 2 3:3, 3 4:4, 4 6:5(Oli), 5 4:4 → Oli 2 auf
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 3 }, { player_idx: 2, hole_number: 2, strokes: 3 },
+      { player_idx: 1, hole_number: 3, strokes: 4 }, { player_idx: 2, hole_number: 3, strokes: 4 },
+      { player_idx: 1, hole_number: 4, strokes: 6 }, { player_idx: 2, hole_number: 4, strokes: 5 },
+      { player_idx: 1, hole_number: 5, strokes: 4 }, { player_idx: 2, hole_number: 5, strokes: 4 },
+    ]
+    const st = casualGrossStanding(players, scores)
+    expect(st).toMatchObject({ leader: 'B', label: '2 Up', played: 5, remaining: 13 })
+    expect(st.b.display_name).toBe('Oli Hoffmann')
+  })
+
+  it('ignores holes only one player has scored', () => {
+    const scores = [
+      { player_idx: 1, hole_number: 1, strokes: 4 }, { player_idx: 2, hole_number: 1, strokes: 3 },
+      { player_idx: 1, hole_number: 2, strokes: 5 }, // nur Rainer → zählt nicht
+    ]
+    expect(casualGrossStanding(players, scores)).toMatchObject({ leader: 'B', played: 1 })
+  })
+
+  it('returns null when not exactly two players', () => {
+    expect(casualGrossStanding([{ idx: 1 }], [])).toBe(null)
+    expect(casualGrossStanding([{ idx: 1 }, { idx: 2 }, { idx: 3 }], [])).toBe(null)
   })
 })
 
