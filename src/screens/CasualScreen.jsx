@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
+import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
@@ -846,6 +847,67 @@ export default function CasualScreen() {
     if (error) alert('Par speichern fehlgeschlagen: ' + (error.message || 'unbekannt'))
   }
 
+  // Ergebnis-Karte der Runde rendern und ins WhatsApp-/Share-Sheet geben.
+  // Funktioniert für alle Teilnehmer (nicht nur den Owner), sobald gewertet ist.
+  const [sharing, setSharing] = useState(false)
+  async function handleShareCasual() {
+    if (!active || sharing) return
+    const pars = active.hole_pars?.length === 18 ? active.hole_pars : null
+    const hcps = active.hole_handicaps?.length === 18 ? active.hole_handicaps : null
+    const fmt = d => d === 0 ? 'E' : d > 0 ? `+${d}` : `${d}`
+
+    const rows = players.map(p => {
+      const own = scores.filter(s => s.player_idx === p.idx)
+      const total = own.reduce((s, x) => s + x.strokes, 0)
+      const grossDiff = pars
+        ? own.reduce((d, s) => d + (s.strokes - (pars[s.hole_number - 1] || 0)), 0)
+        : null
+      const playerStrokes = strokesPerHole(p.handicap, hcps)
+      const playerAdd = own.reduce((sum, s) => sum + (playerStrokes[s.hole_number - 1] || 0), 0)
+      const netDiff = grossDiff != null ? grossDiff - playerAdd : null
+      const hasHcp = hcps && Number(p.handicap) > 0
+      return { name: p.display_name, total, played: own.length, grossDiff, netDiff, hasHcp }
+    }).filter(r => r.played > 0)
+
+    if (!rows.length) return
+    // Bestes Ergebnis zuerst: nach Netto, sonst Brutto, sonst Gesamt.
+    rows.sort((a, b) => (a.netDiff ?? a.grossDiff ?? a.total) - (b.netDiff ?? b.grossDiff ?? b.total))
+
+    const maxPlayed = Math.max(...rows.map(r => r.played))
+    const finished = active.status === 'finished' || maxPlayed === 18
+    const cardRows = rows.slice(0, 6).map((r, i) => ({
+      name: r.name,
+      total: r.total,
+      sub: r.grossDiff != null
+        ? `Brutto ${fmt(r.grossDiff)}${r.hasHcp && r.netDiff != null ? ` · Netto ${fmt(r.netDiff)}` : ''}`
+        : `${r.played}/18`,
+      winner: i === 0 && (finished || rows.length >= 2),
+    }))
+
+    setSharing(true)
+    try {
+      const { blob } = await renderCasualShareCard({
+        title: active.course_name || 'Casual-Runde',
+        statusLabel: finished ? 'Endstand' : `Live · ${maxPlayed}/18`,
+        rows: cardRows,
+        dateLabel: new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }),
+      })
+      await shareOrDownload({
+        blob,
+        filename: `swingandsavor-casual-${String(active.id).slice(0, 8)}.png`,
+        title: 'Swing & Savor',
+        text: finished
+          ? `${rows[0].name} gewinnt — ${active.course_name || 'Casual-Runde'}`
+          : `Live: ${active.course_name || 'Casual-Runde'}`,
+        url: 'https://swingandsavor.at',
+      })
+    } catch (e) {
+      console.error('[casual] share', e)
+    } finally {
+      setSharing(false)
+    }
+  }
+
   async function saveCourseSetup({ pars, hcps }) {
     if (!active) return
     const { error } = await supabase.from('casual_rounds').update({
@@ -1186,6 +1248,20 @@ export default function CasualScreen() {
           onParChange={changePar}
         />
       </div>
+
+      {active && scores.length > 0 && (
+        <div className="px-4 pb-4">
+          <button onClick={handleShareCasual} disabled={sharing}
+            className="w-full py-3 rounded-xl text-sm font-bold tracking-wide bg-surface text-ink border border-line active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+              <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" /><line x1="15.4" y1="6.5" x2="8.6" y2="10.5" />
+            </svg>
+            {sharing ? 'Erstelle Karte …' : 'Ergebnis teilen'}
+          </button>
+        </div>
+      )}
 
       {isOwner && (
         <div className="px-4 pb-8">

@@ -133,6 +133,102 @@ export async function renderMatchShareCard({
   })
 }
 
+/**
+ * Ergebnis-Karte für eine Casual-Runde (Leaderboard, 1–6 Spieler).
+ * rows = [{ name, total, sub, winner }]. Gleiche Bildsprache wie die Match-Card,
+ * 1080×1080, WhatsApp-/Instagram-tauglich.
+ */
+export async function renderCasualShareCard({ title, statusLabel, rows, dateLabel }) {
+  const SIZE = 1080
+  const canvas = document.createElement('canvas')
+  canvas.width = SIZE; canvas.height = SIZE
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, SIZE, SIZE)
+
+  const grad = ctx.createLinearGradient(0, 0, SIZE, 0)
+  grad.addColorStop(0, 'rgba(217,201,168,0.0)')
+  grad.addColorStop(0.5, 'rgba(217,201,168,0.6)')
+  grad.addColorStop(1, 'rgba(217,201,168,0.0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 60, SIZE, 4)
+
+  // Brand
+  ctx.fillStyle = ACC
+  ctx.textAlign = 'center'
+  ctx.font = '700 32px -apple-system, "Helvetica Neue", Arial'
+  ctx.fillText('SWING & SAVOR', SIZE / 2, 140)
+  ctx.fillStyle = MUTED
+  ctx.font = '500 22px -apple-system, "Helvetica Neue", Arial'
+  ctx.fillText('CASUAL', SIZE / 2, 180)
+
+  // Title (course)
+  ctx.fillStyle = INK
+  ctx.font = '700 46px -apple-system, "Helvetica Neue", Arial'
+  ctx.fillText(trunc(ctx, title || 'Casual-Runde', SIZE - 160), SIZE / 2, 250)
+
+  // Leaderboard card
+  const list = (rows || []).slice(0, 6)
+  const rowH = 104
+  const top = 300
+  const cardH = Math.max(1, list.length) * rowH + 40
+  rounded(ctx, 80, top, SIZE - 160, cardH, 32)
+  ctx.fillStyle = SURF; ctx.fill()
+  ctx.strokeStyle = EDGE; ctx.lineWidth = 2; ctx.stroke()
+
+  list.forEach((r, i) => {
+    const y = top + 20 + i * rowH
+    const cy = y + rowH / 2 - 10
+    if (r.winner) {
+      rounded(ctx, 96, y + 8, SIZE - 192, rowH - 16, 20)
+      ctx.fillStyle = 'rgba(217,201,168,0.10)'; ctx.fill()
+    }
+    // Rank
+    ctx.beginPath(); ctx.arc(160, cy, 30, 0, Math.PI * 2)
+    ctx.fillStyle = r.winner ? ACC : '#0A1A12'; ctx.fill()
+    if (!r.winner) { ctx.strokeStyle = EDGE; ctx.lineWidth = 2; ctx.stroke() }
+    ctx.fillStyle = r.winner ? '#0A1A12' : MUTED
+    ctx.textAlign = 'center'
+    ctx.font = '800 30px -apple-system, "Helvetica Neue", Arial'
+    ctx.fillText(String(i + 1), 160, cy + 11)
+    // Name + sub
+    ctx.textAlign = 'left'
+    ctx.fillStyle = INK
+    ctx.font = '700 40px -apple-system, "Helvetica Neue", Arial'
+    ctx.fillText(trunc(ctx, r.name || '—', 540), 220, cy - 2)
+    if (r.sub) {
+      ctx.fillStyle = MUTED
+      ctx.font = '500 24px -apple-system, "Helvetica Neue", Arial'
+      ctx.fillText(trunc(ctx, r.sub, 560), 220, cy + 34)
+    }
+    // Total
+    ctx.textAlign = 'right'
+    ctx.fillStyle = r.winner ? ACC : INK
+    ctx.font = '900 60px -apple-system, "Helvetica Neue", Arial'
+    ctx.fillText(r.total != null && r.total > 0 ? String(r.total) : '—', SIZE - 130, cy + 16)
+  })
+
+  // Status + date
+  ctx.textAlign = 'center'
+  ctx.fillStyle = MUTED
+  ctx.font = '600 24px -apple-system, "Helvetica Neue", Arial'
+  const footMeta = [String(statusLabel || '').toUpperCase(), dateLabel].filter(Boolean).join('  ·  ')
+  ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, top + cardH + 70)
+
+  // Footer URL
+  ctx.fillStyle = ACC
+  ctx.font = '700 26px -apple-system, "Helvetica Neue", Arial'
+  ctx.fillText('swingandsavor.at', SIZE / 2, 1000)
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 1016, SIZE, 4)
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve({ blob, dataUrl: canvas.toDataURL('image/png') })
+    }, 'image/png', 0.95)
+  })
+}
+
 /** Versucht Web-Share-API mit File, fällt zurück auf Download. */
 export async function shareOrDownload({ blob, filename, title, text, url }) {
   const file = new File([blob], filename, { type: 'image/png' })
