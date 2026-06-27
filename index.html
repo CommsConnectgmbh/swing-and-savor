@@ -5,8 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Swing &amp; Savor</title>
 
-    <meta name="theme-color" content="#0A1A12" />
+    <meta name="theme-color" content="#EFEBE1" />
     <meta name="description" content="Swing &amp; Savor — The Premium Golf Lifestyle Club. Founder Invitationals, Cups, Hall of Fame." />
+
+    <!-- Farb-Theme vor dem ersten Paint setzen (verhindert Aufblitzen).
+         Standard ist hell; eine gespeicherte Wahl gewinnt. Muss mit
+         src/lib/theme.js übereinstimmen. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('sw_theme');
+          if (t !== 'dark' && t !== 'light') t = 'light';
+          var r = document.documentElement;
+          r.setAttribute('data-theme', t);
+          r.style.colorScheme = t;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'dark' ? '#0A1A12' : '#EFEBE1');
+        } catch (e) {}
+      })();
+    </script>
 
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />

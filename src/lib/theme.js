@@ -8,7 +8,11 @@
 
 const STORAGE_KEY = 'sw_theme'
 export const THEMES = ['dark', 'light']
-const DEFAULT_THEME = 'dark'
+// App startet hell; Dunkel ist optional über den Umschalter im Profil.
+const DEFAULT_THEME = 'light'
+
+// Browser-Chrome (Statusleiste) passend einfärben.
+const THEME_COLOR = { dark: '#0A1A12', light: '#EFEBE1' }
 
 export function getStoredTheme() {
   try {
@@ -27,6 +31,8 @@ export function applyTheme(theme) {
   root.setAttribute('data-theme', next)
   // Lets the browser paint native UI (form controls, scrollbars) to match.
   root.style.colorScheme = next
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', THEME_COLOR[next])
   try { localStorage.setItem(STORAGE_KEY, next) } catch {}
   return next
 }
