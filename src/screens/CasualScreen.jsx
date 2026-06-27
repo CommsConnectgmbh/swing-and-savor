@@ -893,14 +893,17 @@ export default function CasualScreen() {
         const net = showNet
           ? calcCasualMatchStanding(byHole, strokesPerHole(a.handicap, hcps), strokesPerHole(b.handicap, hcps))
           : null
+        // Lead als Löcher-Vorsprung ("N Up") — wie im Live-Banner, statt der
+        // "3&2"-Schreibweise.
+        const upLabel = st => st.leader === 'AS' ? 'AS' : `${Math.abs(st.upA - st.upB)} Up`
         let sub = `${first(a.display_name)} ${gross.upA} · ${first(b.display_name)} ${gross.upB} · ½ ${gross.halved}`
-        if (net && (net.leader !== gross.leader || net.label !== gross.label)) {
+        if (net && (net.leader !== gross.leader || upLabel(net) !== upLabel(gross))) {
           const netName = net.leader === 'A' ? first(a.display_name) : net.leader === 'B' ? first(b.display_name) : 'All Square'
-          sub += `   ·   Netto: ${net.leader === 'AS' ? 'All Square' : `${netName} ${net.label}`}`
+          sub += `   ·   Netto: ${net.leader === 'AS' ? 'All Square' : `${netName} ${upLabel(net)}`}`
         }
         matchResult = {
           text: winner ? `${first(winner.display_name)} ${finished ? 'gewinnt' : 'führt'}` : 'All Square',
-          label: gross.leader === 'AS' ? 'AS' : gross.label,
+          label: upLabel(gross),
           sub,
         }
       }
