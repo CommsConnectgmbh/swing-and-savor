@@ -16,11 +16,68 @@
   --champagne-deep: #A8956A;
   --course-green:   #5C9A6E;
   --hairline:       rgba(244,241,234,0.08);
+
+  /* ── Theme palette (dark, default) ──────────────────────────────────────
+     RGB channel triples so Tailwind `/<alpha>` opacity utilities keep working.
+     Tokens in tailwind.config.js resolve to these (e.g. bg → rgb(var(--c-bg))).
+     The light palette below overrides them under html[data-theme="light"]. */
+  --c-bg:        10 26 18;
+  --c-surface:   16 40 34;
+  --c-surface2:  22 51 43;
+  --c-line:      31 69 55;
+  --c-lineSoft:  21 48 42;
+  --c-ink:       244 241 234;
+  --c-inkMuted:  156 175 164;
+  --c-inkDim:    92 112 104;
+  --c-accent:    217 201 168;
+  --c-accentDeep:168 149 106;
+  --c-course:    92 154 110;
+  --c-danger:    224 123 91;
+  --c-warn:      217 178 106;
+  --c-teamA:     155 181 201;
+  --c-teamB:     217 163 142;
+
+  /* Floating glass bottom-nav (BottomNav.jsx binds to these). */
+  --nav-surface: rgba(10, 26, 18, 0.72);
+  --nav-border:  rgba(244, 241, 234, 0.10);
+  --nav-ink:     #9CAFA4;
+
+  /* Base page colours (used by html/body below). */
+  --page-bg:   rgb(var(--c-bg));
+  --page-ink:  rgb(var(--c-ink));
+
+  color-scheme: dark;
+}
+
+/* ── Light bone palette ─────────────────────────────────────────────────────
+   Warm bone backgrounds, deep forest ink, deeper champagne-gold accent so that
+   `text-accent` stays readable on light surfaces. Semantic/team colours inherit
+   the dark values (they read on both and double as winner-cell fills). */
+html[data-theme="light"] {
+  --c-bg:        239 235 225;  /* #EFEBE1 warm bone */
+  --c-surface:   248 245 238;  /* #F8F5EE */
+  --c-surface2:  255 255 255;  /* raised white */
+  --c-line:      221 213 197;  /* #DDD5C5 hairline */
+  --c-lineSoft:  232 226 213;  /* #E8E2D5 */
+  --c-ink:       16 35 26;     /* #10231A near-forest text */
+  --c-inkMuted:  86 100 90;    /* #56645A */
+  --c-inkDim:    128 135 126;  /* #80877E */
+  --c-accent:    143 113 52;   /* #8F7134 deep champagne gold */
+  --c-accentDeep:108 84 37;    /* #6C5425 */
+  --c-course:    43 122 76;    /* #2B7A4C readable green */
+  --c-danger:    192 74 44;    /* #C04A2C */
+  --c-warn:      163 122 46;   /* #A37A2E */
+
+  --nav-surface: rgba(255, 255, 255, 0.82);
+  --nav-border:  rgba(10, 26, 18, 0.08);
+  --nav-ink:     #56645A;
+
+  color-scheme: light;
 }
 
 html, body {
-  background-color: #0A1A12;
-  color: #F4F1EA;
+  background-color: var(--page-bg);
+  color: var(--page-ink);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -82,7 +139,7 @@ body.sheet-open nav[aria-label-bottomnav], body.sheet-open .bottom-nav { display
 
 ::-webkit-scrollbar { width: 2px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1F4537; }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-line)); }
 
 input:focus, select:focus, textarea:focus {
   outline: none;

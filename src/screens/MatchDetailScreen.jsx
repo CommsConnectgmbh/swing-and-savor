@@ -860,9 +860,9 @@ export default function MatchDetailScreen() {
                 className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
                 style={{
                   background: played && h.winner === 'A' ? 'rgba(155,181,201,0.18)'
-                    : played ? '#102822' : '#16332B',
+                    : played ? 'rgb(var(--c-surface))' : 'rgb(var(--c-surface2))',
                   color: played && h.winner === 'A' ? TEAM_A
-                    : played ? '#5C5851' : '#ffffff',
+                    : played ? 'rgb(var(--c-inkDim))' : 'rgb(var(--c-ink))',
                   border: played && h.winner === 'A'
                     ? '1.5px solid rgba(155,181,201,0.45)'
                     : '1.5px solid transparent',
@@ -881,9 +881,9 @@ export default function MatchDetailScreen() {
                 className="w-full h-14 text-center font-condensed font-black text-2xl rounded-2xl tabular-nums transition-all disabled:opacity-50"
                 style={{
                   background: played && h.winner === 'B' ? 'rgba(217,163,142,0.18)'
-                    : played ? '#102822' : '#16332B',
+                    : played ? 'rgb(var(--c-surface))' : 'rgb(var(--c-surface2))',
                   color: played && h.winner === 'B' ? TEAM_B
-                    : played ? '#5C5851' : '#ffffff',
+                    : played ? 'rgb(var(--c-inkDim))' : 'rgb(var(--c-ink))',
                   border: played && h.winner === 'B'
                     ? '1.5px solid rgba(217,163,142,0.45)'
                     : '1.5px solid transparent',
@@ -932,7 +932,7 @@ export default function MatchDetailScreen() {
             <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totA || '—'}</p>
             {dA !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
-                style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#D9C9A8' : '#5C5851' }}>
+                style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#D9C9A8' : 'rgb(var(--c-inkDim))' }}>
                 {fmtDelta(dA)}
               </p>
             )}
@@ -942,7 +942,7 @@ export default function MatchDetailScreen() {
             <p className="font-condensed font-black text-2xl leading-none text-ink tabular-nums">{totB || '—'}</p>
             {dB !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
-                style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#D9C9A8' : '#5C5851' }}>
+                style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#D9C9A8' : 'rgb(var(--c-inkDim))' }}>
                 {fmtDelta(dB)}
               </p>
             )}

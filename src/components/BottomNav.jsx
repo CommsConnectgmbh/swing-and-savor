@@ -107,12 +107,13 @@ export default function BottomNav() {
         aria-label="Hauptnavigation"
         className={`ccnav ccnav--edge bottom-nav${hidden ? ' ccnav--hidden' : ''}`}
         style={{
-          // Forest-tinted dark glass + champagne accent.
-          '--ccnav-surface': 'rgba(10,26,18,0.72)',
-          '--ccnav-border': 'rgba(244,241,234,0.10)',
+          // Glass + champagne accent. Surface/border/ink follow the app theme
+          // (see --nav-* in index.css); the champagne FAB stays in both.
+          '--ccnav-surface': 'var(--nav-surface)',
+          '--ccnav-border': 'var(--nav-border)',
           '--ccnav-accent': '#D9C9A8',
           '--ccnav-accent-ink': '#0A1A12',
-          '--ccnav-ink': '#9CAFA4',
+          '--ccnav-ink': 'var(--nav-ink)',
         }}
       >
         <div className="ccnav__row">

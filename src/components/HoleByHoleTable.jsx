@@ -3,12 +3,25 @@
 // hinterlegt; eine Stand-Zeile zeigt den laufenden Vorsprung. Erste Spalte bleibt
 // beim horizontalen Scrollen stehen. Wird von Casual- und Turnier-Match genutzt.
 // rows = [{ hole, a, b, winner: 'A'|'B'|'halved', diff }] (nur gewertete Löcher).
+//
+// totalHoles (optional): zeigt die volle Runde (z.B. 18) auf einen Blick —
+// noch nicht gespielte Löcher erscheinen als Platzhalter. Ohne den Prop bleibt
+// es beim alten Verhalten (nur gespielte Löcher).
 
 const WIN_TEXT = '#102822' // dunkle Schrift auf farbiger Gewinner-Zelle
 
 function firstWord(n) { return (n || '').trim().split(/[ ·]/)[0] }
 
-function PlayerRow({ rows, name, side, color }) {
+// Spalten-Löcher bestimmen: volle Runde (1..totalHoles) oder nur gespielte.
+function buildColumns(rows, totalHoles) {
+  const byHole = new Map(rows.map(r => [r.hole, r]))
+  const holes = totalHoles && totalHoles > 0
+    ? Array.from({ length: totalHoles }, (_, i) => i + 1)
+    : rows.map(r => r.hole)
+  return holes.map(h => ({ hole: h, row: byHole.get(h) || null }))
+}
+
+function PlayerRow({ cols, name, side, color }) {
   return (
     <tr>
       <td className="sticky left-0 z-10 bg-surface px-3 py-1.5 text-left text-[12px] font-semibold text-ink truncate"
@@ -18,15 +31,17 @@ function PlayerRow({ rows, name, side, color }) {
           {name}
         </span>
       </td>
-      {rows.map(r => {
-        const won = r.winner === side
-        const strokes = side === 'A' ? r.a : r.b
+      {cols.map(({ hole, row }) => {
+        const won = row && row.winner === side
+        const strokes = row ? (side === 'A' ? row.a : row.b) : null
         return (
-          <td key={r.hole} className="px-0.5 py-1.5 text-center" style={{ minWidth: 38 }}>
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[14px] font-bold tabular-nums"
-              style={won
-                ? { background: color, color: WIN_TEXT }
-                : { color: '#8a857c' }}>
+          <td key={hole} className="px-0.5 py-1.5 text-center" style={{ minWidth: 38 }}>
+            <span
+              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-[14px] font-bold tabular-nums ${
+                won ? '' : row ? 'text-inkMuted' : 'text-inkDim'
+              }`}
+              style={won ? { background: color, color: WIN_TEXT } : undefined}
+            >
               {strokes ?? '–'}
             </span>
           </td>
@@ -36,8 +51,9 @@ function PlayerRow({ rows, name, side, color }) {
   )
 }
 
-export default function HoleByHoleTable({ rows, labelA, labelB, colorA, colorB }) {
+export default function HoleByHoleTable({ rows, labelA, labelB, colorA, colorB, totalHoles }) {
   if (!rows || rows.length === 0) return null
+  const cols = buildColumns(rows, totalHoles)
   const upA = rows.filter(r => r.winner === 'A').length
   const upB = rows.filter(r => r.winner === 'B').length
   const halved = rows.filter(r => r.winner === 'halved').length
@@ -64,27 +80,32 @@ export default function HoleByHoleTable({ rows, labelA, labelB, colorA, colorB }
               <td className="sticky left-0 z-10 bg-surface px-3 py-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-inkDim">
                 Loch
               </td>
-              {rows.map(r => (
-                <td key={r.hole} className="px-0.5 py-1.5 text-center text-[11px] text-inkDim tabular-nums" style={{ minWidth: 38 }}>
-                  {r.hole}
+              {cols.map(({ hole }) => (
+                <td key={hole} className="px-0.5 py-1.5 text-center text-[11px] text-inkDim tabular-nums" style={{ minWidth: 38 }}>
+                  {hole}
                 </td>
               ))}
             </tr>
 
             {/* je eine Zeile pro Spieler */}
-            <PlayerRow rows={rows} name={nameA} side="A" color={colorA} />
-            <PlayerRow rows={rows} name={nameB} side="B" color={colorB} />
+            <PlayerRow cols={cols} name={nameA} side="A" color={colorA} />
+            <PlayerRow cols={cols} name={nameB} side="B" color={colorB} />
 
             {/* laufender Stand */}
             <tr>
               <td className="sticky left-0 z-10 bg-surface px-3 py-1.5 text-left text-[10px] font-bold uppercase tracking-wider text-inkDim">
                 Stand
               </td>
-              {rows.map(r => (
-                <td key={r.hole} className="px-0.5 py-1.5 text-center text-[10px] font-bold tabular-nums" style={{ minWidth: 38 }}>
-                  <span style={{ color: r.diff === 0 ? '#8a857c' : r.diff > 0 ? colorA : colorB }}>
-                    {r.diff === 0 ? 'AS' : `${Math.abs(r.diff)}↑`}
-                  </span>
+              {cols.map(({ hole, row }) => (
+                <td key={hole} className="px-0.5 py-1.5 text-center text-[10px] font-bold tabular-nums" style={{ minWidth: 38 }}>
+                  {row ? (
+                    <span style={{ color: row.diff === 0 ? undefined : row.diff > 0 ? colorA : colorB }}
+                      className={row.diff === 0 ? 'text-inkMuted' : ''}>
+                      {row.diff === 0 ? 'AS' : `${Math.abs(row.diff)}↑`}
+                    </span>
+                  ) : (
+                    <span className="text-inkDim">·</span>
+                  )}
                 </td>
               ))}
             </tr>

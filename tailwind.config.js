@@ -12,43 +12,52 @@ export default {
         condensed: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
+        // Colours are driven by CSS variables (see index.css) so the whole app
+        // can flip between the dark forest palette and a light bone palette via
+        // `html[data-theme="light"]`. Channel-triple form keeps Tailwind's
+        // `/<alpha>` opacity utilities (e.g. `bg-accent/12`) working.
+
         // ---- Forest Green base (Premium Golf Club) ----
-        bg:        '#0A1A12',  // deepest forest, almost black with green hue
-        surface:   '#102822',  // moss-on-shadow
-        surface2:  '#16332B',  // raised surface
-        line:      '#1F4537',  // hairline border tint
-        lineSoft:  '#15302A',
+        bg:        'rgb(var(--c-bg) / <alpha-value>)',        // deepest forest
+        surface:   'rgb(var(--c-surface) / <alpha-value>)',   // moss-on-shadow
+        surface2:  'rgb(var(--c-surface2) / <alpha-value>)',  // raised surface
+        line:      'rgb(var(--c-line) / <alpha-value>)',      // hairline border tint
+        lineSoft:  'rgb(var(--c-lineSoft) / <alpha-value>)',
 
         // ---- Ink (Bone on Forest) ----
-        ink:       '#F4F1EA',  // bone
-        inkMuted:  '#9CAFA4',  // muted sage-tinted bone
-        inkDim:    '#5C7068',
+        ink:       'rgb(var(--c-ink) / <alpha-value>)',       // bone
+        inkMuted:  'rgb(var(--c-inkMuted) / <alpha-value>)',  // muted sage-tinted bone
+        inkDim:    'rgb(var(--c-inkDim) / <alpha-value>)',
 
         // ---- Brand accent: Champagne / Gold ----
-        accent:    '#D9C9A8',
-        accentDeep:'#A8956A',
+        accent:    'rgb(var(--c-accent) / <alpha-value>)',
+        accentDeep:'rgb(var(--c-accentDeep) / <alpha-value>)',
 
         // ---- Course Green (semantic, sparingly) ----
-        course:    '#5C9A6E',  // sage / fairway green for "live" dots
+        course:    'rgb(var(--c-course) / <alpha-value>)',    // sage / fairway green for "live" dots
 
         // ---- Semantic ----
-        live:      '#D9C9A8',
-        win:       '#D9C9A8',
-        lock:      '#A8956A',
-        danger:    '#E07B5B',
-        warn:      '#D9B26A',
+        live:      'rgb(var(--c-accent) / <alpha-value>)',
+        win:       'rgb(var(--c-accent) / <alpha-value>)',
+        lock:      'rgb(var(--c-accentDeep) / <alpha-value>)',
+        danger:    'rgb(var(--c-danger) / <alpha-value>)',
+        warn:      'rgb(var(--c-warn) / <alpha-value>)',
 
-        // Team identity (gedeckt, lifestyle-tauglich)
-        teamA:     '#9BB5C9',
-        teamB:     '#D9A38E',
+        // Team identity (gedeckt, lifestyle-tauglich) — pastels that read on
+        // both palettes (also used as winner-cell fills with dark ink).
+        teamA:     'rgb(var(--c-teamA) / <alpha-value>)',
+        teamB:     'rgb(var(--c-teamB) / <alpha-value>)',
 
-        // Legacy aliases — keep so existing components render correctly
-        brand:      '#102822',
+        // Legacy aliases — keep so existing components render correctly.
+        // `brandDark` stays a fixed dark ink: it is the contrast colour painted
+        // on top of the champagne accent (`bg-accent text-brandDark`), so it
+        // must NOT flip with the theme.
+        brand:      'rgb(var(--c-surface) / <alpha-value>)',
         brandDark:  '#0A1A12',
-        brandGreen: '#D9C9A8',  // mapped to champagne, so old "brandGreen" CTAs still work
-        card:       '#102822',
-        border:     '#1F4537',
-        muted:      '#5C7068',
+        brandGreen: 'rgb(var(--c-accent) / <alpha-value>)',
+        card:       'rgb(var(--c-surface) / <alpha-value>)',
+        border:     'rgb(var(--c-line) / <alpha-value>)',
+        muted:      'rgb(var(--c-inkDim) / <alpha-value>)',
       },
       borderRadius: {
         'card': '14px',

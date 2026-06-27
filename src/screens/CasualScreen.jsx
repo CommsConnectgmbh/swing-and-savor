@@ -330,6 +330,42 @@ function ScoreCell({ value, par, onChange, disabled }) {
   )
 }
 
+// Antippbare Par-Zelle (3–6) — Par direkt in der Scorecard ändern.
+function ParCell({ value, onChange, disabled }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  function open() {
+    if (disabled) return
+    setDraft(value ? String(value) : '')
+    setEditing(true)
+  }
+  function commit() {
+    const n = parseInt(draft, 10)
+    if (Number.isFinite(n) && n >= 3 && n <= 6) onChange(n)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <input type="number" inputMode="numeric" min={3} max={6} autoFocus
+        value={draft} onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
+        className="w-10 h-7 text-center text-[11px] font-bold tabular-nums bg-bg border border-accent rounded text-ink focus:outline-none" />
+    )
+  }
+  if (disabled) {
+    return <span className="text-[10px] text-inkMuted tabular-nums">{value || '—'}</span>
+  }
+  return (
+    <button type="button" onClick={open}
+      className="w-10 h-7 rounded text-[11px] font-bold tabular-nums text-inkMuted border border-dashed border-line active:scale-95 transition-transform">
+      {value || '—'}
+    </button>
+  )
+}
+
 // ─── Live-Stand (groß über der Scorecard) ──────────────────────────────────
 function LiveStanding({ round, playersList, scores }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : null
@@ -460,7 +496,7 @@ function LiveStanding({ round, playersList, scores }) {
 }
 
 // ─── Scorecard ──────────────────────────────────────────────────────────────
-function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
+function Scorecard({ round, playersList, scores, isOwner, onScoreChange, onParChange }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : Array(18).fill(0)
   const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
   const totalPar = pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0)
@@ -524,12 +560,14 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
                       </td>
                     ))}
                   </tr>
-                  {hasPars && (
+                  {(hasPars || (isOwner && onParChange)) && (
                     <tr>
                       <td className="text-[10px] text-inkDim uppercase tracking-wider pr-2 w-12">Par</td>
                       {HOLES.map(h => (
                         <td key={h} className="w-12 text-center text-[10px] text-inkMuted tabular-nums">
-                          {pars[h - 1] || '—'}
+                          {isOwner && onParChange
+                            ? <ParCell value={pars[h - 1] || 0} onChange={(v) => onParChange(h, v)} />
+                            : (pars[h - 1] || '—')}
                         </td>
                       ))}
                     </tr>
@@ -790,6 +828,22 @@ export default function CasualScreen() {
     setDeleteId(null)
     if (active?.id === id) backToList()
     else loadRounds()
+  }
+
+  // Par eines einzelnen Lochs direkt aus der Scorecard heraus anpassen
+  // (ohne den Loch-Setup-Dialog). Fehlt noch ein Par-Set, starten wir bei
+  // Par 4 pro Loch und überschreiben nur das angetippte Loch.
+  async function changePar(hole, value) {
+    if (!active) return
+    const v = Number(value)
+    if (!Number.isFinite(v) || v < 3 || v > 6) return
+    const base = active.hole_pars?.length === 18 ? [...active.hole_pars] : Array(18).fill(4)
+    if (base[hole - 1] === v) return
+    base[hole - 1] = v
+    setActive(a => ({ ...a, hole_pars: base }))
+    const { error } = await supabase.from('casual_rounds')
+      .update({ hole_pars: base }).eq('id', active.id)
+    if (error) alert('Par speichern fehlgeschlagen: ' + (error.message || 'unbekannt'))
   }
 
   async function saveCourseSetup({ pars, hcps }) {
@@ -1115,6 +1169,7 @@ export default function CasualScreen() {
                 labelB={players[1]?.display_name}
                 colorA={CAS_A}
                 colorB={CAS_B}
+                totalHoles={18}
               />
             </div>
           )}
@@ -1128,6 +1183,7 @@ export default function CasualScreen() {
           scores={scores}
           isOwner={!!isOwner}
           onScoreChange={changeScore}
+          onParChange={changePar}
         />
       </div>
 
