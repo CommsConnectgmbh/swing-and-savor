@@ -138,7 +138,7 @@ export async function renderMatchShareCard({
  * rows = [{ name, total, sub, winner }]. Gleiche Bildsprache wie die Match-Card,
  * 1080×1080, WhatsApp-/Instagram-tauglich.
  */
-export async function renderCasualShareCard({ title, statusLabel, rows, dateLabel }) {
+export async function renderCasualShareCard({ title, statusLabel, rows, dateLabel, matchResult }) {
   const SIZE = 1080
   const canvas = document.createElement('canvas')
   canvas.width = SIZE; canvas.height = SIZE
@@ -208,12 +208,41 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
     ctx.fillText(r.total != null && r.total > 0 ? String(r.total) : '—', SIZE - 130, cy + 16)
   })
 
+  let cursorY = top + cardH + 40
+
+  // Lochspiel-Ergebnis (nur bei Match-Play): wer mit wie vielen Löchern.
+  if (matchResult) {
+    const bx = 100, bw = SIZE - 200, bh = 150
+    rounded(ctx, bx, cursorY, bw, bh, 24)
+    ctx.fillStyle = '#0A1A12'; ctx.fill()
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2; ctx.stroke()
+    ctx.textAlign = 'left'
+    ctx.fillStyle = MUTED
+    ctx.font = '700 22px -apple-system, "Helvetica Neue", Arial'
+    ctx.fillText('LOCHSPIEL', bx + 40, cursorY + 48)
+    ctx.fillStyle = INK
+    ctx.font = '700 42px -apple-system, "Helvetica Neue", Arial'
+    ctx.fillText(trunc(ctx, matchResult.text || '—', bw - 280), bx + 40, cursorY + 96)
+    if (matchResult.sub) {
+      ctx.fillStyle = MUTED
+      ctx.font = '500 22px -apple-system, "Helvetica Neue", Arial'
+      ctx.fillText(trunc(ctx, matchResult.sub, bw - 80), bx + 40, cursorY + 130)
+    }
+    if (matchResult.label) {
+      ctx.textAlign = 'right'
+      ctx.fillStyle = ACC
+      ctx.font = '900 66px -apple-system, "Helvetica Neue", Arial'
+      ctx.fillText(matchResult.label, bx + bw - 40, cursorY + 92)
+    }
+    cursorY += bh + 40
+  }
+
   // Status + date
   ctx.textAlign = 'center'
   ctx.fillStyle = MUTED
   ctx.font = '600 24px -apple-system, "Helvetica Neue", Arial'
   const footMeta = [String(statusLabel || '').toUpperCase(), dateLabel].filter(Boolean).join('  ·  ')
-  ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, top + cardH + 70)
+  ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, cursorY + 30)
 
   // Footer URL
   ctx.fillStyle = ACC

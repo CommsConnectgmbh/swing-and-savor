@@ -875,6 +875,37 @@ export default function CasualScreen() {
 
     const maxPlayed = Math.max(...rows.map(r => r.played))
     const finished = active.status === 'finished' || maxPlayed === 18
+
+    // Lochspiel-Ergebnis (nur 2 Spieler): wer mit wie vielen Löchern führt/gewinnt.
+    let matchResult = null
+    if (players.length === 2) {
+      const a = players[0], b = players[1]
+      const byHole = {}
+      for (const s of scores) {
+        (byHole[s.hole_number] || (byHole[s.hole_number] = {}))[s.player_idx === a.idx ? 'a' : 'b'] = s.strokes
+      }
+      const zero = Array(18).fill(0)
+      const gross = calcCasualMatchStanding(byHole, zero, zero)
+      if (gross.played > 0) {
+        const first = n => (n || '').split(' ')[0]
+        const winner = gross.leader === 'A' ? a : gross.leader === 'B' ? b : null
+        const showNet = hcps && (Number(a.handicap) > 0 || Number(b.handicap) > 0)
+        const net = showNet
+          ? calcCasualMatchStanding(byHole, strokesPerHole(a.handicap, hcps), strokesPerHole(b.handicap, hcps))
+          : null
+        let sub = `${first(a.display_name)} ${gross.upA} · ${first(b.display_name)} ${gross.upB} · ½ ${gross.halved}`
+        if (net && (net.leader !== gross.leader || net.label !== gross.label)) {
+          const netName = net.leader === 'A' ? first(a.display_name) : net.leader === 'B' ? first(b.display_name) : 'All Square'
+          sub += `   ·   Netto: ${net.leader === 'AS' ? 'All Square' : `${netName} ${net.label}`}`
+        }
+        matchResult = {
+          text: winner ? `${first(winner.display_name)} ${finished ? 'gewinnt' : 'führt'}` : 'All Square',
+          label: gross.leader === 'AS' ? 'AS' : gross.label,
+          sub,
+        }
+      }
+    }
+
     const cardRows = rows.slice(0, 6).map((r, i) => ({
       name: r.name,
       total: r.total,
@@ -890,15 +921,19 @@ export default function CasualScreen() {
         title: active.course_name || 'Casual-Runde',
         statusLabel: finished ? 'Endstand' : `Live · ${maxPlayed}/18`,
         rows: cardRows,
+        matchResult,
         dateLabel: new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }),
       })
+      const shareText = matchResult
+        ? `${matchResult.text}${matchResult.label && matchResult.label !== 'AS' ? ` ${matchResult.label}` : ''} — ${active.course_name || 'Casual-Runde'}`
+        : finished
+          ? `${rows[0].name} gewinnt — ${active.course_name || 'Casual-Runde'}`
+          : `Live: ${active.course_name || 'Casual-Runde'}`
       await shareOrDownload({
         blob,
         filename: `swingandsavor-casual-${String(active.id).slice(0, 8)}.png`,
         title: 'Swing & Savor',
-        text: finished
-          ? `${rows[0].name} gewinnt — ${active.course_name || 'Casual-Runde'}`
-          : `Live: ${active.course_name || 'Casual-Runde'}`,
+        text: shareText,
         url: 'https://swingandsavor.at',
       })
     } catch (e) {
