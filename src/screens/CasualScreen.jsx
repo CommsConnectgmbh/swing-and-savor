@@ -8,6 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { fmtHc } from '../lib/format'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
@@ -108,7 +109,7 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
                 <div className="flex-1 text-left min-w-0">
                   <p className="font-semibold text-sm text-ink truncate">{f.display_name}</p>
                   <p className="text-[11px] text-inkMuted truncate">
-                    @{f.handle}{f.hcp != null && ` · HC ${Number(f.hcp).toFixed(1)}`}
+                    @{f.handle}{f.hcp != null && ` · HC ${fmtHc(f.hcp)}`}
                   </p>
                 </div>
                 {taken && <span className="text-[10px] uppercase tracking-wider text-inkDim">drin</span>}
@@ -498,7 +499,7 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange }) {
                 </span>
                 <span className="font-semibold text-sm text-ink truncate">{p.display_name}</span>
                 <span className="text-[11px] text-inkMuted tabular-nums">
-                  HC {Number(p.handicap).toFixed(1)}
+                  HC {fmtHc(p.handicap)}
                 </span>
               </div>
               <div className="text-right tabular-nums">
@@ -941,7 +942,7 @@ export default function CasualScreen() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-ink truncate">{s.display_name}</p>
                     <p className="text-[10px] text-inkMuted tabular-nums">
-                      HC {Number(s.handicap).toFixed(1)}
+                      HC {fmtHc(s.handicap)}
                       {s.profile_id ? ' · Account' : ' · Gast'}
                       {i === 0 ? ' · du' : ''}
                     </p>

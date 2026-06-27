@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import { isUnlocked } from '../lib/tournamentGate'
+import { fmtHc } from '../lib/format'
 
 function validateHC(val) {
   const n = parseFloat(val)
@@ -279,7 +280,7 @@ export default function TeamsScreen() {
                       <span className="font-semibold text-sm text-ink">{p.name}</span>
                     </div>
                     <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-md tabular-nums bg-bg text-inkMuted border border-line">
-                      HC {Number(p.handicap).toFixed(1)}
+                      HC {fmtHc(p.handicap)}
                     </span>
                     <button onClick={() => openEdit(p)}
                       className="p-1.5 rounded-lg active:scale-90 transition-transform text-inkMuted hover:text-ink">
