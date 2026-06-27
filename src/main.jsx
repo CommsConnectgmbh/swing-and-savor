@@ -4,8 +4,12 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './lib/auth'
+import { applyTheme, getStoredTheme } from './lib/theme'
 import './lib/i18n'
 import './index.css'
+
+// Reflect the saved colour theme before the first paint (no flash).
+applyTheme(getStoredTheme())
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

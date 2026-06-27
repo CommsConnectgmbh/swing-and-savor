@@ -8,6 +8,7 @@ import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '..
 import { buildReferralLink } from '../lib/referral'
 import { profileInitial } from '../lib/names'
 import { SUPPORTED_LANGUAGES } from '../lib/i18n'
+import { THEMES, getCurrentTheme, applyTheme } from '../lib/theme'
 import AvatarPicker from '../components/AvatarPicker'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
@@ -22,6 +23,7 @@ export default function ProfileScreen() {
   const navigate = useNavigate()
   const { profile: me, signOut, refreshProfile, setProfileDirect } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
+  const [theme, setTheme] = useState(() => getCurrentTheme())
 
   const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState(null)
@@ -522,6 +524,34 @@ export default function ProfileScreen() {
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </a>
+        </div>
+      )}
+
+      {/* Appearance / Darstellung */}
+      {isSelf && (
+        <div className="mx-3 mt-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted pl-1 mb-1.5">
+            {t('profile.themeLabel', 'Darstellung')}
+          </p>
+          <div className="rounded-card bg-surface border border-line overflow-hidden">
+            {THEMES.map((mode, idx) => {
+              const active = theme === mode
+              const meta = mode === 'light'
+                ? { icon: '☀️', name: t('profile.themeLight', 'Hell') }
+                : { icon: '🌙', name: t('profile.themeDark', 'Dunkel') }
+              return (
+                <button key={mode}
+                  onClick={() => setTheme(applyTheme(mode))}
+                  className={`w-full flex items-center justify-between px-4 py-3 active:bg-bg/40 transition-colors ${idx === THEMES.length - 1 ? '' : 'border-b border-lineSoft'}`}>
+                  <span className="flex items-center gap-3">
+                    <span className="text-base">{meta.icon}</span>
+                    <span className={`text-sm font-semibold ${active ? 'text-accent' : 'text-ink'}`}>{meta.name}</span>
+                  </span>
+                  {active && <span className="text-accent text-xs font-bold">✓</span>}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 
