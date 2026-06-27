@@ -236,7 +236,7 @@ export default function BoardScreen() {
 
           {/* Team A */}
           <div className="flex-1 text-center py-5 px-3"
-            style={{ background: 'rgba(155,181,201,0.07)', borderRight: '1px solid #15302A' }}>
+            style={{ background: 'rgba(155,181,201,0.07)', borderRight: '1px solid rgb(var(--c-lineSoft))' }}>
             <p className="text-[9px] font-bold tracking-[0.22em] uppercase mb-3 truncate" style={{ color: TEAM_A }}>
               {tournament.team_a_name}
             </p>
@@ -244,7 +244,7 @@ export default function BoardScreen() {
               className="font-condensed font-black leading-none tabular-nums"
               style={{
                 fontSize: '4.5rem',
-                color: leaderA ? TEAM_A : '#e5e7eb',
+                color: leaderA ? TEAM_A : 'rgb(var(--c-ink))',
                 filter: leaderA ? `drop-shadow(0 0 20px rgba(155,181,201,0.5))` : 'none',
               }}
             >
@@ -259,7 +259,7 @@ export default function BoardScreen() {
 
           {/* Team B */}
           <div className="flex-1 text-center py-5 px-3"
-            style={{ background: 'rgba(217,163,142,0.07)', borderLeft: '1px solid #15302A' }}>
+            style={{ background: 'rgba(217,163,142,0.07)', borderLeft: '1px solid rgb(var(--c-lineSoft))' }}>
             <p className="text-[9px] font-bold tracking-[0.22em] uppercase mb-3 truncate" style={{ color: TEAM_B }}>
               {tournament.team_b_name}
             </p>
@@ -267,7 +267,7 @@ export default function BoardScreen() {
               className="font-condensed font-black leading-none tabular-nums"
               style={{
                 fontSize: '4.5rem',
-                color: leaderB ? TEAM_B : '#e5e7eb',
+                color: leaderB ? TEAM_B : 'rgb(var(--c-ink))',
                 filter: leaderB ? `drop-shadow(0 0 20px rgba(217,163,142,0.5))` : 'none',
               }}
             >
