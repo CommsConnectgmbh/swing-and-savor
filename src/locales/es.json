@@ -283,5 +283,12 @@
       "not_refundable": "This purchase cannot be withdrawn.",
       "purchase_not_found": "Purchase not found."
     }
+  },
+  "range": {
+    "cardTitle": "Launch Monitor",
+    "proBadge": "PRO",
+    "cardOpenAria": "Abrir el Launch Monitor",
+    "cardSubPro": "Abre el monitor de lanzamiento AR: carry, velocidad de bola y efecto.",
+    "cardSub": "Monitor de lanzamiento AR: carry, velocidad de bola, efecto y lectura de green."
   }
 }

@@ -409,5 +409,12 @@
       "not_refundable": "This purchase cannot be withdrawn.",
       "purchase_not_found": "Purchase not found."
     }
+  },
+  "range": {
+    "cardTitle": "Launch Monitor",
+    "proBadge": "PRO",
+    "cardOpenAria": "Open Launch Monitor",
+    "cardSubPro": "Open the AR launch monitor — carry, ball speed & spin.",
+    "cardSub": "AR launch monitor — carry, ball speed, spin & green reader."
   }
 }

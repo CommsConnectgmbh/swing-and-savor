@@ -283,5 +283,12 @@
       "not_refundable": "This purchase cannot be withdrawn.",
       "purchase_not_found": "Purchase not found."
     }
+  },
+  "range": {
+    "cardTitle": "Launch Monitor",
+    "proBadge": "PRO",
+    "cardOpenAria": "ローンチモニターを開く",
+    "cardSubPro": "ARローンチモニターを開く — キャリー、ボールスピード、スピン。",
+    "cardSub": "ARローンチモニター — キャリー、ボールスピード、スピン、グリーンリーダー。"
   }
 }

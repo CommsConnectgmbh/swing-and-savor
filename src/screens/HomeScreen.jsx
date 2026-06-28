@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
@@ -402,11 +403,12 @@ export default function HomeScreen() {
 // owns the gating ladder (non-iOS upsell, LiDAR check, paywall, launch), so this
 // card is shown to everyone — it's both the discovery surface and the upsell.
 function RangePromoCard({ isPro, onOpen }) {
+  const { t } = useTranslation()
   return (
     <div className="px-3 pt-3">
       <button type="button" onClick={onOpen}
         className="w-full rounded-card bg-surface border border-line px-4 py-3.5 flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
-        aria-label="Launch Monitor öffnen">
+        aria-label={t('range.cardOpenAria', 'Launch Monitor öffnen')}>
         {/* Target / launch-monitor icon tile */}
         <span className="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center"
           style={{ background: 'rgba(217,201,168,0.14)' }}>
@@ -419,15 +421,15 @@ function RangePromoCard({ isPro, onOpen }) {
           <div className="flex items-center gap-2">
             <h2 className="font-display text-ink leading-tight"
               style={{ fontSize: 'clamp(16px, 4.2vw, 19px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
-              Launch Monitor
+              {t('range.cardTitle', 'Launch Monitor')}
             </h2>
             <span className="text-[9px] tracking-[0.18em] font-bold rounded px-1.5 py-0.5"
-              style={{ background: 'rgba(217,201,168,0.18)', color: '#D9C9A8' }}>PRO</span>
+              style={{ background: 'rgba(217,201,168,0.18)', color: '#D9C9A8' }}>{t('range.proBadge', 'PRO')}</span>
           </div>
           <p className="text-[11px] text-inkMuted mt-0.5 truncate">
             {isPro
-              ? 'AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.'
-              : 'AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader.'}
+              ? t('range.cardSubPro', 'AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.')
+              : t('range.cardSub', 'AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader.')}
           </p>
         </div>
         <span aria-hidden className="flex-shrink-0 text-inkDim">

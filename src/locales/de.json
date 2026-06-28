@@ -409,5 +409,12 @@
       "not_refundable": "Dieser Kauf ist nicht widerrufbar.",
       "purchase_not_found": "Kauf nicht gefunden."
     }
+  },
+  "range": {
+    "cardTitle": "Launch Monitor",
+    "proBadge": "PRO",
+    "cardOpenAria": "Launch Monitor öffnen",
+    "cardSubPro": "AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.",
+    "cardSub": "AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader."
   }
 }
