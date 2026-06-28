@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
+import { useProAccess } from '../lib/proAccess'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
@@ -35,6 +36,7 @@ const FILTERS = [
 export default function HomeScreen() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const isPro = useProAccess()
   const [loading, setLoading] = useState(true)
   const [matches, setMatches] = useState([])
   const [casualRounds, setCasualRounds] = useState([])
@@ -348,6 +350,8 @@ export default function HomeScreen() {
 
       <div className="hairline-b" />
 
+      <RangePromoCard isPro={isPro} onOpen={() => navigate('/range')} />
+
       {casualRounds.length > 0 && (
         <CasualSection
           rounds={casualRounds.filter(r => {
@@ -390,6 +394,48 @@ export default function HomeScreen() {
       </div>
 
       <div className="h-32" />
+    </div>
+  )
+}
+
+// Entry point for the Pro AR Launch Monitor (/range). The RangeScreen itself
+// owns the gating ladder (non-iOS upsell, LiDAR check, paywall, launch), so this
+// card is shown to everyone — it's both the discovery surface and the upsell.
+function RangePromoCard({ isPro, onOpen }) {
+  return (
+    <div className="px-3 pt-3">
+      <button type="button" onClick={onOpen}
+        className="w-full rounded-card bg-surface border border-line px-4 py-3.5 flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
+        aria-label="Launch Monitor öffnen">
+        {/* Target / launch-monitor icon tile */}
+        <span className="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center"
+          style={{ background: 'rgba(217,201,168,0.14)' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D9C9A8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4.5" />
+            <circle cx="12" cy="12" r="1" fill="#D9C9A8" stroke="none" />
+          </svg>
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-ink leading-tight"
+              style={{ fontSize: 'clamp(16px, 4.2vw, 19px)', letterSpacing: '-0.01em', fontWeight: 500 }}>
+              Launch Monitor
+            </h2>
+            <span className="text-[9px] tracking-[0.18em] font-bold rounded px-1.5 py-0.5"
+              style={{ background: 'rgba(217,201,168,0.18)', color: '#D9C9A8' }}>PRO</span>
+          </div>
+          <p className="text-[11px] text-inkMuted mt-0.5 truncate">
+            {isPro
+              ? 'AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.'
+              : 'AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader.'}
+          </p>
+        </div>
+        <span aria-hidden className="flex-shrink-0 text-inkDim">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </span>
+      </button>
     </div>
   )
 }
