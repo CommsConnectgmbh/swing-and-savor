@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { fetchProfile } from '../lib/profiles'
 
 export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
   const { t } = useTranslation()
@@ -16,8 +17,8 @@ export default function JoinTournamentSheet({ tournament, onClose, onJoined }) {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('profiles').select('display_name, handle, hcp').eq('id', user.id).maybeSingle()
-      .then(({ data }) => {
+    fetchProfile(user.id, 'display_name, handle, hcp')
+      .then((data) => {
         setProfile(data || null)
         if (data?.display_name) setName(data.display_name)
         if (data?.hcp != null)   setHcp(String(data.hcp))

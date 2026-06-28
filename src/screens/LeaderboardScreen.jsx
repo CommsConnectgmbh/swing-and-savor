@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { fetchProfile } from '../lib/profiles'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -40,9 +41,7 @@ export default function LeaderboardScreen() {
     setRows(data || [])
 
     if (user?.id) {
-      const { data: myProf } = await supabase.from('profiles')
-        .select('id,handle,display_name,avatar_url,elo_rating,games_played,wins')
-        .eq('id', user.id).maybeSingle()
+      const myProf = await fetchProfile(user.id, 'id,handle,display_name,avatar_url,elo_rating,games_played,wins')
       setMe(myProf || null)
 
       // Echter Welt-Rang unabhängig vom 200er-Fenster: zähle aktive Profile mit
