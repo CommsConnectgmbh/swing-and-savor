@@ -285,8 +285,21 @@
     }
   },
   "range": {
-    "cardTitle": "Launch Monitor",
+    "title": "Launch Monitor",
+    "subtitle": "ARローンチモニター — キャリー、ボールスピード、スピン、打ち出し角に加え、ARグリーンリーダー。Powered by QuickLaunch。",
     "proBadge": "PRO",
+    "iosOnly": "ローンチモニターはiPhoneのLiDARカメラを使用し、iPhone 12 Pro以降のSwing & Savor iOSアプリ内でのみ利用できます。",
+    "needsLidar": "この機能にはLiDAR搭載のiPhone（iPhone 12 Pro以降）が必要です。お使いのデバイスは対応していません。",
+    "paywall": "ARローンチモニターとグリーンリーダーをアンロック — アカウントに紐づく買い切りです。",
+    "consent": "私は即時アクセスを明示的に希望し、機能のアンロック後は撤回権が消滅することを了承します。",
+    "opening": "開いています…",
+    "unlock": "アンロック — {{price}}",
+    "open": "ローンチモニターを開く",
+    "mustLogin": "先にサインインしてください。",
+    "consentRequired": "続行するには確認してください。",
+    "checkoutFailed": "決済に失敗しました。後でもう一度お試しください。",
+    "launchFailed": "ローンチモニターを開けませんでした。",
+    "cardTitle": "Launch Monitor",
     "cardOpenAria": "ローンチモニターを開く",
     "cardSubPro": "ARローンチモニターを開く — キャリー、ボールスピード、スピン。",
     "cardSub": "ARローンチモニター — キャリー、ボールスピード、スピン、グリーンリーダー。"

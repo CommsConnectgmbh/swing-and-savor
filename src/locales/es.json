@@ -285,8 +285,21 @@
     }
   },
   "range": {
-    "cardTitle": "Launch Monitor",
+    "title": "Launch Monitor",
+    "subtitle": "Monitor de lanzamiento AR: carry, velocidad de bola, efecto y ángulo de salida, además del lector de green AR. Con tecnología de QuickLaunch.",
     "proBadge": "PRO",
+    "iosOnly": "El Launch Monitor usa la cámara LiDAR de tu iPhone y solo está disponible en la app de iOS de Swing & Savor en un iPhone 12 Pro o posterior.",
+    "needsLidar": "Esta función necesita un iPhone con LiDAR (iPhone 12 Pro o posterior). Tu dispositivo no es compatible.",
+    "paywall": "Desbloquea el Launch Monitor AR y el lector de green: una compra única vinculada a tu cuenta.",
+    "consent": "Solicito expresamente el acceso inmediato y reconozco que mi derecho de desistimiento se extingue una vez desbloqueada la función.",
+    "opening": "Abriendo…",
+    "unlock": "Desbloquear — {{price}}",
+    "open": "Abrir el Launch Monitor",
+    "mustLogin": "Inicia sesión primero.",
+    "consentRequired": "Confirma para continuar.",
+    "checkoutFailed": "El pago falló. Inténtalo de nuevo más tarde.",
+    "launchFailed": "No se pudo abrir el Launch Monitor.",
+    "cardTitle": "Launch Monitor",
     "cardOpenAria": "Abrir el Launch Monitor",
     "cardSubPro": "Abre el monitor de lanzamiento AR: carry, velocidad de bola y efecto.",
     "cardSub": "Monitor de lanzamiento AR: carry, velocidad de bola, efecto y lectura de green."
