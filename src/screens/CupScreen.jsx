@@ -13,6 +13,7 @@ import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
 import { isUnlocked } from '../lib/tournamentGate'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { getAccessToken } from '../lib/session'
 
 const emptyForm = {
   name: '', date: '',
@@ -125,8 +126,7 @@ export default function CupScreen() {
     setPremiumConsentCup(null)
     setUpgrading(cup.id)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error('no_session')
       const res = await fetch(functionUrl('create-premium-checkout'), {
         method: 'POST',

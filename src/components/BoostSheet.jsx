@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { getAccessToken } from '../lib/session'
 import { fmtEur } from '../lib/format'
 
 const TIERS = [
@@ -33,8 +33,7 @@ export default function BoostSheet({ cup, onClose }) {
     if (!instantConsent) { setErr(t('sheets.boost.consentRequired')); return }
     setBusy(true); setErr(null)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error(t('sheets.boost.mustLogin'))
       const res = await fetch(functionUrl('create-boost-checkout'), {
         method: 'POST',
