@@ -133,21 +133,6 @@ Per the user's choice we gate on the Stripe-sold entitlement. **Apple's guidelin
 
 ---
 
-## 11. CI — Codemagic (manual trigger only)
-
-`codemagic.yaml` adds the workflow **`ios-swingsavor-testflight`** that builds the iOS app on a cloud Mac so the integration can be compiled without a local Mac. It mirrors the proven `.github/workflows/ios-release.yml` build (Capacitor → `cap sync` → `patch-ios-project.mjs` → `pod install` → archive → export → optional TestFlight), translated to Codemagic.
-
-- **Triggering:** `triggering.events: []` → **no automatic builds** (no push/PR/tag, including pushes to `main`). Start every build manually from the Codemagic UI/API. (GolfLaunchMonitor's existing `codemagic.yaml` is already manual-only the same way — nothing to change there.)
-- Because the iOS shell loads from the remote URL (`app.swingandsavor.at`), this build compiles the **native plugin + the QuickLaunchKit Swift Package** — the real integration compile check. The JS paywall ships separately via Vercel.
-
-🔨 **One-time Xcode prerequisite (the build fails without it):**
-`LaunchMonitorBridge.swift` does `import QuickLaunchKit`, so the package must be a dependency of the App project. In Xcode → App target → *Package Dependencies* → **+** → add `https://github.com/olihoffmann/GolfLaunchMonitor.git`, pin a branch/tag, product **QuickLaunchKit** → App target. Commit the resulting `project.pbxproj` change. (Capacitor regenerates parts of the iOS project, so verify the SPM reference survives a `cap sync`.)
-
-🔨 **Codemagic UI setup (account-specific, can't be scripted here):**
-1. Connect the `CommsConnectgmbh/swing-and-savor` repo to Codemagic.
-2. Create env-var group **`swingsavor_signing`** with the values listed at the top of `codemagic.yaml` — reuse the **same** cert/profile/ASC secrets already in your GitHub Actions secrets, plus a **`GLM_REPO_TOKEN`** (a GitHub PAT with read access to the private GolfLaunchMonitor repo) so SPM can resolve QuickLaunchKit.
-3. Trigger the workflow manually. Set `UPLOAD_TO_TESTFLIGHT=false` for a pure compile/export check before shipping.
-
 ## 10. Files added/changed by this scaffold
 
 **GolfLaunchMonitor repo**
@@ -163,5 +148,4 @@ Per the user's choice we gate on the Stripe-sold entitlement. **Apple's guidelin
 - `src/App.jsx` (edited — lazy import + `/range` route)
 - `supabase/migrations/033_pro_entitlements.sql` (new)
 - `supabase/functions/create-pro-checkout/index.ts` (new)
-- `codemagic.yaml` (new — manual-trigger iOS build)
 - `INTEGRATION_LAUNCH_MONITOR.md` (this file)
