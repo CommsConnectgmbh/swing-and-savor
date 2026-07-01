@@ -13,6 +13,7 @@ import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
 import { isUnlocked } from '../lib/tournamentGate'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { buildInviteUrl } from '../lib/links'
 
 const emptyForm = {
   name: '', date: '',
@@ -673,8 +674,8 @@ export default function CupScreen() {
         <ShareSheet
           open={!!shareCup}
           onClose={() => setShareCup(null)}
-          url={`https://swingandsavor.at/i/${shareCup.invite_code}`}
-          text={t('share.cupShareText', { cup: shareCup.name, url: `https://swingandsavor.at/i/${shareCup.invite_code}` })}
+          url={buildInviteUrl(shareCup.invite_code)}
+          text={t('share.cupShareText', { cup: shareCup.name, url: buildInviteUrl(shareCup.invite_code) })}
           title={t('cup.shareInvite')}
         />
       )}

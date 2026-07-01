@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { openDealBuddyChallenge, challengeFriendOnDealBuddy } from '../lib/dealbuddy'
 import { fetchProfileMap, searchProfiles } from '../lib/profiles'
+import { buildMatchUrl } from '../lib/links'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChallengesScreen() {
@@ -136,7 +137,7 @@ export default function ChallengesScreen() {
 
   function postOnDealBuddy(c) {
     const opponent = c.opponent_id ? profilesById[c.opponent_id]?.display_name : ''
-    const matchUrl = c.match_id ? `https://app.swingandsavor.at/matches/${c.match_id}` : null
+    const matchUrl = c.match_id ? buildMatchUrl(c.match_id) : null
     openDealBuddyChallenge({
       title: c.title, opponent, stake: c.stake, challengeId: c.id, matchUrl,
     })

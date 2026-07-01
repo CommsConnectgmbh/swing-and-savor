@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
+import { buildCupRoute } from '../lib/links'
 
 function Avatar({ src, name, size = 36 }) {
   const initials = nameInitials(name)
@@ -24,7 +25,7 @@ function CupRow({ cup }) {
   const date = new Date(cup.date).toLocaleDateString('de-DE',
     { day: '2-digit', month: 'short', year: 'numeric' })
   return (
-    <Link to={finished ? `/recap/${cup.invite_code}` : `/i/${cup.invite_code}`}
+    <Link to={buildCupRoute(cup)}
           className="flex items-center justify-between hairline-b py-5 active:bg-surface/40 transition-colors">
       <div className="min-w-0 flex-1 pr-4">
         <p className="font-display text-ink text-[20px] leading-tight"

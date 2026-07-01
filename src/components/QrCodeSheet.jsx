@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { formatCupDate } from '../lib/format'
 import { roundRect, loadImage } from '../lib/canvas'
+import { buildInviteUrl } from '../lib/links'
 
 /**
  * Editorial QR-Code-Sheet.
@@ -18,7 +19,7 @@ export default function QrCodeSheet({ open, onClose, cup }) {
   const [busy, setBusy] = useState(false)
   const [dataUrl, setDataUrl] = useState('')
 
-  const inviteUrl = cup ? `https://swingandsavor.at/i/${cup.invite_code}` : ''
+  const inviteUrl = cup ? buildInviteUrl(cup.invite_code) : ''
 
   useEffect(() => {
     if (!open || !cup) return
