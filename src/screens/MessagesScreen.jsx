@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { relTime } from '../lib/format'
-import { indexById } from '../lib/profiles'
+import { fetchProfileList, indexById } from '../lib/profiles'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -38,8 +38,8 @@ export default function MessagesScreen() {
     const otherIds = list.map(c => c.user_a === user.id ? c.user_b : c.user_a)
     const ids = list.map(c => c.id)
 
-    const [{ data: profs }, { data: lastMsgs }, { data: unreadRows }] = await Promise.all([
-      supabase.from('profiles').select('id,handle,display_name,avatar_url').in('id', otherIds),
+    const [profs, { data: lastMsgs }, { data: unreadRows }] = await Promise.all([
+      fetchProfileList(otherIds, 'id,handle,display_name,avatar_url'),
       supabase.from('messages').select('conversation_id,body,sender_id,created_at,read_at')
         .in('conversation_id', ids).order('created_at', { ascending: false }),
       supabase.from('messages').select('conversation_id')
