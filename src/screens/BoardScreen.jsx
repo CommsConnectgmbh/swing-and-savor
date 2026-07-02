@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchTournaments } from '../lib/tournaments'
 import { subscribeToTables } from '../lib/realtime'
 import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
@@ -29,8 +30,7 @@ export default function BoardScreen() {
   }, [])
 
   async function loadTournaments() {
-    const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
-    const list = data || []
+    const list = await fetchTournaments()
     setTournaments(list)
     if (list.length === 0) { setLoading(false); return }
     const active = list.find(t => t.status === 'active') || list[0]

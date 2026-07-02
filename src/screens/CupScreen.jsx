@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { fetchTournaments } from '../lib/tournaments'
 import { useAuth } from '../lib/auth'
 import { uploadCupCover, clearCupCover } from '../lib/photo'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -148,12 +149,12 @@ export default function CupScreen() {
   }
 
   async function loadTournaments() {
-    const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
-    setTournaments(data || [])
+    const list = await fetchTournaments()
+    setTournaments(list)
     setLoading(false)
     // pending Join-Requests pro Owner-Cup zählen
     if (user?.id) {
-      const mine = (data || []).filter(c => c.owner_id === user.id).map(c => c.id)
+      const mine = list.filter(c => c.owner_id === user.id).map(c => c.id)
       if (mine.length) {
         const { data: jr } = await supabase.from('tournament_join_requests')
           .select('tournament_id').in('tournament_id', mine).eq('status', 'pending')
