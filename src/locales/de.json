@@ -409,5 +409,25 @@
       "not_refundable": "Dieser Kauf ist nicht widerrufbar.",
       "purchase_not_found": "Kauf nicht gefunden."
     }
+  },
+  "range": {
+    "title": "Launch Monitor",
+    "subtitle": "AR-Launch-Monitor — Carry, Ballgeschwindigkeit, Spin & Abflugwinkel, plus der AR-Green-Reader. Powered by QuickLaunch.",
+    "proBadge": "PRO",
+    "iosOnly": "Der Launch Monitor nutzt die LiDAR-Kamera deines iPhones und ist nur in der Swing & Savor iOS-App auf einem iPhone 12 Pro oder neuer verfügbar.",
+    "needsLidar": "Diese Funktion benötigt ein iPhone mit LiDAR (iPhone 12 Pro oder neuer). Dein Gerät wird nicht unterstützt.",
+    "paywall": "Schalte den AR-Launch-Monitor & Green Reader frei — ein einmaliger Kauf, der mit deinem Konto verknüpft ist.",
+    "consent": "Ich verlange ausdrücklich den sofortigen Zugang und nehme zur Kenntnis, dass mein Widerrufsrecht mit der Freischaltung der Funktion erlischt.",
+    "opening": "Wird geöffnet …",
+    "unlock": "Freischalten — {{price}}",
+    "open": "Launch Monitor öffnen",
+    "mustLogin": "Bitte melde dich zuerst an.",
+    "consentRequired": "Bitte bestätige, um fortzufahren.",
+    "checkoutFailed": "Bezahlung fehlgeschlagen. Bitte versuche es später erneut.",
+    "launchFailed": "Der Launch Monitor konnte nicht geöffnet werden.",
+    "cardTitle": "Launch Monitor",
+    "cardOpenAria": "Launch Monitor öffnen",
+    "cardSubPro": "AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.",
+    "cardSub": "AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader."
   }
 }

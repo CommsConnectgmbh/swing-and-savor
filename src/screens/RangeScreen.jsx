@@ -132,7 +132,7 @@ export default function RangeScreen() {
             disabled={busy || !consent}
             className="w-full rounded-xl bg-emerald-500 disabled:opacity-50 text-emerald-950 font-semibold py-3"
           >
-            {busy ? t('range.opening', 'Opening…') : t('range.unlock', `Unlock — ${PRICE_LABEL}`)}
+            {busy ? t('range.opening', 'Opening…') : t('range.unlock', { price: PRICE_LABEL, defaultValue: 'Unlock — {{price}}' })}
           </button>
         </Card>
       )}

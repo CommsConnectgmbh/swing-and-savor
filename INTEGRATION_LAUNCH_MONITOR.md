@@ -74,17 +74,23 @@ The standalone app is unaffected — `project.yml` / XcodeGen still build it fro
 ### iOS native
 - **`native/ios/App/App/Plugins/LaunchMonitorBridge.swift` / `.m`** — Capacitor plugin (`isSupported`, `present`). Mirrors `WatchBridge` registration exactly.
 
-🔨 **Manual Xcode / macOS steps (cannot be done here):**
-1. **Add the Swift Package dependency** to `native/ios/App/App.xcodeproj`:
-   - Xcode → App target → *Package Dependencies* → **+** → add the GolfLaunchMonitor repo URL (or `Add Local…` pointing at `../../GolfLaunchMonitor` during dev) → product **QuickLaunchKit** → add to the **App** target.
-   - Pin a tag/branch for reproducible CI builds.
-2. **Add the two plugin files to the App target** in Xcode if they aren't auto-included (they live in `App/Plugins/`, same place as `WatchBridge.*`, so the existing file-system group should pick them up — confirm target membership).
-3. **Info.plist permission strings** on the **App** target (the engine needs them at runtime):
-   - `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`, `NSMotionUsageDescription`.
-   - Copy the wording from `GolfLaunchMonitor/QuickLaunch/Info.plist`.
-4. **Deployment target / capabilities:** App target must be iOS ≥ 18 (engine requirement). ARKit is weak-linked via the package; no extra capability toggle, but ensure the device requirement messaging in §RangeScreen matches.
-5. **Orientation lock (known gap):** the capture screens want landscape. QuickLaunch's `OrientationLock` writes to *its own* `AppDelegate.orientationLock`, which does not exist in the Capacitor app. Wire S&S's `AppDelegate` to implement `application(_:supportedInterfaceOrientationsFor:)` reading a shared flag, or accept rotation for v1. Track as follow-up.
-6. `npx cap sync ios` after JS build so `www/` and plugin registration refresh.
+🔨 **Manual Xcode / macOS steps (cannot be done from Windows):**
+
+> ⚠️ **Blocker — deployment target.** `QuickLaunchKit` declares `.iOS(.v18)` (LiDAR / ARKit sceneDepth / 240 fps), but the S&S app targets **iOS 14.0** (both the `Podfile` and `IPHONEOS_DEPLOYMENT_TARGET` in `project.pbxproj`). SPM refuses to link a package whose minimum is above the app's deployment target — Xcode errors *"requires minimum platform version 18.0."* Either **raise the whole app to iOS 18** (drops all iOS 14–17 users — usually unacceptable) or **lower `QuickLaunchKit`'s declared minimum** in `Package.swift` to the lowest iOS the engine actually compiles against (verify on the Mac; likely 16/17), bump S&S to that, and runtime-gate with `QuickLaunchCapability.isSupported`. Resolve this **before** step 2 or the build fails.
+
+1. **Open the workspace** — `native/ios/App/App.xcworkspace` (after `pod install`), **not** `App.xcodeproj`; CocoaPods requires the workspace.
+2. **Add the Swift Package dependency:** App project → *Package Dependencies* → **+** → `https://github.com/olihoffmann/GolfLaunchMonitor.git` → pin a **tag** (reproducible) or a branch, or `Add Local…` at `../../GolfLaunchMonitor` for dev → product **QuickLaunchKit** → **App** target. Auth: see **Private package access** below.
+3. **Confirm plugin target membership:** `LaunchMonitorBridge.swift` / `.m` sit in `App/Plugins/` next to the working `WatchBridge.*`; verify each is a member of the **App** target. The `@objc(LaunchMonitorBridgePlugin)` class + the `CAP_PLUGIN` macro auto-register the plugin — no `capacitor.config` change.
+4. **Info.plist permission strings** on the App target (`native/ios/App/App/Info.plist`): `NSCameraUsageDescription`, `NSMicrophoneUsageDescription`, `NSMotionUsageDescription`. Copy the wording from `GolfLaunchMonitor/QuickLaunch/Info.plist`.
+5. **`Bundle.module` assets:** inside a package, `Image("x")` / `UIImage(named:)` resolve from the package bundle, not `.main`. Grep `QuickLaunch/` and wrap as `Image("x", bundle: .module)` where needed. Code-defined color tokens are fine.
+6. **Orientation lock (known gap):** the capture screens want landscape. QuickLaunch's `OrientationLock` writes to its own `AppDelegate.orientationLock`, which does not exist in the Capacitor app. Implement `application(_:supportedInterfaceOrientationsFor:)` in `native/ios/App/App/AppDelegate.swift` reading a shared flag, or accept rotation for v1. Track as follow-up.
+7. **Commit** `App.xcodeproj/project.pbxproj` + `App.xcworkspace/xcshareddata/swiftpm/Package.resolved`, then `npm run build` → `npx cap sync ios` → build on a **physical iPhone 12 Pro+** (LiDAR isn't in the Simulator). Verify the SPM reference survives `cap sync`.
+
+### Private package access (GolfLaunchMonitor is private — no GitHub Actions secret required)
+The build machine needs read access to the private engine repo. To keep credentials **out of GitHub secrets**:
+- **Local Mac build (recommended for now):** you own GolfLaunchMonitor, so your GitHub account already has read access — Xcode resolves it once signed in (Xcode → Settings → Accounts). Or use `Add Local…` against a sibling `../GolfLaunchMonitor` checkout for zero network auth.
+- **Self-hosted runner:** a read-only **deploy key** (`glm-spm-deploy`, key id `156145957`) is registered on GolfLaunchMonitor. Put its private half in the runner's `~/.ssh/` + ssh-agent (generated copy kept at `~/.ssh/glm_spm_deploy` on the dev box) and rewrite the package URL to SSH: `git config --global url."git@github.com:".insteadOf "https://github.com/"`. The private key never touches GitHub.
+- **GitHub-hosted runner** (the existing `.github/workflows/ios-release.yml`) is the *only* path that must store a credential in GitHub (repo/env/org secret) — deliberately not used here.
 
 ---
 
@@ -133,21 +139,6 @@ Per the user's choice we gate on the Stripe-sold entitlement. **Apple's guidelin
 
 ---
 
-## 11. CI — Codemagic (manual trigger only)
-
-`codemagic.yaml` adds the workflow **`ios-swingsavor-testflight`** that builds the iOS app on a cloud Mac so the integration can be compiled without a local Mac. It mirrors the proven `.github/workflows/ios-release.yml` build (Capacitor → `cap sync` → `patch-ios-project.mjs` → `pod install` → archive → export → optional TestFlight), translated to Codemagic.
-
-- **Triggering:** `triggering.events: []` → **no automatic builds** (no push/PR/tag, including pushes to `main`). Start every build manually from the Codemagic UI/API. (GolfLaunchMonitor's existing `codemagic.yaml` is already manual-only the same way — nothing to change there.)
-- Because the iOS shell loads from the remote URL (`app.swingandsavor.at`), this build compiles the **native plugin + the QuickLaunchKit Swift Package** — the real integration compile check. The JS paywall ships separately via Vercel.
-
-🔨 **One-time Xcode prerequisite (the build fails without it):**
-`LaunchMonitorBridge.swift` does `import QuickLaunchKit`, so the package must be a dependency of the App project. In Xcode → App target → *Package Dependencies* → **+** → add `https://github.com/olihoffmann/GolfLaunchMonitor.git`, pin a branch/tag, product **QuickLaunchKit** → App target. Commit the resulting `project.pbxproj` change. (Capacitor regenerates parts of the iOS project, so verify the SPM reference survives a `cap sync`.)
-
-🔨 **Codemagic UI setup (account-specific, can't be scripted here):**
-1. Connect the `CommsConnectgmbh/swing-and-savor` repo to Codemagic.
-2. Create env-var group **`swingsavor_signing`** with the values listed at the top of `codemagic.yaml` — reuse the **same** cert/profile/ASC secrets already in your GitHub Actions secrets, plus a **`GLM_REPO_TOKEN`** (a GitHub PAT with read access to the private GolfLaunchMonitor repo) so SPM can resolve QuickLaunchKit.
-3. Trigger the workflow manually. Set `UPLOAD_TO_TESTFLIGHT=false` for a pure compile/export check before shipping.
-
 ## 10. Files added/changed by this scaffold
 
 **GolfLaunchMonitor repo**
@@ -163,5 +154,4 @@ Per the user's choice we gate on the Stripe-sold entitlement. **Apple's guidelin
 - `src/App.jsx` (edited — lazy import + `/range` route)
 - `supabase/migrations/033_pro_entitlements.sql` (new)
 - `supabase/functions/create-pro-checkout/index.ts` (new)
-- `codemagic.yaml` (new — manual-trigger iOS build)
 - `INTEGRATION_LAUNCH_MONITOR.md` (this file)
