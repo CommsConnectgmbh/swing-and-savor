@@ -1,0 +1,14 @@
+{
+  "originHash" : "64ebe0801aa7aead09e72ce1cfba1ddb54b0428f888021c82e09d53e3dd995a1",
+  "pins" : [
+    {
+      "identity" : "golflaunchmonitor",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:olihoffmann/GolfLaunchMonitor.git",
+      "state" : {
+        "revision" : "d261732e6016f5cbf50703709c097a7ccf812e0e"
+      }
+    }
+  ],
+  "version" : 3
+}
