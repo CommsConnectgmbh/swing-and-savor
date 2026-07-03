@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, formatToPar, formatCupDate, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -38,6 +38,28 @@ describe('fmtPts', () => {
 
   it('keeps one decimal for halves', () => {
     expect(fmtPts(2.5)).toBe('2.5')
+  })
+})
+
+describe('formatToPar', () => {
+  it('renders level par as "E"', () => {
+    expect(formatToPar(0)).toBe('E')
+  })
+
+  it('prefixes over-par scores with "+"', () => {
+    expect(formatToPar(1)).toBe('+1')
+    expect(formatToPar(12)).toBe('+12')
+  })
+
+  it('keeps the native minus sign for under-par scores', () => {
+    expect(formatToPar(-1)).toBe('-1')
+    expect(formatToPar(-7)).toBe('-7')
+  })
+
+  it('always returns a string', () => {
+    expect(typeof formatToPar(-3)).toBe('string')
+    expect(typeof formatToPar(0)).toBe('string')
+    expect(typeof formatToPar(4)).toBe('string')
   })
 })
 
