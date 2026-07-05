@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { fetchProfile } from './profiles'
 import { pushToast } from './toast'
 import { debounce } from './debounce'
 
@@ -44,8 +45,7 @@ export function startLiveEvents(user) {
 
   async function profileFor(id) {
     if (myProfilesById[id]) return myProfilesById[id]
-    const { data } = await supabase.from('profiles')
-      .select('id,handle,display_name').eq('id', id).maybeSingle()
+    const data = await fetchProfile(id, 'id,handle,display_name')
     if (data) myProfilesById[id] = data
     return data
   }
