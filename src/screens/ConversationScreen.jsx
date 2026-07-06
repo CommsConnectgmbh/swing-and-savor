@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { profileInitial } from '../lib/names'
+import { formatTime } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ConversationScreen() {
@@ -195,7 +196,7 @@ export default function ConversationScreen() {
                 }`}>
                 <p className="text-sm leading-snug whitespace-pre-wrap break-words">{m.body}</p>
                 <p className={`text-[9px] mt-0.5 tabular-nums ${mine ? 'text-brandDark/60 text-right' : 'text-inkDim'}`}>
-                  {new Date(m.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                  {formatTime(m.created_at, { hour: '2-digit', minute: '2-digit' }, 'de-DE')}
                 </p>
               </div>
               {!mine && (

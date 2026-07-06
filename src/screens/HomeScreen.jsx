@@ -7,7 +7,7 @@ import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { formatCupDate } from '../lib/format'
+import { formatCupDate, formatDate } from '../lib/format'
 import { useTranslation } from 'react-i18next'
 import { useProAccess } from '../lib/proAccess'
 import SocialBar from '../components/SocialBar'
@@ -453,7 +453,7 @@ function CasualSection({ rounds, userId, onOpen }) {
           const playersLabel = (r._players || []).map(p => p.display_name).filter(Boolean).join(' vs ')
           const totalHoles = (r._players?.length || 1) * 18
           const progress = totalHoles > 0 ? Math.min(100, Math.round(((r._scoreCount || 0) / totalHoles) * 100)) : 0
-          const dateStr = new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
+          const dateStr = formatDate(r.created_at, { day: '2-digit', month: 'short' }, 'de-DE')
           return (
             <button key={r.id} onClick={() => onOpen(r)}
               className={`w-full px-3 py-3 flex items-center gap-3 active:bg-bg/40 transition-colors text-left ${i > 0 ? 'border-t border-lineSoft' : ''}`}>

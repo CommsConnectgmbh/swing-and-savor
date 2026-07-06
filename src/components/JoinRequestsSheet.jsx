@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { fetchProfileMap } from '../lib/profiles'
+import { formatDate } from '../lib/format'
 
 export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
   const { t, i18n } = useTranslation()
@@ -91,7 +92,7 @@ export default function JoinRequestsSheet({ cup, onClose, onChanged }) {
                   {r.profile?.handle && <span className="text-inkDim font-normal text-xs"> · @{r.profile.handle}</span>}
                 </p>
                 <p className="text-[11px] text-inkMuted">
-                  HC {r.handicap ?? r.profile?.hcp ?? '—'} · {t('sheets.joinRequests.requestedOn', { date: new Date(r.created_at).toLocaleDateString(lang) })}
+                  HC {r.handicap ?? r.profile?.hcp ?? '—'} · {t('sheets.joinRequests.requestedOn', { date: formatDate(r.created_at, undefined, lang) })}
                   {r.status !== 'pending' && <span className="ml-2 text-accent">· {r.status}</span>}
                 </p>
                 {r.message && <p className="text-[11px] text-ink mt-1 italic">„{r.message}"</p>}

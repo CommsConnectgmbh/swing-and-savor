@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, formatCupDate, formatDate, formatTime, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -55,6 +55,45 @@ describe('formatCupDate', () => {
 
   it('passes the locale through', () => {
     expect(formatCupDate('2026-06-14', { month: 'long' }, 'en-US')).toBe('June')
+  })
+})
+
+describe('formatDate', () => {
+  it('returns empty string for falsy or unparseable input', () => {
+    expect(formatDate(null)).toBe('')
+    expect(formatDate('')).toBe('')
+    expect(formatDate(undefined)).toBe('')
+    expect(formatDate('not-a-date')).toBe('')
+  })
+
+  it('passes locale and options through (no noon anchor)', () => {
+    // A full timestamp is unambiguous regardless of runtime timezone.
+    expect(formatDate('2026-06-14T12:00:00Z', { month: 'long' }, 'en-US')).toBe('June')
+  })
+
+  it('accepts a Date instance as-is', () => {
+    expect(formatDate(new Date('2026-06-14T12:00:00Z'), { year: 'numeric' }, 'en-US'))
+      .toBe('2026')
+  })
+
+  it('unlike formatCupDate, does not inject a noon anchor', () => {
+    // Bare 'YYYY-MM-DD' is parsed as UTC midnight — this documents that
+    // formatDate reproduces the raw inline behaviour rather than anchoring.
+    const anchored = formatCupDate('2026-06-14', { day: '2-digit' }, 'en-US')
+    const raw = formatDate('2026-06-14T12:00:00', { day: '2-digit' }, 'en-US')
+    expect(anchored).toBe(raw)
+  })
+})
+
+describe('formatTime', () => {
+  it('returns empty string for falsy or unparseable input', () => {
+    expect(formatTime(null)).toBe('')
+    expect(formatTime('nope')).toBe('')
+  })
+
+  it('formats the time-of-day with the given locale and options', () => {
+    expect(formatTime('2026-06-14T09:05:00Z', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC', hour12: false }, 'en-GB'))
+      .toBe('09:05')
   })
 })
 
