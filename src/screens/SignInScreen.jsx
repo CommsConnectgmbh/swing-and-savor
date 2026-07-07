@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { callPublicFunction } from '../lib/functions'
 
 export default function SignInScreen() {
   const { t } = useTranslation()
@@ -44,16 +44,12 @@ export default function SignInScreen() {
     if (lowered === 'apple-review@swingandsavor.at' ||
         lowered === 'play-review@swingandsavor.at') {
       try {
-        const res = await fetch(
-          functionUrl('reviewer-bypass'),
-          {
-            method: 'POST',
-            headers: { ...publicFunctionHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: lowered, code: code.trim() }),
-          },
-        )
+        const { res, data } = await callPublicFunction('reviewer-bypass', {
+          method: 'POST',
+          body: { email: lowered, code: code.trim() },
+        })
         if (res.ok) {
-          const { token_hash } = await res.json()
+          const { token_hash } = data
           if (token_hash) {
             const { error: verifyErr } = await supabase.auth.verifyOtp({
               type: 'magiclink',
