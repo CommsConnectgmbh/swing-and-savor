@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { getPublicFunction } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -60,9 +60,7 @@ export default function HallOfFameScreen() {
 
   useEffect(() => {
     if (!handle) return
-    fetch(`${functionUrl('public-rivalries')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
+    getPublicFunction('public-rivalries', { handle })
       .then(async (r) => r.ok ? r.json() : null)
       .then((j) => { if (j?.rivalries) setRivalries(j.rivalries) })
       .catch(() => {})
@@ -72,9 +70,7 @@ export default function HallOfFameScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
+    getPublicFunction('public-hall', { handle })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))
         if (cancelled) return
