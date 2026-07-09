@@ -5,34 +5,20 @@ import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ShareSheet from '../components/ShareSheet'
 import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { usePublicFunctionData } from '../hooks/usePublicFunctionData'
 
 export default function SavorOfferScreen() {
   const { user } = useAuth()
   const { slug } = useParams()
-  const [offer, setOffer] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [wishlisted, setWishlisted] = useState(false)
   const [wishBusy, setWishBusy] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true); setErr(null)
-    fetch(`${SAVOR_FUNCTIONS_URL}?mode=offer&slug=${encodeURIComponent(slug)}`, {
-      headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setOffer(j.offer)
-        document.title = `${j.offer.title} · Savor · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [slug])
+  const { data, loading, err } = usePublicFunctionData(
+    `${SAVOR_FUNCTIONS_URL}?mode=offer&slug=${encodeURIComponent(slug)}`,
+    (j) => { document.title = `${j.offer.title} · Savor · Swing & Savor` },
+  )
+  const offer = data?.offer ?? null
 
   // Wishlist state (auth users only)
   useEffect(() => {
