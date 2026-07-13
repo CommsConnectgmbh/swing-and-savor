@@ -6,21 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
-import { initials as nameInitials } from '../lib/names'
-
-function Avatar({ src, name, size = 32 }) {
-  const initials = nameInitials(name)
-  return (
-    <div
-      className="rounded-full overflow-hidden bg-surface flex-shrink-0 flex items-center justify-center"
-      style={{ width: size, height: size, border: '1px solid rgba(244,241,234,0.16)' }}
-    >
-      {src
-        ? <img src={src} alt={name || ''} className="w-full h-full object-cover" loading="lazy" />
-        : <span className="font-display text-[10px] text-ink uppercase tracking-wider">{initials}</span>}
-    </div>
-  )
-}
+import Avatar from '../components/Avatar'
 
 function AwardCard({ award }) {
   return (
@@ -39,7 +25,7 @@ function AwardCard({ award }) {
         {award.title}
       </p>
       <div className="flex items-center gap-2.5 mt-3">
-        <Avatar src={award.recipient_avatar_url} name={award.recipient_display_name} size={28} />
+        <Avatar src={award.recipient_avatar_url} name={award.recipient_display_name} size={28} initialsFontSize={10} />
         <span className="text-[13px] text-inkMuted truncate">
           {award.recipient_display_name || '—'}
         </span>
@@ -269,7 +255,7 @@ export default function RecapScreen() {
                 <ul className="space-y-2.5">
                   {team.list.map((p, i) => (
                     <li key={i} className="flex items-center gap-2.5">
-                      <Avatar src={p.avatar_url} name={p.name} size={28} />
+                      <Avatar src={p.avatar_url} name={p.name} size={28} initialsFontSize={10} />
                       <span className="text-[13px] text-ink truncate">{p.name}</span>
                     </li>
                   ))}
@@ -289,7 +275,7 @@ export default function RecapScreen() {
               Captain
             </p>
             <div className="flex items-center gap-3">
-              <Avatar src={captain.avatar_url} name={captain.display_name || captain.handle} size={48} />
+              <Avatar src={captain.avatar_url} name={captain.display_name || captain.handle} size={48} initialsFontSize={10} />
               <div>
                 <p className="font-display text-ink text-[20px]" style={{ fontWeight: 500 }}>
                   {captain.display_name || (captain.handle ? `@${captain.handle}` : '—')}
