@@ -135,11 +135,11 @@
     "search": "Suchen"
   },
   "signIn": {
-    "title": "Du wurdest eingeladen",
-    "subtitle": "Premium Golf Cups. Founder Invitationals. Hall of Fame.",
+    "title": "Los geht's",
+    "subtitle": "Live Match Play, Cups & Casual-Runden mit deiner Crew.",
     "email": "E-Mail",
     "emailPlaceholder": "du@beispiel.de",
-    "sendCode": "Einladung anfordern",
+    "sendCode": "Code anfordern",
     "sending": "Sende…",
     "codeSent": "Code gesendet — prüfe dein Postfach.",
     "enterCode": "Gib den 8-stelligen Code ein",

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { logDebug, getDebugSessionId } from '../lib/debug'
+import { logDebug, getDebugSessionId, isDebug } from '../lib/debug'
 import AvatarPicker from '../components/AvatarPicker'
 
 function deriveHandle(email) {
@@ -246,18 +246,24 @@ export default function OnboardingScreen() {
               className="text-xs text-inkDim py-1 hover:text-inkMuted transition-colors">
               Abmelden
             </button>
-            <button type="button" onClick={hardReset}
-              className="text-xs text-inkDim py-1 hover:text-danger transition-colors">
-              App-Cache löschen & neu starten
-            </button>
+            {isDebug() && (
+              <button type="button" onClick={hardReset}
+                className="text-xs text-inkDim py-1 hover:text-danger transition-colors">
+                App-Cache löschen & neu starten
+              </button>
+            )}
           </div>
 
-          <div className="text-[10px] text-inkDim text-center pt-2 break-all">
-            user: <span className="text-accent">{user?.id || '—'}</span>
-          </div>
-          <div className="text-[10px] text-inkDim text-center break-all">
-            diag: <span className="text-accent">{getDebugSessionId()}</span>
-          </div>
+          {isDebug() && (
+            <>
+              <div className="text-[10px] text-inkDim text-center pt-2 break-all">
+                user: <span className="text-accent">{user?.id || '—'}</span>
+              </div>
+              <div className="text-[10px] text-inkDim text-center break-all">
+                diag: <span className="text-accent">{getDebugSessionId()}</span>
+              </div>
+            </>
+          )}
         </form>
       </div>
     </div>

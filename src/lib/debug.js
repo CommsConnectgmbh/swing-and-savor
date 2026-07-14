@@ -23,6 +23,22 @@ export function getDebugSessionId() {
   return sessionId
 }
 
+// Debug-UI (User-ID, Diag-Session, Hard-Reset) nur zeigen, wenn explizit angefordert:
+// URL `?debug` oder localStorage `sns_debug=1`. Im Normalbetrieb sieht der Kunde
+// keine technischen Diagnose-Elemente. Einmal `?debug` merkt sich die Aktivierung.
+export function isDebug() {
+  try {
+    if (typeof window === 'undefined') return false
+    if (new URLSearchParams(window.location.search).has('debug')) {
+      try { localStorage.setItem('sns_debug', '1') } catch {}
+      return true
+    }
+    return localStorage.getItem('sns_debug') === '1'
+  } catch {
+    return false
+  }
+}
+
 // Telemetrie nur in Entwicklung — in Produktion komplett aus, damit die
 // (jetzt auth-gebundene) client_debug-Senke nicht im Normalbetrieb beschrieben
 // wird. Per VITE_DEBUG_TELEMETRY=1 explizit aktivierbar.
