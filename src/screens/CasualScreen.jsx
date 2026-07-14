@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
+import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults, scoreToPar } from '../lib/scoring'
 import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -282,6 +282,15 @@ function CourseSetupSheet({ initialPars, initialHcps, onSave, onClose }) {
 }
 
 // ─── Score Cell ─────────────────────────────────────────────────────────────
+// Score-relativ-zum-Par → Textfarbe (Eagle … Doppelbogey+).
+const SCORE_TINT = {
+  eagle: 'text-accent',
+  birdie: 'text-course',
+  par: 'text-ink',
+  bogey: 'text-inkMuted',
+  double: 'text-danger',
+}
+
 function ScoreCell({ value, par, onChange, disabled }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -301,12 +310,7 @@ function ScoreCell({ value, par, onChange, disabled }) {
   // Relative-to-par tint
   let tint = 'text-ink'
   if (value != null && par > 0) {
-    const d = value - par
-    if (d <= -2) tint = 'text-accent'
-    else if (d === -1) tint = 'text-course'
-    else if (d === 0) tint = 'text-ink'
-    else if (d === 1) tint = 'text-inkMuted'
-    else tint = 'text-danger'
+    tint = SCORE_TINT[scoreToPar(value, par)]
   } else if (value == null) {
     tint = 'text-inkDim'
   }

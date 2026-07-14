@@ -4,6 +4,16 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import { fileExt } from '../lib/format'
+import { scoreToPar } from '../lib/scoring'
+
+// Score-relativ-zum-Par → Zellen-Hintergrund (Eagle … Doppelbogey+).
+const SCORE_BG = {
+  eagle: 'bg-accent/40',
+  birdie: 'bg-accent/20',
+  par: 'bg-bg',
+  bogey: 'bg-warn/20',
+  double: 'bg-danger/20',
+}
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -315,15 +325,7 @@ function PlayerCard({ t, lang, player, players, holes, markerId, scores, signatu
           const hn = i + 1
           const par = holes?.[i]?.par ?? 4
           const v = scores[hn]
-          const diff = v != null ? v - par : null
-          let bg = 'bg-surface'
-          if (v != null) {
-            if (diff <= -2) bg = 'bg-accent/40'
-            else if (diff === -1) bg = 'bg-accent/20'
-            else if (diff === 0) bg = 'bg-bg'
-            else if (diff === 1) bg = 'bg-warn/20'
-            else if (diff >= 2) bg = 'bg-danger/20'
-          }
+          const bg = v != null ? SCORE_BG[scoreToPar(v, par)] : 'bg-surface'
           return (
             <div key={hn} className={`rounded-lg p-1 border border-line ${bg} text-center`}>
               <p className="text-[9px] text-inkMuted tabular-nums">{hn}</p>
