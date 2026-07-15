@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useSavorEnabled } from '../lib/savor'
 
 /**
  * Editorial Swing | Savor mode switch.
@@ -8,9 +9,16 @@ import { Link, useLocation } from 'react-router-dom'
  *
  * The active half is filled with Champagne; the inactive half stays hairline-bone.
  * Lives inside BrandHeader so it's always one tap away.
+ *
+ * The switch only appears once the Savor world actually has live offers (see
+ * useSavorEnabled). Until then it stays hidden so we don't tease an empty
+ * shopping world — it reappears automatically the moment an offer goes live.
  */
 export default function ModeSwitch() {
   const { pathname } = useLocation()
+  const savorEnabled = useSavorEnabled()
+  if (savorEnabled !== true) return null
+
   const isSavor = pathname === '/savor' || pathname.startsWith('/savor/')
 
   return (

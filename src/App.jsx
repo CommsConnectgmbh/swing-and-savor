@@ -6,6 +6,7 @@ import BrandHeader from './components/BrandHeader'
 import LoadingSpinner from './components/LoadingSpinner'
 import Toaster from './components/Toaster'
 import { useAuth } from './lib/auth'
+import { useSavorEnabled } from './lib/savor'
 import { captureReferralFromUrl } from './lib/referral'
 import { startLiveEvents } from './lib/liveEvents'
 
@@ -70,6 +71,16 @@ function HeaderForRoute() {
 
 function ScreenFallback() {
   return <div className="flex items-center justify-center py-20"><LoadingSpinner /></div>
+}
+
+// Guards the /savor routes: while there are no live offers the Savor world is
+// hidden, so deep-links (or a stale bookmark) fall back to Swing. Data-coupled
+// via useSavorEnabled — reopens automatically once an offer goes live.
+function SavorGate({ children }) {
+  const savorEnabled = useSavorEnabled()
+  if (savorEnabled === null) return <ScreenFallback />   // still resolving
+  if (!savorEnabled) return <Navigate to="/home" replace />
+  return children
 }
 
 export default function App() {
@@ -140,9 +151,9 @@ export default function App() {
             <Route path="/me"                element={<ProfileScreen />} />
             <Route path="/u/:handle"         element={<ProfileScreen />} />
             <Route path="/admin"             element={<AdminScreen />} />
-            <Route path="/savor"             element={<SavorScreen />} />
-            <Route path="/savor/c/:category"  element={<SavorCategoryScreen />} />
-            <Route path="/savor/o/:slug"      element={<SavorOfferScreen />} />
+            <Route path="/savor"             element={<SavorGate><SavorScreen /></SavorGate>} />
+            <Route path="/savor/c/:category"  element={<SavorGate><SavorCategoryScreen /></SavorGate>} />
+            <Route path="/savor/o/:slug"      element={<SavorGate><SavorOfferScreen /></SavorGate>} />
             <Route path="/casual"             element={<CasualScreen />} />
             <Route path="/range"              element={<RangeScreen />} />
             <Route path="/casual/:roundId"    element={<CasualScreen />} />
