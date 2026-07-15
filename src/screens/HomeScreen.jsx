@@ -10,6 +10,7 @@ import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { formatCupDate } from '../lib/format'
 import { useTranslation } from 'react-i18next'
 import { useProAccess } from '../lib/proAccess'
+import { probeLaunchMonitor } from '../lib/launchMonitor'
 import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
@@ -48,6 +49,10 @@ export default function HomeScreen() {
   const [myLikes, setMyLikes] = useState(new Set())
   const [sponsorByCup, setSponsorByCup] = useState({}) // cupId → { name, logo_url, website_url }
   const [coverOverrides, setCoverOverrides] = useState({}) // cupId → fresh cover_url (optimistic)
+  // Launch Monitor läuft nur in der iOS-App auf LiDAR-Geräten (iPhone 12 Pro+).
+  // Auf Web/Android/älteren iPhones die PRO-Promo-Karte gar nicht zeigen, sonst
+  // führt sie in eine Sackgasse. Nutzt dieselbe Capability-Probe wie RangeScreen.
+  const [rangeCapable, setRangeCapable] = useState(false)
   const channelRef = useRef(null)
   const loadRef = useRef(() => {})
   const refreshSocialRef = useRef(() => {})
@@ -65,6 +70,12 @@ export default function HomeScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
+
+  useEffect(() => {
+    let alive = true
+    probeLaunchMonitor().then(p => { if (alive) setRangeCapable(!!p?.supported) })
+    return () => { alive = false }
+  }, [])
 
   async function load() {
     setLoading(true)
@@ -347,7 +358,7 @@ export default function HomeScreen() {
 
       <div className="hairline-b" />
 
-      <RangePromoCard isPro={isPro} onOpen={() => navigate('/range')} />
+      {rangeCapable && <RangePromoCard isPro={isPro} onOpen={() => navigate('/range')} />}
 
       {casualRounds.length > 0 && (
         <CasualSection
@@ -395,9 +406,11 @@ export default function HomeScreen() {
   )
 }
 
-// Entry point for the Pro AR Launch Monitor (/range). The RangeScreen itself
-// owns the gating ladder (non-iOS upsell, LiDAR check, paywall, launch), so this
-// card is shown to everyone — it's both the discovery surface and the upsell.
+// Entry point for the Pro AR Launch Monitor (/range). Only rendered when the
+// device can actually run the monitor (iOS app on a LiDAR iPhone — see the
+// probeLaunchMonitor gate in HomeScreen). Web/Android/older iPhones never see it,
+// so the card never leads into the RangeScreen dead-end. Discovery + upsell for
+// entitled-vs-not is still handled by RangeScreen's paywall step.
 function RangePromoCard({ isPro, onOpen }) {
   const { t } = useTranslation()
   return (

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 /**
  * Bottom-Sheet, das vom zentralen [+] in der BottomNav geöffnet wird.
- * Bietet die drei primären Schöpfungsaktionen: Match, Duell, Turnier.
+ * Bietet die drei primären Schöpfungsaktionen: Match, Duell, Cup.
  */
 export default function CreateSheet({ open, onClose }) {
   const navigate = useNavigate()
@@ -68,7 +68,7 @@ export default function CreateSheet({ open, onClose }) {
     },
     {
       key: 'cup',
-      label: 'Neues Turnier',
+      label: 'Neuer Cup',
       sub: 'Cup mit Teams, Matches und Leaderboard',
       to: '/cup?new=1',
       icon: (

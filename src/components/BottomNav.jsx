@@ -68,7 +68,7 @@ export default function BottomNav() {
   const isSavorMode = pathname === '/savor' || pathname.startsWith('/savor/')
 
   const swingTabs = [
-    { to: '/home',       Icon: HomeIcon,   label: t('nav.home',       'Home')    },
+    { to: '/home',       Icon: HomeIcon,   label: t('nav.home',       'Club')    },
     { to: '/challenges', Icon: SwordsIcon, label: t('nav.challenges', 'Duelle')  },
     { fab: true,         label: t('nav.create',     'Neu')     },
     { to: '/matches',    Icon: ChartIcon,  label: t('nav.matches',    'Matches') },

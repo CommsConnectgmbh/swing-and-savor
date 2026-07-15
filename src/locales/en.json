@@ -100,7 +100,7 @@
     "home": "Club",
     "board": "Leaderboard",
     "discover": "Discover",
-    "challenges": "Rivalries",
+    "challenges": "Duels",
     "matches": "Matches",
     "cups": "Cups",
     "profile": "Profile",
@@ -186,9 +186,9 @@
     "emptyCourses": "No courses found."
   },
   "challenges": {
-    "title": "Rivalries",
-    "newChallenge": "New rivalry",
-    "noOpenChallenges": "No open rivalries.",
+    "title": "Duels",
+    "newChallenge": "New duel",
+    "noOpenChallenges": "No open duels.",
     "you": "You",
     "vs": "vs",
     "accept": "Accept",
