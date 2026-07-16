@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { formatCupDate } from '../lib/format'
 import { fetchProfileMap } from '../lib/profiles'
+import { promoState } from '../lib/promo'
 import LoadingSpinner from '../components/LoadingSpinner'
 import JoinTournamentSheet from '../components/JoinTournamentSheet'
 
@@ -28,10 +29,8 @@ export default function DiscoverScreen() {
     const list = data ?? []
     const now = Date.now()
     list.sort((a, b) => {
-      const aPromo = a.promoted_until && new Date(a.promoted_until).getTime() > now
-                     && (a.promo_tier === 'top' || a.promo_tier === 'both')
-      const bPromo = b.promoted_until && new Date(b.promoted_until).getTime() > now
-                     && (b.promo_tier === 'top' || b.promo_tier === 'both')
+      const aPromo = promoState(a, now).isTop
+      const bPromo = promoState(b, now).isTop
       if (aPromo && !bPromo) return -1
       if (bPromo && !aPromo) return 1
       if (a.status === 'active' && b.status !== 'active') return -1
@@ -112,10 +111,7 @@ export default function DiscoverScreen() {
 }
 
 function FeedRow({ t, idx, onOpen, onJoin }) {
-  const now = Date.now()
-  const promoActive = t.promoted_until && new Date(t.promoted_until).getTime() > now
-  const isTop       = promoActive && (t.promo_tier === 'top' || t.promo_tier === 'both')
-  const isHighlight = promoActive && (t.promo_tier === 'highlight' || t.promo_tier === 'both')
+  const { isTop, isHighlight } = promoState(t)
 
   return (
     <div
