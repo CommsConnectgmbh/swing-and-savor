@@ -236,3 +236,29 @@ export function calcTeamPoints(matches, holesByMatch = {}) {
 
   return { A: round2(A), B: round2(B) }
 }
+
+// --- Match shape/display helpers -------------------------------------------
+// These two were copy-pasted across the match screens (Home/Board/Matches/
+// MatchDetail): the team-type label and the "array-column or legacy single
+// columns" player-id fallback. Centralising them keeps the variants from
+// drifting apart. Both are pure and take already-derived inputs so every call
+// site keeps its exact previous behaviour.
+
+// Human label for a match's team format. Singles/Doubles are fixed strings;
+// anything else is a flight sized from the two side counts the caller passes
+// (e.g. name-array lengths), yielding "Flight 4v3".
+export function matchTypeLabel(type, aCount, bCount) {
+  if (type === 'singles') return 'Singles'
+  if (type === 'doubles') return 'Doubles'
+  return `Flight ${aCount}v${bCount}`
+}
+
+// Resolve a match side's player ids. Newer rows carry a `team_<side>_player_ids`
+// array; older ones only have the two legacy `player1_id`/`player2_id` columns.
+// Prefer the array when populated, else fall back to the (falsy-filtered) pair.
+// `side` is 'a' | 'b'.
+export function resolvePlayerIds(match, side) {
+  const arr = match?.[`team_${side}_player_ids`]
+  if (arr?.length) return arr
+  return [match?.[`team_${side}_player1_id`], match?.[`team_${side}_player2_id`]].filter(Boolean)
+}
