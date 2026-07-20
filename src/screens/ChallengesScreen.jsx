@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { openDealBuddyChallenge, challengeFriendOnDealBuddy } from '../lib/dealbuddy'
-import { fetchProfileMap, searchProfiles } from '../lib/profiles'
+import { fetchProfileMap, searchProfiles, PROFILE_CARD_COLUMNS } from '../lib/profiles'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChallengesScreen() {
@@ -33,7 +33,7 @@ export default function ChallengesScreen() {
     let cancelled = false
     ;(async () => {
       const { data } = await supabase.from('profiles')
-        .select('id, handle, display_name, avatar_url, hcp')
+        .select(PROFILE_CARD_COLUMNS)
         .eq('id', presetOpponentId).maybeSingle()
       if (!cancelled && data) {
         setPresetOpponent(data)
