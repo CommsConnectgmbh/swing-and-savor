@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchTournaments } from '../lib/tournaments'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
 import { suggestFactors } from '../lib/scoring'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -114,10 +115,10 @@ export default function MatchesScreen() {
   const pendingRef = useRef(null)
 
   useEffect(() => {
-    supabase.from('tournaments').select('*').order('date', { ascending: false })
-      .then(({ data }) => {
-        setTournaments(data || [])
-        if (data?.length > 0) setSelected(data[0])
+    fetchTournaments()
+      .then((list) => {
+        setTournaments(list)
+        if (list.length > 0) setSelected(list[0])
         setLoading(false)
       })
     supabase.from('team_templates').select('id,name,members,created_at')

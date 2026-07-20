@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
+import { otherUserId } from '../lib/pairs'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { formatCupDate } from '../lib/format'
 import { useTranslation } from 'react-i18next'
@@ -87,7 +88,7 @@ export default function HomeScreen() {
         .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
         .eq('status', 'accepted')
       const ids = new Set()
-      for (const f of (fs || [])) ids.add(f.user_a === user.id ? f.user_b : f.user_a)
+      for (const f of (fs || [])) ids.add(otherUserId(f, user.id))
       setFriendOwnerIds(ids)
     }
 
