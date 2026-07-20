@@ -1,10 +1,15 @@
 // reviewer-bypass — Apple + Google Reviewer Login ohne Mailbox-Zugriff.
 //
 // Sicherheit basiert auf zwei Faktoren:
-//   1. Hardcoded Email — nur apple-review@swingandsavor.at oder
+//   1. Zugelassene Email — nur apple-review@swingandsavor.at oder
 //      play-review@swingandsavor.at wird akzeptiert.
-//   2. Hardcoded 8-stelliger Code — nur dieser eine Wert öffnet die Tür.
+//   2. Ein 8-stelliger Code aus dem Env-Secret REVIEWER_BYPASS_CODE.
+//      Der Code steht NICHT im Code. Ist das Secret nicht gesetzt, ist der
+//      Reviewer-Login komplett deaktiviert (503, fail-closed) — es passiert
+//      dann weder Service-Role-Init, generateLink noch Seeding.
 // Jeder andere Zugriffsversuch endet in 403.
+//
+// Zusätzlich: pro Email ein simples In-Memory-Rate-Limit gegen Brute-Force.
 //
 // Nach erfolgreicher Auth wird der Reviewer-Account idempotent mit Demo-
 // Content geseedet (Profile + Friends + Turnier + Matches + DM-Konversationen
@@ -22,9 +27,45 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
 
-const REVIEWERS: Record<string, string> = {
-  "apple-review@swingandsavor.at": "87654321",
-  "play-review@swingandsavor.at":  "87654321",
+// Nur diese Email-Adressen dürfen den Reviewer-Login überhaupt versuchen.
+// Der zugehörige Code kommt ausschließlich aus dem Env-Secret.
+const ALLOWED_REVIEWER_EMAILS = new Set<string>([
+  "apple-review@swingandsavor.at",
+  "play-review@swingandsavor.at",
+])
+
+// ── Rate-Limit (best-effort) ──────────────────────────────────────────
+// In-Memory pro Instanz: Bei mehreren/rezyklierten Function-Instanzen ist das
+// nicht global konsistent, bremst aber ungebremsten Brute-Force pro Instanz
+// wirksam. Für die zwei bekannten Reviewer-Accounts völlig ausreichend.
+const RATE_LIMIT_MAX_ATTEMPTS = 5
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000 // 5 Minuten
+const attempts = new Map<string, { count: number; resetAt: number }>()
+
+// Registriert einen Versuch und meldet, ob das Limit überschritten ist.
+function rateLimited(key: string): boolean {
+  const now = Date.now()
+  const entry = attempts.get(key)
+  if (!entry || now >= entry.resetAt) {
+    attempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return false
+  }
+  entry.count += 1
+  return entry.count > RATE_LIMIT_MAX_ATTEMPTS
+}
+
+// Konstante-Zeit-Vergleich zweier Strings, um Timing-Leaks beim Code-Vergleich
+// zu vermeiden. Länge fließt bewusst ein, aber ohne Early-Return im Loop.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder()
+  const ba = enc.encode(a)
+  const bb = enc.encode(b)
+  let diff = ba.length ^ bb.length
+  const len = Math.max(ba.length, bb.length)
+  for (let i = 0; i < len; i++) {
+    diff |= (ba[i] ?? 0) ^ (bb[i] ?? 0)
+  }
+  return diff === 0
 }
 
 const DEMO_TOURNAMENT_NAME = "🍃 Apple Review Demo Cup"
@@ -44,12 +85,30 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // Fail-closed: ohne konfiguriertes Secret ist der Reviewer-Login komplett aus.
+  // Wird VOR jeglicher Service-Role-/generateLink-/Seeding-Logik geprüft.
+  const expectedCode = Deno.env.get("REVIEWER_BYPASS_CODE")
+  if (!expectedCode) {
+    return new Response(JSON.stringify({ error: "reviewer_login_disabled" }), {
+      status: 503, headers: { ...CORS, "Content-Type": "application/json" },
+    })
+  }
+
   let body: { email?: string; code?: string } | null = null
   try { body = await req.json() } catch { /* noop */ }
   const email = (body?.email ?? "").toLowerCase().trim()
   const code  = (body?.code  ?? "").trim()
 
-  if (!email || !code || REVIEWERS[email] !== code) {
+  // Rate-Limit pro Email, bevor der Code überhaupt geprüft wird.
+  if (email && rateLimited(email)) {
+    return new Response(JSON.stringify({ error: "too_many_attempts" }), {
+      status: 429, headers: { ...CORS, "Content-Type": "application/json" },
+    })
+  }
+
+  const emailAllowed = ALLOWED_REVIEWER_EMAILS.has(email)
+  const codeOk = timingSafeEqual(code, expectedCode)
+  if (!email || !code || !emailAllowed || !codeOk) {
     return new Response(JSON.stringify({ error: "invalid_credentials" }), {
       status: 403, headers: { ...CORS, "Content-Type": "application/json" },
     })
