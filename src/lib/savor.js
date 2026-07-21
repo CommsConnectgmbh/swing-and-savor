@@ -6,10 +6,25 @@
 // endpoint must stay identical across screens), so they live here now.
 
 import { useEffect, useState } from 'react'
+import { functionUrl, publicFunctionHeaders } from './functions'
 
 // Base URL of the public-savor Supabase edge function. Append a query string
 // such as `?mode=home`, `?mode=category&category=…` or `?mode=offer&slug=…`.
-export const SAVOR_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
+// Derived from the canonical `lib/functions` endpoint builder so the
+// `/functions/v1/` path lives in exactly one place.
+export const SAVOR_FUNCTIONS_URL = functionUrl('public-savor')
+
+// Fetch from the public-savor edge function. `params` is the query as a plain
+// object — `{ mode: 'home' }`, `{ mode: 'category', category, city }` or
+// `{ mode: 'offer', slug }` — encoded via URLSearchParams. The anon-key auth
+// header comes from the shared `publicFunctionHeaders()` so the four Savor call
+// sites no longer each re-spell the endpoint + `apikey` header (a drift risk if
+// the auth scheme or base URL ever changes). Returns the raw fetch
+// `Promise<Response>`, so each caller keeps its own response/error handling.
+export function savorFetch(params) {
+  const qs = new URLSearchParams(params).toString()
+  return fetch(`${SAVOR_FUNCTIONS_URL}?${qs}`, { headers: publicFunctionHeaders() })
+}
 
 // Display label for an offer's price.
 // Priority: an explicit price_label, then a formatted EUR amount, then a
@@ -44,9 +59,7 @@ let _savorPromise = null
 
 function resolveSavor() {
   if (_savorPromise) return _savorPromise
-  _savorPromise = fetch(`${SAVOR_FUNCTIONS_URL}?mode=home`, {
-    headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
-  })
+  _savorPromise = savorFetch({ mode: 'home' })
     .then((r) => (r.ok ? r.json() : { counts: {} }))
     .then((j) => {
       const total = Object.values(j?.counts || {}).reduce((a, n) => a + (n || 0), 0)

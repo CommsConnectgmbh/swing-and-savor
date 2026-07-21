@@ -144,6 +144,11 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] Route the Savor marketplace fetches through the canonical edge-function
+      layer: `lib/savor.js#savorFetch` (built on `lib/functions` `functionUrl` /
+      `publicFunctionHeaders`) replaces the endpoint + `apikey`-header pair that
+      was hand-rolled in `resolveSavor`, SavorScreen, SavorCategoryScreen and
+      SavorOfferScreen (+ tests).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.

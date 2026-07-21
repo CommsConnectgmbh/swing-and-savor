@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ShareSheet from '../components/ShareSheet'
-import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { savorFetch, formatOfferPrice } from '../lib/savor'
 
 export default function SavorOfferScreen() {
   const { user } = useAuth()
@@ -19,9 +19,7 @@ export default function SavorOfferScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr(null)
-    fetch(`${SAVOR_FUNCTIONS_URL}?mode=offer&slug=${encodeURIComponent(slug)}`, {
-      headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
-    })
+    savorFetch({ mode: 'offer', slug })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))
         if (cancelled) return
