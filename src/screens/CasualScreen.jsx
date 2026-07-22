@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
 import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
@@ -655,7 +656,8 @@ export default function CasualScreen() {
   const [creating, setCreating] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
 
-  const chRef = useRef(null)
+  // Holds the idempotent teardown returned by subscribeToTables (not the raw channel).
+  const unsubscribeRef = useRef(null)
 
   // Initial-Load: vom Plus-FAB ?new=1 → direkt zum Form
   useEffect(() => {
@@ -725,21 +727,22 @@ export default function CasualScreen() {
   }
 
   function subscribeRealtime(roundId) {
-    if (chRef.current) { supabase.removeChannel(chRef.current); chRef.current = null }
-    const ch = supabase.channel(`casual-${roundId}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'casual_scores', filter: `round_id=eq.${roundId}` },
-        () => loadDetail(roundId))
-      .subscribe()
-    chRef.current = ch
+    if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null }
+    unsubscribeRef.current = subscribeToTables(`casual-${roundId}`, [
+      {
+        table: 'casual_scores',
+        filter: `round_id=eq.${roundId}`,
+        handler: () => loadDetail(roundId),
+      },
+    ])
   }
 
   useEffect(() => () => {
-    if (chRef.current) supabase.removeChannel(chRef.current)
+    if (unsubscribeRef.current) unsubscribeRef.current()
   }, [])
 
   function backToList() {
-    if (chRef.current) { supabase.removeChannel(chRef.current); chRef.current = null }
+    if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null }
     setActive(null); setPlayers([]); setScores([])
     setView('list'); loadRounds()
     if (roundIdParam) navigate('/casual', { replace: true })
