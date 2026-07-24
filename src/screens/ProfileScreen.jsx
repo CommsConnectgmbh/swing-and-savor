@@ -15,7 +15,7 @@ import CoursePicker from '../components/CoursePicker'
 import ShareSheet from '../components/ShareSheet'
 import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
 import { hasWiderrufbareKaeufe } from '../lib/widerruf'
-import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { postFunction } from '../lib/functions'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -113,10 +113,7 @@ export default function ProfileScreen() {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
       if (!token) throw new Error('Keine Session — bitte neu anmelden')
-      const res = await fetch(functionUrl('delete-account'), {
-        method: 'POST',
-        headers: { ...authFunctionHeaders(token), 'Content-Type': 'application/json' },
-      })
+      const res = await postFunction('delete-account', { token })
       const body = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(body?.detail || body?.error || `HTTP ${res.status}`)
       await signOut()

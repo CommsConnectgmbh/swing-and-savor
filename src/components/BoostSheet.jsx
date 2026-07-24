@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { postFunction } from '../lib/functions'
 import { fmtEur } from '../lib/format'
 
 const TIERS = [
@@ -36,10 +36,9 @@ export default function BoostSheet({ cup, onClose }) {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
       if (!jwt) throw new Error(t('sheets.boost.mustLogin'))
-      const res = await fetch(functionUrl('create-boost-checkout'), {
-        method: 'POST',
-        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true }),
+      const res = await postFunction('create-boost-checkout', {
+        token: jwt,
+        body: { tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true },
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
