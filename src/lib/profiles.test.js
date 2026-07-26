@@ -3,11 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Mock the supabase client before importing the module under test so the
 // import-time `import { supabase }` binds to the mock.
 const inMock = vi.fn()
-const selectMock = vi.fn(() => ({ in: inMock }))
+const maybeSingleMock = vi.fn()
+const eqMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }))
+const selectMock = vi.fn(() => ({ in: inMock, eq: eqMock }))
 const fromMock = vi.fn(() => ({ select: selectMock }))
 vi.mock('./supabase', () => ({ supabase: { from: (...a) => fromMock(...a) } }))
 
-import { indexById, fetchProfileMap, fetchProfileList, PROFILE_CARD_COLUMNS } from './profiles'
+import { indexById, fetchProfileMap, fetchProfileList, fetchProfile, PROFILE_CARD_COLUMNS } from './profiles'
 
 describe('indexById', () => {
   it('keys rows by id', () => {
@@ -75,5 +77,39 @@ describe('fetchProfileList', () => {
   it('returns an empty array for no ids', async () => {
     expect(await fetchProfileList([])).toEqual([])
     expect(fromMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('fetchProfile', () => {
+  beforeEach(() => {
+    maybeSingleMock.mockReset()
+    eqMock.mockClear()
+    selectMock.mockClear()
+    fromMock.mockClear()
+  })
+
+  it('returns the row for a given id', async () => {
+    maybeSingleMock.mockResolvedValue({ data: { id: 'a', handle: 'ada' }, error: null })
+    expect(await fetchProfile('a')).toEqual({ id: 'a', handle: 'ada' })
+    expect(eqMock).toHaveBeenCalledWith('id', 'a')
+    expect(selectMock).toHaveBeenCalledWith(PROFILE_CARD_COLUMNS)
+  })
+
+  it('honours a custom column projection', async () => {
+    maybeSingleMock.mockResolvedValue({ data: null, error: null })
+    await fetchProfile('a', 'id, handle, display_name')
+    expect(selectMock).toHaveBeenCalledWith('id, handle, display_name')
+  })
+
+  it('short-circuits on a falsy id without hitting the network', async () => {
+    expect(await fetchProfile(null)).toBeNull()
+    expect(await fetchProfile(undefined)).toBeNull()
+    expect(await fetchProfile('')).toBeNull()
+    expect(fromMock).not.toHaveBeenCalled()
+  })
+
+  it('degrades to null when the row is missing or the query errors', async () => {
+    maybeSingleMock.mockResolvedValue({ data: null, error: { message: 'boom' } })
+    expect(await fetchProfile('a')).toBeNull()
   })
 })

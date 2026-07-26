@@ -35,6 +35,20 @@ export async function fetchProfileMap(ids, columns = PROFILE_CARD_COLUMNS) {
   return indexById(await fetchProfileList(ids, columns))
 }
 
+// Fetch a single profile row by id, or `null` when the id is falsy, the row
+// is missing, or the query errors. Mirrors the `.eq('id', …).maybeSingle()`
+// idiom that screens/components (ConversationScreen, ChallengesScreen,
+// liveEvents, …) each open by hand.
+export async function fetchProfile(id, columns = PROFILE_CARD_COLUMNS) {
+  if (!id) return null
+  const { data } = await supabase
+    .from('profiles')
+    .select(columns)
+    .eq('id', id)
+    .maybeSingle()
+  return data ?? null
+}
+
 // Search profiles by handle (prefix) or display name (contains). `query` may
 // include a leading `@`. Callers are still responsible for any minimum-length
 // gating before they choose to search.
