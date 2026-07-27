@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { formatCupDate } from '../lib/format'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -97,9 +98,9 @@ export default function InvitationalScreen() {
   const { cup, captain, participants, sponsors = [] } = data
   const titleSponsor = sponsors.find((s) => s.placement_type === 'title_sponsor')
   const poweredBy    = sponsors.find((s) => s.placement_type === 'powered_by')
-  const dateFmt = new Date(cup.date).toLocaleDateString(i18n.resolvedLanguage || 'de-DE', {
+  const dateFmt = formatCupDate(cup.date, {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
+  }, i18n.resolvedLanguage || 'de-DE')
   const isLive = cup.status === 'active' && cup.matches_finished > 0 && cup.matches_finished < cup.matches_total
   const finished = cup.status === 'finished'
   const teamAList = participants.filter((p) => p.team === 'A')
