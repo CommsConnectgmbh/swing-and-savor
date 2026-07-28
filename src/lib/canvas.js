@@ -17,6 +17,18 @@ export function roundRect(ctx, x, y, w, h, r) {
 }
 
 /**
+ * Truncate `text` so it fits within `maxWidth` for the context's current font,
+ * appending an ellipsis when it has to cut. Returns the original string when it
+ * already fits. Assumes the caller has set `ctx.font` beforehand.
+ */
+export function fitText(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text
+  let s = text
+  while (s.length > 1 && ctx.measureText(s + '…').width > maxWidth) s = s.slice(0, -1)
+  return s + '…'
+}
+
+/**
  * Load an image with CORS enabled so it can be drawn onto a canvas that
  * later needs to be exported (toDataURL / toBlob) without tainting it.
  */
