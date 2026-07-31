@@ -144,6 +144,10 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] `lib/session.js` — `getAccessToken()` (+ tests); route the copy-pasted
+      `supabase.auth.getSession()` → `?.session?.access_token` retrieval in
+      BoostSheet, ScorecardSheet, CupScreen, WiderrufScreen, RangeScreen and
+      ProfileScreen through it (each keeps its own missing-token guard).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
