@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { SITE_URL } from '../lib/links'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
@@ -937,7 +938,7 @@ export default function CasualScreen() {
         filename: `swingandsavor-casual-${String(active.id).slice(0, 8)}.png`,
         title: 'Swing & Savor',
         text: shareText,
-        url: 'https://swingandsavor.at',
+        url: SITE_URL,
       })
     } catch (e) {
       console.error('[casual] share', e)
