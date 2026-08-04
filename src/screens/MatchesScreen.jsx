@@ -9,6 +9,7 @@ import PasswordGate from '../components/PasswordGate'
 import CoursePicker from '../components/CoursePicker'
 import { isUnlocked } from '../lib/tournamentGate'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { monogram } from '../lib/names'
 
 function PencilIcon() {
   return (
@@ -994,7 +995,7 @@ function PlayerPickSheet({
                   onClick={() => onPick(p.id)}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl active:bg-bg/60 transition-colors disabled:opacity-30 text-left">
                   <span className="w-9 h-9 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0">
-                    {p.name.slice(0, 2).toUpperCase()}
+                    {monogram(p.name)}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-ink truncate">{p.name}</p>
@@ -1023,7 +1024,7 @@ function PlayerPickSheet({
                   {f.avatar_url
                     ? <img src={f.avatar_url} alt="" className="w-full h-full object-cover" />
                     : <span className="text-xs font-bold text-inkMuted">
-                        {f.display_name.slice(0, 2).toUpperCase()}
+                        {monogram(f.display_name)}
                       </span>}
                 </div>
                 <div className="flex-1 min-w-0">

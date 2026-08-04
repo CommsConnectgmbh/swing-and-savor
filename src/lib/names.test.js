@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { initials, profileInitial } from './names'
+import { initials, profileInitial, monogram } from './names'
 
 describe('initials', () => {
   it('takes the first letter of up to two words', () => {
@@ -55,5 +55,27 @@ describe('profileInitial', () => {
 
   it('ignores an empty-string display name', () => {
     expect(profileInitial({ display_name: '', handle: 'bob' })).toBe('B')
+  })
+})
+
+describe('monogram', () => {
+  it('takes the first two characters, upper-cased', () => {
+    expect(monogram('Ada')).toBe('AD')
+    expect(monogram('bob lee')).toBe('BO')
+  })
+
+  it('returns the whole (upper-cased) string when shorter than two chars', () => {
+    expect(monogram('A')).toBe('A')
+  })
+
+  it('is a character slice, not word initials', () => {
+    // Distinct from `initials()` which would return "AL" here.
+    expect(monogram('Ada Lovelace')).toBe('AD')
+  })
+
+  it('returns an empty string for empty / missing names', () => {
+    expect(monogram('')).toBe('')
+    expect(monogram(null)).toBe('')
+    expect(monogram(undefined)).toBe('')
   })
 })
