@@ -93,6 +93,11 @@ codebase-wide grep:
 - **Date formatting** — `new Date(x).toLocaleDateString('de-DE', …)` is inlined
   ~16 times, half hard-coding `de-DE` instead of the active i18n locale.
   **→ pending: `lib/format.js#formatDate` (preserve current locale per site).**
+- **Score-relative-to-par bucketing** — the eagle/birdie/par/bogey/double
+  `strokes − par` threshold chain was re-encoded per view (CasualScreen tint,
+  ScorecardSheet cell background) alongside the identical thresholds already in
+  `stablefordPoints`. **→ extracted to `lib/scoring.js#scoreToPar` (named
+  category); the two views now keep only their own category→class map.**
 
 ### P2 — God screens
 `CasualScreen` (1120 LOC), `MatchesScreen` (1079), `MatchDetailScreen` (978),
@@ -146,6 +151,8 @@ high-leverage fix.
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
+- [x] `lib/scoring.js#scoreToPar` — unify the per-view score-to-par threshold
+      chain (+ tests); migrate CasualScreen tint + ScorecardSheet background.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.

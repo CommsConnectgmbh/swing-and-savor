@@ -68,6 +68,28 @@ export function stablefordPoints(strokes, par) {
   return 0
 }
 
+// Klassifiziert einen Bruttoscore relativ zum Par in die klassische
+// Golf-Kategorie. Dieselben Schwellen (Eagle/Birdie/Par/Bogey/Doppelbogey+)
+// wie stablefordPoints, aber als benannte Kategorie statt Punktzahl — damit die
+// Scorecard-Farbgebung nicht in jeder View eine eigene value-minus-par-Kette
+// pflegt (CasualScreen-Tint, ScorecardSheet-Hintergrund), die auseinanderläuft.
+//
+// Rein numerisch, ohne Validierung: der Aufrufer entscheidet über die Guards
+// (z.B. nur bei gesetztem Score und par > 0). diff = strokes - par:
+//   <= -2 → 'eagle'   (Eagle oder besser)
+//    === -1 → 'birdie'
+//    === 0 → 'par'
+//    === 1 → 'bogey'
+//   >= 2 → 'double'   (Doppelbogey oder schlechter)
+export function scoreToPar(strokes, par) {
+  const diff = strokes - par
+  if (diff <= -2) return 'eagle'
+  if (diff === -1) return 'birdie'
+  if (diff === 0)  return 'par'
+  if (diff === 1)  return 'bogey'
+  return 'double'
+}
+
 // HCP-Schläge pro Loch nach Stroke-Index (SI).
 // playingHcp = ganze Schläge, die der Spieler über 18 Löcher kriegt.
 // hcps = Array[18] mit SI 1..18 (1 = schwerstes, 18 = leichtestes).

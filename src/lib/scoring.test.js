@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals, scoreToPar } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -230,6 +230,33 @@ describe('stablefordPoints', () => {
   it('coerces numeric strings', () => {
     expect(stablefordPoints('4', '4')).toBe(2)
     expect(stablefordPoints('3', '4')).toBe(3)
+  })
+})
+
+describe('scoreToPar', () => {
+  it('classifies eagle-or-better (>=2 under par)', () => {
+    expect(scoreToPar(3, 5)).toBe('eagle')
+    expect(scoreToPar(2, 4)).toBe('eagle')
+    expect(scoreToPar(1, 4)).toBe('eagle') // albatross still buckets as eagle+
+  })
+
+  it('classifies birdie, par and bogey', () => {
+    expect(scoreToPar(3, 4)).toBe('birdie')
+    expect(scoreToPar(4, 4)).toBe('par')
+    expect(scoreToPar(5, 4)).toBe('bogey')
+  })
+
+  it('classifies double bogey or worse', () => {
+    expect(scoreToPar(6, 4)).toBe('double')
+    expect(scoreToPar(9, 4)).toBe('double')
+  })
+
+  it('mirrors the stablefordPoints thresholds for valid scores', () => {
+    // eagle+/birdie/par/bogey/double ↔ 4/3/2/1/0
+    const bucket = { eagle: 4, birdie: 3, par: 2, bogey: 1, double: 0 }
+    for (const [s, p] of [[2, 4], [3, 4], [4, 4], [5, 4], [6, 4]]) {
+      expect(bucket[scoreToPar(s, p)]).toBe(stablefordPoints(s, p))
+    }
   })
 })
 
