@@ -12,7 +12,7 @@ import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
+import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun, formatToPar } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
@@ -43,12 +43,6 @@ function calcWinner(sa, sb) {
   if (a < b) return 'A'
   if (b < a) return 'B'
   return 'halved'
-}
-
-function fmtDelta(v) {
-  if (v === null) return null
-  if (v === 0) return 'E'
-  return v > 0 ? `+${v}` : String(v)
 }
 
 function ResultDot({ winner }) {
@@ -933,7 +927,7 @@ export default function MatchDetailScreen() {
             {dA !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
                 style={{ color: dA > 0 ? '#ef4444' : dA < 0 ? '#D9C9A8' : 'rgb(var(--c-inkDim))' }}>
-                {fmtDelta(dA)}
+                {formatToPar(dA)}
               </p>
             )}
           </div>
@@ -943,7 +937,7 @@ export default function MatchDetailScreen() {
             {dB !== null && (
               <p className="text-[11px] font-bold mt-0.5 tabular-nums"
                 style={{ color: dB > 0 ? '#ef4444' : dB < 0 ? '#D9C9A8' : 'rgb(var(--c-inkDim))' }}>
-                {fmtDelta(dB)}
+                {formatToPar(dB)}
               </p>
             )}
           </div>
