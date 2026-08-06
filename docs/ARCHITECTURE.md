@@ -150,3 +150,8 @@ high-leverage fix.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.
 - [ ] Move client-side stat aggregation (`lib/stats.js`) behind a Postgres view/RPC.
+- [x] `lib/uploads.js` — `uploadToBucket` / `publicUrl` (+ tests); route the
+      hand-rolled Storage upload→getPublicUrl idiom in CupExtrasSheet (×4),
+      HomeScreen and AdminScreen — and re-spelled inside `lib/photo.js` /
+      `lib/avatar.js` — through the shared helper (named `uploads`, not
+      `storage`, to stay distinct from Web Storage access).

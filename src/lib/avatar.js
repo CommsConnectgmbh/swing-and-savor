@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { publicUrl } from './uploads'
 
 const BUCKET = 'avatars'
 const MAX_DIM = 512
@@ -40,6 +41,7 @@ export async function uploadAvatar(userId, file) {
     console.error('[avatar] upload error:', error)
     throw error
   }
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return data.publicUrl
+  // Keep the bespoke error log above (unlike uploadToBucket); only the
+  // public-URL read is shared.
+  return publicUrl(BUCKET, path)
 }
