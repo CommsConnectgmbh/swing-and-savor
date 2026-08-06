@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { fileExt } from '../lib/format'
+import { uploadToBucket } from '../lib/storage'
 import QrCodeSheet from './QrCodeSheet'
 
 const AWARD_TYPES = [
@@ -65,11 +66,7 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     try {
       const ext = fileExt(file)
       const path = `${cup.id}/cover-${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
-      if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
-      const newUrl = pub.publicUrl
+      const newUrl = await uploadToBucket('cup-covers', path, file, { contentType: file.type })
       await supabase.from('tournaments').update({ cover_url: newUrl }).eq('id', cup.id)
       setCoverUrl(newUrl)
       onChanged?.()
@@ -120,11 +117,8 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     try {
       const ext = fileExt(file, { fallback: 'png' })
       const path = `${user.id}/sponsor-${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('sponsor-logos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
-      if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('sponsor-logos').getPublicUrl(path)
-      setSponsorForm((f) => ({ ...f, logo_url: pub.publicUrl }))
+      const url = await uploadToBucket('sponsor-logos', path, file, { contentType: file.type })
+      setSponsorForm((f) => ({ ...f, logo_url: url }))
     } catch (err) {
       console.error('[sponsor] upload', err)
       alert('Logo-Upload fehlgeschlagen.')
@@ -411,11 +405,8 @@ function TeamsTab({ cup, busy, setBusy, onChanged }) {
     try {
       const ext = fileExt(file, { fallback: 'png' })
       const path = `${cup.id}/team-${side}-${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
-      if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
-      setForm((f) => ({ ...f, [`team_${side}_logo_url`]: pub.publicUrl }))
+      const url = await uploadToBucket('cup-covers', path, file, { contentType: file.type })
+      setForm((f) => ({ ...f, [`team_${side}_logo_url`]: url }))
     } catch (err) {
       console.error('[team-logo]', err)
       alert('Logo-Upload fehlgeschlagen.')
