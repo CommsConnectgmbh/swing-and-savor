@@ -7,6 +7,7 @@ import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
+import { copyToClipboard } from '../lib/share'
 import { formatCupDate } from '../lib/format'
 import { useTranslation } from 'react-i18next'
 import { useProAccess } from '../lib/proAccess'
@@ -246,8 +247,7 @@ export default function HomeScreen() {
     try {
       if (navigator.share) {
         await navigator.share({ title: tournament.name, text, url })
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url)
+      } else if (await copyToClipboard(url)) {
         alert('Link kopiert: ' + url)
       }
     } catch (err) {
