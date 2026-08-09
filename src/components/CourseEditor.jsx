@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { applyCourseEdit } from '../lib/courses'
+import { clamp } from '../lib/math'
 
 // Normalize an 18-entry int array, with fallback default.
 function fillArr(arr, len = 18, fallback = 0) {
@@ -19,11 +20,11 @@ export default function CourseEditor({ course, sourceMatchId = null, onClose, on
   const totalPar = pars.reduce((s, p) => s + (p || 0), 0)
 
   function updatePar(i, delta) {
-    setPars(p => p.map((v, idx) => idx === i ? Math.max(3, Math.min(6, v + delta)) : v))
+    setPars(p => p.map((v, idx) => idx === i ? clamp(v + delta, 3, 6) : v))
   }
   function updateHcp(i, value) {
     const v = parseInt(value) || 0
-    setHcps(arr => arr.map((x, idx) => idx === i ? Math.max(0, Math.min(18, v)) : x))
+    setHcps(arr => arr.map((x, idx) => idx === i ? clamp(v, 0, 18) : x))
   }
 
   async function save() {

@@ -15,6 +15,7 @@ import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
+import { clamp } from '../lib/math'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -416,7 +417,7 @@ export default function MatchDetailScreen() {
     setHoles(prev => {
       const next = prev.map(h =>
         h.hole_number === holeNum
-          ? { ...h, par: Math.max(3, Math.min(5, h.par + delta)) }
+          ? { ...h, par: clamp(h.par + delta, 3, 5) }
           : h
       )
       setPars(next)
