@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { usePublicResource } from '../lib/usePublicResource'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -43,30 +43,13 @@ function PackageBadge({ pkg }) {
 export default function InvitationalScreen() {
   const { t, i18n } = useTranslation()
   const { inviteCode } = useParams()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [cardOpen, setCardOpen] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setErr(null)
-    fetch(`${functionUrl('public-invitational')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.cup.name} · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [inviteCode])
+  const { data, loading, error: err } = usePublicResource(
+    'public-invitational', { invite: inviteCode },
+    { onLoad: (j) => { document.title = `${j.cup.name} · Swing & Savor` } },
+  )
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
