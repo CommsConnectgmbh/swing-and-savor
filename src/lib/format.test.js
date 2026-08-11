@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, formatCupDate, formatDateTime, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -55,6 +55,27 @@ describe('formatCupDate', () => {
 
   it('passes the locale through', () => {
     expect(formatCupDate('2026-06-14', { month: 'long' }, 'en-US')).toBe('June')
+  })
+})
+
+describe('formatDateTime', () => {
+  it('returns empty string for falsy input', () => {
+    expect(formatDateTime(null)).toBe('')
+    expect(formatDateTime('')).toBe('')
+    expect(formatDateTime(undefined)).toBe('')
+  })
+
+  it('renders the default short date + time (day, month, hour, minute)', () => {
+    // The exact day/hour depend on the runtime timezone, but the DD.MM date
+    // and the HH:MM time separator are always present in the de-DE format.
+    const out = formatDateTime('2026-06-14T12:00:00Z', undefined, 'de-DE')
+    expect(out).toMatch(/\d{2}\.\d{2}/)
+    expect(out).toMatch(/\d{2}:\d{2}/)
+  })
+
+  it('passes custom opts and locale through', () => {
+    expect(formatDateTime('2026-06-14T09:05:00Z', { month: 'long' }, 'en-US'))
+      .toMatch(/June/)
   })
 })
 

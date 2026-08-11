@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ShareSheet from '../components/ShareSheet'
 import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { formatDateTime } from '../lib/format'
 
 export default function SavorOfferScreen() {
   const { user } = useAuth()
@@ -123,8 +124,7 @@ export default function SavorOfferScreen() {
           <div>
             <p className="text-[9px] tracking-[0.32em] uppercase text-inkDim">Tee Time</p>
             <p className="font-display text-ink mt-1" style={{ fontSize: 16, fontWeight: 500 }}>
-              {new Date(offer.tee_time_at).toLocaleString('de-DE',
-                { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              {formatDateTime(offer.tee_time_at, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
         )}

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
-import { fileExt } from '../lib/format'
+import { fileExt, formatDateTime } from '../lib/format'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -392,7 +392,7 @@ function SignRow({ t, lang, title, subtitle, signedAt, onSign, onClear }) {
         <div className="mt-2 flex items-center justify-between gap-2">
           <p className="text-[10px] text-accent font-bold flex items-center gap-1">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-            {new Date(signedAt).toLocaleString(lang, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
+            {formatDateTime(signedAt, undefined, lang)}
           </p>
           <button onClick={onClear}
             className="text-[10px] text-inkDim underline">{t('sheets.scorecard.undo')}</button>
