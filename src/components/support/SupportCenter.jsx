@@ -5,6 +5,7 @@
  * Usage: <SupportCenter supabase={supabase} appLabel="Swing & Savor" brandColor="#0ea5a4" />
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatDateTime } from '../../lib/format';
 
 const STATUS = {
   received:     { label: 'Eingegangen',    color: '#6b7280' },
@@ -22,14 +23,6 @@ function StatusBadge({ status }) {
       fontWeight: 600, color: '#fff', background: s.color, whiteSpace: 'nowrap',
     }}>{s.label}</span>
   );
-}
-
-function fmt(d) {
-  try {
-    return new Date(d).toLocaleString('de-DE', {
-      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return d; }
 }
 
 export default function SupportCenter({ supabase, appLabel, brandColor = '#2563eb', context }) {
@@ -152,7 +145,7 @@ export default function SupportCenter({ supabase, appLabel, brandColor = '#2563e
                 <span style={{ fontWeight: 600, fontSize: 15 }}>{t.subject}</span>
                 <StatusBadge status={t.status} />
               </div>
-              <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Aktualisiert {fmt(t.last_activity_at)}</div>
+              <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Aktualisiert {formatDateTime(t.last_activity_at)}</div>
             </button>
           ))}
         </>
@@ -178,7 +171,7 @@ export default function SupportCenter({ supabase, appLabel, brandColor = '#2563e
       {view === 'detail' && active && (
         <>
           <div style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: 13 }}>Erstellt {fmt(active.created_at)}</span>
+            <span style={{ color: '#6b7280', fontSize: 13 }}>Erstellt {formatDateTime(active.created_at)}</span>
             <StatusBadge status={active.status} />
           </div>
           <div style={{ ...card }}>
@@ -191,7 +184,7 @@ export default function SupportCenter({ supabase, appLabel, brandColor = '#2563e
                   color: m.author === 'user' ? '#fff' : '#111827',
                 }}>
                   <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 2 }}>
-                    {m.author === 'user' ? 'Du' : 'Support'} · {fmt(m.created_at)}
+                    {m.author === 'user' ? 'Du' : 'Support'} · {formatDateTime(m.created_at)}
                   </div>
                   {m.body}
                 </div>

@@ -37,6 +37,24 @@ export function formatCupDate(d, opts, locale = 'de-DE') {
   }
 }
 
+// Default Intl-Optionen für kurze Zeitstempel mit Uhrzeit ("TT.MM, HH:MM").
+const SHORT_DATE_TIME = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
+
+// Zeitstempel mit Uhrzeit für Chat-/Ticket-/Signatur-Anzeigen. Anders als
+// formatCupDate (reines Kalenderdatum) enthält dies die Uhrzeit; der Wert ist
+// ein voller ISO-Timestamp, daher ohne Mittags-Anker.
+// Zuvor mehrfach kopiert in ScorecardSheet/SupportCenter/SavorOfferScreen.
+// `opts` überschreibt die Intl-Optionen, `locale` die Sprache;
+// leere/ungültige Eingaben ergeben ''.
+export function formatDateTime(value, opts = SHORT_DATE_TIME, locale = 'de-DE') {
+  if (!value) return ''
+  try {
+    return new Date(value).toLocaleString(locale, opts)
+  } catch {
+    return ''
+  }
+}
+
 /**
  * Format a cents amount as a localised EUR currency string.
  */
