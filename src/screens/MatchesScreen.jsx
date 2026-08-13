@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
 import { suggestFactors } from '../lib/scoring'
+import { fmtHcp } from '../lib/format'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -851,7 +852,7 @@ function PlayerSelect({
         {picked ? (
           <span className="text-ink truncate">
             {picked.name}
-            <span className="text-inkMuted ml-1.5 text-xs tabular-nums">HC {Number(picked.handicap).toFixed(1)}</span>
+            <span className="text-inkMuted ml-1.5 text-xs tabular-nums">HC {fmtHcp(picked.handicap)}</span>
           </span>
         ) : (
           <span className="text-inkDim">{label} wählen…</span>
@@ -999,7 +1000,7 @@ function PlayerPickSheet({
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-ink truncate">{p.name}</p>
                     <p className="text-[11px] text-inkMuted tabular-nums">
-                      HC {Number(p.handicap).toFixed(1)}
+                      HC {fmtHcp(p.handicap)}
                       {isTaken && ' · in anderem Slot'}
                       {isSelf && ' · aktuell gewählt'}
                     </p>
@@ -1029,7 +1030,7 @@ function PlayerPickSheet({
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-ink truncate">{f.display_name}</p>
                   <p className="text-[11px] text-inkMuted truncate">
-                    @{f.handle}{f.hcp != null && ` · HC ${Number(f.hcp).toFixed(1)}`}
+                    @{f.handle}{f.hcp != null && ` · HC ${fmtHcp(f.hcp)}`}
                   </p>
                 </div>
                 <span className="text-[10px] font-bold tracking-wider uppercase text-accent flex-shrink-0">

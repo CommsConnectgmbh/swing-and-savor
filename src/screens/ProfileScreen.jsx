@@ -16,6 +16,7 @@ import ShareSheet from '../components/ShareSheet'
 import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
 import { hasWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { fmtHcp } from '../lib/format'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -306,7 +307,7 @@ export default function ProfileScreen() {
           {target.home_club && <span>{target.home_club}</span>}
           {target.home_club && target.hcp !== null && target.hcp !== undefined && <span>·</span>}
           {target.hcp !== null && target.hcp !== undefined && (
-            <span className="tabular-nums">HC {Number(target.hcp).toFixed(1)}</span>
+            <span className="tabular-nums">HC {fmtHcp(target.hcp)}</span>
           )}
           {target.elo_rating !== null && target.elo_rating !== undefined && target.games_played > 0 && (
             <>
