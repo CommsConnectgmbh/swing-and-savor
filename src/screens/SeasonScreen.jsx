@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { dotList } from '../lib/format'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
@@ -17,7 +18,7 @@ function CupRow({ cup }) {
         <p className="font-display text-ink text-[20px] leading-tight"
            style={{ fontWeight: 500, letterSpacing: '-0.01em' }}>{cup.name}</p>
         <p className="text-[11px] tracking-[0.22em] uppercase text-inkDim mt-1">
-          {[cup.location_name, date].filter(Boolean).join('  ·  ')}
+          {dotList([cup.location_name, date])}
         </p>
         {cup.champion && (
           <p className="text-[12px] text-accent tracking-wide mt-1">Champion: {cup.champion}</p>
@@ -109,7 +110,7 @@ export default function SeasonScreen() {
           </h1>
           {(range || group) && (
             <p className="text-[12px] tracking-[0.22em] uppercase text-inkMuted">
-              {[group?.name, range].filter(Boolean).join('  ·  ')}
+              {dotList([group?.name, range])}
             </p>
           )}
           {season.description && (

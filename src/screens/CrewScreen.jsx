@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
+import { dotList } from '../lib/format'
 
 function Avatar({ src, name, size = 36 }) {
   const initials = nameInitials(name)
@@ -32,7 +33,7 @@ function CupRow({ cup }) {
           {cup.name}
         </p>
         <p className="text-[11px] tracking-[0.22em] uppercase text-inkDim mt-1">
-          {[cup.location_name, date].filter(Boolean).join('  ·  ')}
+          {dotList([cup.location_name, date])}
         </p>
         {cup.champion && (
           <p className="text-[12px] text-accent tracking-wide mt-1">
@@ -126,7 +127,7 @@ export default function CrewScreen() {
             {group.name}
           </h1>
           <p className="text-[12px] tracking-[0.22em] uppercase text-inkMuted">
-            {[group.region, `${stats.members_total} members`].filter(Boolean).join('  ·  ')}
+            {dotList([group.region, `${stats.members_total} members`])}
           </p>
           {group.description && (
             <p className="text-ink/80 text-[15px] leading-[1.65] mt-7 max-w-[460px]">

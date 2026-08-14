@@ -44,6 +44,24 @@ export function fmtEur(cents, lang = 'de') {
   return (cents / 100).toLocaleString(lang, { style: 'currency', currency: 'EUR' })
 }
 
+// Separator for the "· "-style meta lines shown under cards, cups and
+// profiles: two spaces, a middot (U+00B7), two spaces.
+export const DOT = '  ·  '
+
+/**
+ * Join a list of parts into a single meta line, dropping every falsy entry
+ * (null / undefined / '' / 0 / false) before joining. This is the shared
+ * form of the `[a, b, c].filter(Boolean).join('  ·  ')` idiom that was
+ * copy-pasted across the cup/card/profile subtitle lines.
+ *
+ * @param {Array<unknown>} parts
+ * @param {string} [sep=DOT] separator (defaults to the padded middot)
+ * @returns {string}
+ */
+export function dotList(parts, sep = DOT) {
+  return (Array.isArray(parts) ? parts : [parts]).filter(Boolean).join(sep)
+}
+
 /**
  * Lower-cased file extension for storage keys.
  * @param {File} file

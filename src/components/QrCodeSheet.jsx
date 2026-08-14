@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
-import { formatCupDate } from '../lib/format'
+import { formatCupDate, dotList } from '../lib/format'
 import { roundRect, loadImage } from '../lib/canvas'
 
 /**
@@ -60,7 +60,7 @@ export default function QrCodeSheet({ open, onClose, cup }) {
     ctx.fillStyle = 'rgba(244,241,234,0.72)'
     ctx.font = '500 24px "Inter", sans-serif'
     const dateStr = formatCupDate(cup.date, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
-    const meta = [dateStr, cup.location_name].filter(Boolean).join('  ·  ')
+    const meta = dotList([dateStr, cup.location_name])
     if (meta) ctx.fillText(meta, W / 2, 380)
 
     // ── QR Code ──

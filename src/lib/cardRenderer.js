@@ -8,6 +8,7 @@
 //   - portraitCard  → 1080×1350 solid vertical card (WhatsApp / Pinterest).
 
 import { roundRect, loadImage } from './canvas'
+import { dotList } from './format'
 
 const CHAMPAGNE      = '#D9C9A8'
 const CHAMPAGNE_DEEP = '#A8956A'
@@ -117,7 +118,7 @@ export async function renderStoryOverlay({
   if (courseName || dateLabel) {
     ctx.fillStyle = 'rgba(244,241,234,0.72)'
     ctx.font = '500 24px "Inter", sans-serif'
-    const sub = [courseName, dateLabel].filter(Boolean).join('  ·  ')
+    const sub = dotList([courseName, dateLabel])
     ctx.fillText(fitText(ctx, sub, W - 160), W / 2, 244)
   }
 
@@ -261,7 +262,7 @@ export async function renderChampionCard({
   ctx.fillText(String(score ?? '—'), W / 2, scoreY + 170)
 
   // Meta line
-  const meta = [courseName, dateLabel].filter(Boolean).join('  ·  ')
+  const meta = dotList([courseName, dateLabel])
   if (meta) {
     ctx.fillStyle = 'rgba(244,241,234,0.62)'
     ctx.font = '500 22px "Inter", sans-serif'
@@ -323,7 +324,7 @@ export async function renderPortraitCard(params) {
   ctx.font = '500 220px "Fraunces", Georgia, serif'
   ctx.fillText(String(params.score ?? '—'), W / 2, 770)
 
-  const meta = [params.courseName, params.dateLabel].filter(Boolean).join('  ·  ')
+  const meta = dotList([params.courseName, params.dateLabel])
   if (meta) {
     ctx.fillStyle = 'rgba(244,241,234,0.62)'
     ctx.font = '500 24px "Inter", sans-serif'
