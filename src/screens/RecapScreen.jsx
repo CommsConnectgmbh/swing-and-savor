@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { dotList } from '../lib/format'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 32 }) {
@@ -165,7 +166,7 @@ export default function RecapScreen() {
             {cup.name}
           </p>
           <p className="font-sans text-inkDim text-[13px] tracking-[0.18em] uppercase">
-            {[cup.location_name, dateFmt].filter(Boolean).join('  ·  ')}
+            {dotList([cup.location_name, dateFmt])}
           </p>
 
           {cup.description && (

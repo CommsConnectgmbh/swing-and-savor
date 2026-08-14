@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { fileExt } from '../lib/format'
+import { fileExt, dotList } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const ADMIN_EMAIL = 'rainer.roloff@comms-connect.de'
@@ -300,7 +300,7 @@ function AmbassadorTab({ list, onReload }) {
               <div className="min-w-0 flex-1 pr-4">
                 <p className="font-display text-ink text-[18px]" style={{ fontWeight: 500 }}>{a.name}</p>
                 <p className="text-[11px] text-inkMuted truncate">
-                  {[a.email, a.phone, a.community_region].filter(Boolean).join('  ·  ')}
+                  {dotList([a.email, a.phone, a.community_region])}
                 </p>
                 {a.notes && <p className="text-[11px] text-inkDim mt-1.5 leading-relaxed">{a.notes}</p>}
               </div>
@@ -639,7 +639,7 @@ function SavorPartnersTab({ list, onReload }) {
                   {p.country_code && ` · ${p.country_code}`}
                 </p>
                 <p className="text-[11px] text-inkMuted truncate mt-1">
-                  {[p.website_url, p.contact_email].filter(Boolean).join('  ·  ')}
+                  {dotList([p.website_url, p.contact_email])}
                 </p>
               </div>
               <select value={p.status}
@@ -931,12 +931,12 @@ function SavorOffersTab({ list, partners, onReload }) {
                 </p>
                 {o.subtitle && <p className="text-[11px] text-inkMuted truncate mt-0.5">{o.subtitle}</p>}
                 <p className="text-[10px] tracking-[0.18em] uppercase text-inkDim mt-1">
-                  {[
+                  {dotList([
                     o.partner?.name,
                     o.city,
                     o.price_label || (o.price_eur_cents ? `${(o.price_eur_cents/100).toFixed(0)} €` : null),
                     `slug ${o.slug || '—'}`,
-                  ].filter(Boolean).join('  ·  ')}
+                  ])}
                 </p>
               </div>
               <select value={o.status}

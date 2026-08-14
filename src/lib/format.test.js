@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, formatCupDate, fmtEur, fileExt, dotList, DOT } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -63,6 +63,30 @@ describe('fmtEur', () => {
     // Non-breaking spaces vary by ICU build, so assert on the meaningful parts.
     expect(fmtEur(499)).toMatch(/4,99/)
     expect(fmtEur(499)).toMatch(/€/)
+  })
+})
+
+describe('dotList', () => {
+  it('joins parts with the padded middot separator', () => {
+    expect(dotList(['a', 'b', 'c'])).toBe(`a${DOT}b${DOT}c`)
+  })
+
+  it('drops falsy entries before joining', () => {
+    expect(dotList(['a', null, undefined, '', 0, false, 'b'])).toBe(`a${DOT}b`)
+  })
+
+  it('returns an empty string when nothing survives the filter', () => {
+    expect(dotList([null, '', undefined])).toBe('')
+    expect(dotList([])).toBe('')
+  })
+
+  it('accepts a custom separator', () => {
+    expect(dotList(['a', 'b'], ', ')).toBe('a, b')
+  })
+
+  it('tolerates a non-array argument', () => {
+    expect(dotList('solo')).toBe('solo')
+    expect(dotList(null)).toBe('')
   })
 })
 

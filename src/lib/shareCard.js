@@ -3,6 +3,8 @@
  * Format 1080x1080 (Instagram-/WhatsApp-tauglich). Nutzt nur Canvas-Primitives,
  * keine externen Libraries → null Bundle-Overhead.
  */
+import { dotList } from './format'
+
 const BG    = '#0A1A12'
 const SURF  = '#102822'
 const EDGE  = '#1F4537'
@@ -110,7 +112,7 @@ export async function renderMatchShareCard({
   ctx.fillText((statusLabel || '').toUpperCase(), SIZE / 2, 790)
 
   // Course / Cup / Owner
-  const meta = [courseName, cupName, ownerHandle ? `@${ownerHandle}` : null].filter(Boolean).join('  ·  ')
+  const meta = dotList([courseName, cupName, ownerHandle ? `@${ownerHandle}` : null])
   if (meta) {
     ctx.fillStyle = MUTED
     ctx.font = '500 24px -apple-system, "Helvetica Neue", Arial'
@@ -241,7 +243,7 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   ctx.textAlign = 'center'
   ctx.fillStyle = MUTED
   ctx.font = '600 24px -apple-system, "Helvetica Neue", Arial'
-  const footMeta = [String(statusLabel || '').toUpperCase(), dateLabel].filter(Boolean).join('  ·  ')
+  const footMeta = dotList([String(statusLabel || '').toUpperCase(), dateLabel])
   ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, cursorY + 30)
 
   // Footer URL
