@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
-import { suggestFactors } from '../lib/scoring'
+import { suggestFactors, hasHandicapFactor, formatFactor } from '../lib/scoring'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -747,7 +747,7 @@ export default function MatchesScreen() {
             const typeLabel = m.type === 'singles' ? 'Singles'
                             : m.type === 'doubles' ? 'Doubles'
                             : `Flight ${aIds.length}v${bIds.length}`
-            const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
+            const hasFactor = hasHandicapFactor(m)
             return (
               <div key={m.id} className="px-4 py-4 border-b border-lineSoft"
                 style={{ animationDelay: `${idx * 30}ms` }}>
@@ -760,7 +760,7 @@ export default function MatchesScreen() {
                     </span>
                     {hasFactor && (
                       <span className="text-[9px] font-bold tracking-wider uppercase text-accent bg-accent/10 border border-accent/25 px-1.5 py-0.5 rounded">
-                        ×{Number(m.team_a_factor).toFixed(2)}/{Number(m.team_b_factor).toFixed(2)}
+                        ×{formatFactor(m.team_a_factor)}/{formatFactor(m.team_b_factor)}
                       </span>
                     )}
                   </div>
