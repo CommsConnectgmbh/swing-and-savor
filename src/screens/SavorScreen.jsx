@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { pluralize } from '../lib/format'
 
 const DISCORD_INVITE = 'https://discord.gg/jT2GpZqZVE'
 
@@ -169,7 +170,7 @@ export default function SavorScreen() {
           <div className="flex items-baseline justify-between mb-4">
             <p className="text-[10px] tracking-[0.32em] uppercase text-inkMuted">Featured</p>
             <span className="text-[10px] tracking-[0.22em] uppercase text-inkDim">
-              {totalOffers} {totalOffers === 1 ? 'offer' : 'offers'}
+              {totalOffers} {pluralize(totalOffers, 'offer', 'offers')}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3">
