@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, getAccessToken } from './supabase'
 import { getStoredReferralCode, clearStoredReferralCode } from './referral'
 import { logDebug } from './debug'
 import { functionUrl, authFunctionHeaders } from './functions'
@@ -8,8 +8,7 @@ async function claimReferralIfAny() {
   const code = getStoredReferralCode()
   if (!code) return
   try {
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
+    const token = await getAccessToken()
     if (!token) return
     const res = await fetch(functionUrl('claim-referral'), {
       method: 'POST',
