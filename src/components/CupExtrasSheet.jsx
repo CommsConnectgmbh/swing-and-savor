@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { fileExt } from '../lib/format'
+import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
 import QrCodeSheet from './QrCodeSheet'
 
 const AWARD_TYPES = [
@@ -65,8 +66,10 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     try {
       const ext = fileExt(file)
       const path = `${cup.id}/cover-${Date.now()}.${ext}`
+      // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
+      const bytes = await stripFileMetadataForUpload(file, 'cup-covers')
       const { error: upErr } = await supabase.storage
-        .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
+        .from('cup-covers').upload(path, bytes, { upsert: false, cacheControl: '3600', contentType: file.type })
       if (upErr) throw upErr
       const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
       const newUrl = pub.publicUrl
@@ -120,8 +123,10 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
     try {
       const ext = fileExt(file, { fallback: 'png' })
       const path = `${user.id}/sponsor-${Date.now()}.${ext}`
+      // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
+      const bytes = await stripFileMetadataForUpload(file, 'sponsor-logos')
       const { error: upErr } = await supabase.storage
-        .from('sponsor-logos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
+        .from('sponsor-logos').upload(path, bytes, { upsert: false, cacheControl: '3600', contentType: file.type })
       if (upErr) throw upErr
       const { data: pub } = supabase.storage.from('sponsor-logos').getPublicUrl(path)
       setSponsorForm((f) => ({ ...f, logo_url: pub.publicUrl }))
@@ -411,8 +416,10 @@ function TeamsTab({ cup, busy, setBusy, onChanged }) {
     try {
       const ext = fileExt(file, { fallback: 'png' })
       const path = `${cup.id}/team-${side}-${Date.now()}.${ext}`
+      // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
+      const bytes = await stripFileMetadataForUpload(file, 'cup-covers')
       const { error: upErr } = await supabase.storage
-        .from('cup-covers').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type })
+        .from('cup-covers').upload(path, bytes, { upsert: false, cacheControl: '3600', contentType: file.type })
       if (upErr) throw upErr
       const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
       setForm((f) => ({ ...f, [`team_${side}_logo_url`]: pub.publicUrl }))

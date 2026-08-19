@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { stripFileMetadataForUpload } from './stripImageMetadata'
 
 const BUCKET = 'avatars'
 const MAX_DIM = 512
@@ -31,7 +32,11 @@ export async function uploadAvatar(userId, file) {
   const blob = await maybeDownscale(file)
   const ext = (blob.type === 'image/png') ? 'png' : 'jpg'
   const path = `${userId}/avatar-${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+  // Bucket ist public-read. Der Canvas-Weg oben verwirft das EXIF ohnehin, der
+  // Fallback (aelteres Safari, kein createImageBitmap) reicht aber das
+  // Originalfile durch — dort steckt das GPS des Handys drin.
+  const bytes = await stripFileMetadataForUpload(blob, BUCKET)
+  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
     contentType: blob.type || 'image/jpeg',
     upsert: true,
     cacheControl: '3600',
