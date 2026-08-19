@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
+import { getAccessToken, postAuthedFunction } from '../lib/functions'
 import { useAuth } from '../lib/auth'
 import { useProAccess } from '../lib/proAccess'
 import {
@@ -53,17 +53,10 @@ export default function RangeScreen() {
     if (!consent) { setErr(t('range.consentRequired', 'Please confirm to continue.')); return }
     setErr(null); setBusy(true)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error('no_session')
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pro-checkout`, {
-        method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ plan_key: 'launch_monitor_lifetime', instant_execution_consent: true }),
+      const res = await postAuthedFunction('create-pro-checkout', jwt, {
+        plan_key: 'launch_monitor_lifetime', instant_execution_consent: true,
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
