@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { fileExt } from './format'
+import { stripFileMetadataForUpload } from './stripImageMetadata'
 
 const BUCKET = 'match-photos'
 
@@ -7,7 +8,9 @@ export async function uploadMatchPhoto(matchId, file) {
   if (!file) return null
   const ext = fileExt(file, { max: 5 })
   const key = `${matchId}/${Date.now()}.${ext}`
-  const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, file, {
+  // Match-Fotos entstehen auf dem Platz, der Bucket ist public-read.
+  const bytes = await stripFileMetadataForUpload(file, BUCKET)
+  const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, bytes, {
     cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg',
   })
   if (upErr) throw upErr
@@ -28,7 +31,9 @@ export async function uploadCupCover(tournamentId, file) {
   if (!file) return null
   const ext = fileExt(file, { max: 5 })
   const key = `cups/${tournamentId}/${Date.now()}.${ext}`
-  const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, file, {
+  // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
+  const bytes = await stripFileMetadataForUpload(file, BUCKET)
+  const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, bytes, {
     cacheControl: '3600', upsert: false, contentType: file.type || 'image/jpeg',
   })
   if (upErr) throw upErr

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import { fileExt } from '../lib/format'
+import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -110,8 +111,12 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
     try {
       const ext = fileExt(file)
       const path = `${match.id}/${Date.now()}.${ext}`
+      // Die Scorekarte wird auf dem Platz abfotografiert. Bucket ist zwar
+      // privat, der Aufnahmeort wird trotzdem fuer nichts gebraucht. Pixel
+      // bleiben unangetastet, das OCR sieht dasselbe Bild.
+      const bytes = await stripFileMetadataForUpload(file, 'scorecard-photos')
       const up = await supabase.storage.from('scorecard-photos')
-        .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false })
+        .upload(path, bytes, { contentType: file.type || 'image/jpeg', upsert: false })
       if (up.error) throw up.error
       const { data: row, error: insErr } = await supabase.from('scorecard_uploads').insert({
         match_id: match.id,
