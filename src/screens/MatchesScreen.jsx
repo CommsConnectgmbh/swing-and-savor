@@ -9,6 +9,7 @@ import PasswordGate from '../components/PasswordGate'
 import CoursePicker from '../components/CoursePicker'
 import { isUnlocked } from '../lib/tournamentGate'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { useSheetBody } from '../lib/useSheet'
 
 function PencilIcon() {
   return (
@@ -886,10 +887,7 @@ function PlayerPickSheet({
   const [mode, setMode] = useState(options.length === 0 ? 'friends' : 'roster')
 
   // BottomNav ausblenden während Sheet offen ist — sonst überlappt der Plus-FAB.
-  useEffect(() => {
-    document.body.classList.add('sheet-open')
-    return () => document.body.classList.remove('sheet-open')
-  }, [])
+  useSheetBody()
   const [friends, setFriends] = useState([])
   const [loadingFriends, setLoadingFriends] = useState(false)
   const [busy, setBusy] = useState(false)
