@@ -10,9 +10,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Schriften werden lokal ausgeliefert (siehe /fonts/fonts.css). Vorher standen
+         hier <link>-Verweise auf fonts.googleapis.com, die bei jedem Aufruf die IP
+         des Besuchers an Google in die USA uebertragen haben — ohne Einwilligung ein
+         abmahnfaehiger DSGVO-Verstoss. -->
+    <link rel="preload" href="/fonts/fonts.css" as="style" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <link rel="stylesheet" href="/legal.css" />
   </head>
   <body class="legal">
@@ -108,9 +111,9 @@
         <p class="muted small">
           Die Comms Connect GmbH hat ihren Sitz in Deutschland und unterliegt keiner österreichischen
           Gewerbeaufsicht oder Kammerzugehörigkeit nach österreichischem Recht.
-          [[TODO RA-AT: Prüfen, ob aus dem Vertrieb in Österreich eine Gewerbeanmeldung,
-          Kammerzugehörigkeit (WKO) oder die Nennung einer österreichischen Aufsichtsbehörde
-          nach § 5 ECG / § 63 GewO erforderlich ist.]]
+          <!-- OFFEN, von einem oesterreichischen Rechtsanwalt zu klaeren:
+               [[TODO RA-AT: Prüfen, ob aus dem Vertrieb in Österreich eine Gewerbeanmeldung, Kammerzugehörigkeit (WKO) oder die Nennung einer österreichischen Aufsichtsbehörde nach § 5 ECG / § 63 GewO erforderlich ist.]] -->
+        
         </p>
         <h3>Offenlegung gemäß § 25 MedienG</h3>
         <p>
@@ -118,11 +121,10 @@
           Grundlegende Richtung: Information und Unterhaltung im Zusammenhang mit der Swing &amp; Savor
           Golf-Turnier-Plattform sowie deren Bewerbung.
         </p>
-        <p class="muted small">
-          [[TODO RA-AT: Vollständigkeit der § 5 ECG- und § 25 MedienG-Pflichtfelder durch
-          österreichischen Rechtsanwalt verifizieren; insbesondere ob die deutsche Rechtswahl in den
-          AGB die zwingenden AT-Offenlegungspflichten unberührt lässt.]]
-        </p>
+        <!-- OFFEN, von einem oesterreichischen Rechtsanwalt zu klaeren:
+          <!-- OFFEN, von einem oesterreichischen Rechtsanwalt zu klaeren:
+               [[TODO RA-AT: Vollständigkeit der § 5 ECG- und § 25 MedienG-Pflichtfelder durch österreichischen Rechtsanwalt verifizieren; insbesondere ob die deutsche Rechtswahl in den AGB die zwingenden AT-Offenlegungspflichten unberührt lässt.]] -->
+         -->
       </section>
 
       <section>
