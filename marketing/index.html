@@ -29,9 +29,12 @@
     <meta name="twitter:description" content="Match Play, cup brackets, 1,745+ courses, live scoring." />
     <meta name="twitter:image" content="https://swingandsavor.at/img/hero.jpg" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet" />
+    <!-- Schriften werden lokal ausgeliefert (siehe /fonts/fonts.css). Vorher standen
+         hier <link>-Verweise auf fonts.googleapis.com, die bei jedem Aufruf die IP
+         des Besuchers an Google in die USA uebertragen haben — ohne Einwilligung ein
+         abmahnfaehiger DSGVO-Verstoss. -->
+    <link rel="preload" href="/fonts/fonts.css" as="style" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <link rel="preload" as="image" href="img/hero.webp" imagesrcset="img/hero.webp" />
 
     <style>
