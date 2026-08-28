@@ -9,6 +9,7 @@ import PasswordGate from '../components/PasswordGate'
 import CoursePicker from '../components/CoursePicker'
 import { isUnlocked } from '../lib/tournamentGate'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { teamPlayerIds, matchTypeLabel } from '../lib/matches'
 
 function PencilIcon() {
   return (
@@ -195,10 +196,8 @@ export default function MatchesScreen() {
 
   function openEdit(m) {
     guarded(() => {
-      const a = (m.team_a_player_ids?.length ? m.team_a_player_ids
-                : [m.team_a_player1_id, m.team_a_player2_id]).filter(Boolean)
-      const b = (m.team_b_player_ids?.length ? m.team_b_player_ids
-                : [m.team_b_player1_id, m.team_b_player2_id]).filter(Boolean)
+      const a = teamPlayerIds(m, 'a')
+      const b = teamPlayerIds(m, 'b')
       const padded = (arr) => [...arr, '', '', '', ''].slice(0, 4)
       setForm({
         type: m.type,
@@ -738,15 +737,11 @@ export default function MatchesScreen() {
       ) : !locked && (
         <div className="border-t border-lineSoft">
           {matches.map((m, idx) => {
-            const aIds = m.team_a_player_ids?.length ? m.team_a_player_ids
-                       : [m.team_a_player1_id, m.team_a_player2_id].filter(Boolean)
-            const bIds = m.team_b_player_ids?.length ? m.team_b_player_ids
-                       : [m.team_b_player1_id, m.team_b_player2_id].filter(Boolean)
+            const aIds = teamPlayerIds(m, 'a')
+            const bIds = teamPlayerIds(m, 'b')
             const playersA = aIds.map(id => playerById(id)?.name).filter(Boolean).join(' · ')
             const playersB = bIds.map(id => playerById(id)?.name).filter(Boolean).join(' · ')
-            const typeLabel = m.type === 'singles' ? 'Singles'
-                            : m.type === 'doubles' ? 'Doubles'
-                            : `Flight ${aIds.length}v${bIds.length}`
+            const typeLabel = matchTypeLabel(m, aIds.length, bIds.length)
             const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
             return (
               <div key={m.id} className="px-4 py-4 border-b border-lineSoft"
