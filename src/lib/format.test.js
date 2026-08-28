@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, formatCupDate, fmtEur, fileExt, pluralize } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -55,6 +55,18 @@ describe('formatCupDate', () => {
 
   it('passes the locale through', () => {
     expect(formatCupDate('2026-06-14', { month: 'long' }, 'en-US')).toBe('June')
+  })
+})
+
+describe('pluralize', () => {
+  it('returns the singular only for exactly one', () => {
+    expect(pluralize(1, 'Match', 'Matches')).toBe('Match')
+  })
+
+  it('returns the plural for zero, many and non-one values', () => {
+    expect(pluralize(0, 'Match', 'Matches')).toBe('Matches')
+    expect(pluralize(2, 'Match', 'Matches')).toBe('Matches')
+    expect(pluralize(5, 'Loch', 'Löcher')).toBe('Löcher')
   })
 })
 
