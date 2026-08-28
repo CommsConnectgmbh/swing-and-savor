@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
-import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
+import { calcMatchStanding, calcStablefordTotals, matchTypeLabel, resolvePlayerIds } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
@@ -163,10 +163,8 @@ export default function HomeScreen() {
     )
 
     const enriched = list.map(m => {
-      const aIds = m.team_a_player_ids?.length ? m.team_a_player_ids
-                  : [m.team_a_player1_id, m.team_a_player2_id].filter(Boolean)
-      const bIds = m.team_b_player_ids?.length ? m.team_b_player_ids
-                  : [m.team_b_player1_id, m.team_b_player2_id].filter(Boolean)
+      const aIds = resolvePlayerIds(m, 'a')
+      const bIds = resolvePlayerIds(m, 'b')
       return {
         ...m,
         _namesA: aIds.map(id => nameById[id]?.name).filter(Boolean),
@@ -285,7 +283,7 @@ export default function HomeScreen() {
   async function handleShare(m) {
     try {
       const { blob } = await renderMatchShareCard({
-        type: m.type === 'singles' ? 'Singles' : m.type === 'doubles' ? 'Doubles' : `Flight ${m._namesA.length}v${m._namesB.length}`,
+        type: matchTypeLabel(m.type, m._namesA.length, m._namesB.length),
         namesA: m._namesA, namesB: m._namesB,
         teamANameLabel: m.tournament?.team_a_name, teamBNameLabel: m.tournament?.team_b_name,
         scoreLine: scoreLineFor(m),
@@ -658,9 +656,7 @@ function FeedCard({ match: m, holes, social, liked, cupAccent, onOpen, onComment
   const isFinished   = m.status === 'finished'
   const isStableford = m.format === 'stableford'
 
-  const baseTypeLbl = m.type === 'singles' ? 'Singles'
-                     : m.type === 'doubles' ? 'Doubles'
-                     : `Flight ${m._namesA.length}v${m._namesB.length}`
+  const baseTypeLbl = matchTypeLabel(m.type, m._namesA.length, m._namesB.length)
   const typeLbl = isStableford ? `${baseTypeLbl} · Stableford` : baseTypeLbl
 
   const namesA = m._namesA.join(' · ') || '—'
