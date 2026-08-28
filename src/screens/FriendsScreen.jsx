@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { nameInitial } from '../lib/names'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { challengeFriendOnDealBuddy } from '../lib/dealbuddy'
@@ -238,7 +239,7 @@ function FriendRow({ profile, idx, rightSlot }) {
           <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
         ) : (
           <span className="font-condensed font-black text-base text-accent">
-            {profile.display_name?.[0]?.toUpperCase() ?? '?'}
+            {nameInitial(profile.display_name)}
           </span>
         )}
       </div>

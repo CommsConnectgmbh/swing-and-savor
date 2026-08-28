@@ -89,7 +89,15 @@ codebase-wide grep:
   `fetchProfileList`, `indexById`, `searchProfiles`); call sites migrated.**
 - **Initials from a name** is computed ~15 ways (`name?.[0]`, `slice(0,2)`,
   word-split) — several produce *different* output, so they must be unified
-  deliberately, not blindly. **→ pending: `lib/format.js#initials` variants.**
+  deliberately, not blindly. **→ `lib/names.js` now owns the word-based
+  `initials`, the profile-preferring `profileInitial`, and the single-letter
+  `nameInitial` (the avatar-monogram fallback, migrated at 5 byte-identical
+  sites: FriendsScreen, ProfileScreen, AvatarPicker, ChallengesScreen,
+  CupExtrasSheet). The intentionally different variants — no-fallback
+  (`ChallengesScreen` opponent tile), non-upper-cased `?. || '·'`
+  (`SavorOfferScreen`), and the two-letter `slice(0,2)` prefix
+  (`CasualScreen`, `MatchesScreen`) — are left as-is since they render
+  different output.**
 - **Date formatting** — `new Date(x).toLocaleDateString('de-DE', …)` is inlined
   ~16 times, half hard-coding `de-DE` instead of the active i18n locale.
   **→ pending: `lib/format.js#formatDate` (preserve current locale per site).**
