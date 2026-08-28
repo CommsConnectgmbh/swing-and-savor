@@ -16,6 +16,7 @@ import ShareSheet from '../components/ShareSheet'
 import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
 import { hasWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { getAccessToken } from '../lib/session'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -110,8 +111,7 @@ export default function ProfileScreen() {
     setDeleting(true)
     setDeleteError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
+      const token = await getAccessToken()
       if (!token) throw new Error('Keine Session — bitte neu anmelden')
       const res = await fetch(functionUrl('delete-account'), {
         method: 'POST',
