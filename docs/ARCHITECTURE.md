@@ -146,6 +146,11 @@ high-leverage fix.
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
+- [x] `lib/format.js#formatToPar` — the golf score-to-par notation (`E` / `+n` /
+      `-n`), hand-inlined 4× in `CasualScreen` (gross/net badges, live standing,
+      share-card summary) and as `fmtDelta` in `MatchDetailScreen`; unified into a
+      single tested formatter. `MatchDetailScreen`'s `null`→render-nothing guard
+      is preserved by delegating from `fmtDelta`.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.
