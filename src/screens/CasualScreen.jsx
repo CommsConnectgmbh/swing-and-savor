@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
 import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
+import { formatDate } from '../lib/format'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
@@ -925,7 +926,7 @@ export default function CasualScreen() {
         statusLabel: finished ? 'Endstand' : `Live · ${maxPlayed}/18`,
         rows: cardRows,
         matchResult,
-        dateLabel: new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }),
+        dateLabel: formatDate(new Date(), { day: '2-digit', month: 'short', year: 'numeric' }, 'de-DE'),
       })
       const shareText = matchResult
         ? `${matchResult.text}${matchResult.label && matchResult.label !== 'AS' ? ` ${matchResult.label}` : ''} — ${active.course_name || 'Casual-Runde'}`
@@ -1024,7 +1025,7 @@ export default function CasualScreen() {
                     {r.name || r.course_name || 'Casual Runde'}
                   </p>
                   <p className="text-[11px] text-inkMuted truncate">
-                    {new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                    {formatDate(r.created_at, { day: '2-digit', month: 'short' }, 'de-DE')}
                     {r.course_name && ` · ${r.course_name}`}
                     {r.status === 'finished' && ' · beendet'}
                   </p>

@@ -90,9 +90,14 @@ codebase-wide grep:
 - **Initials from a name** is computed ~15 ways (`name?.[0]`, `slice(0,2)`,
   word-split) — several produce *different* output, so they must be unified
   deliberately, not blindly. **→ pending: `lib/format.js#initials` variants.**
-- **Date formatting** — `new Date(x).toLocaleDateString('de-DE', …)` is inlined
-  ~16 times, half hard-coding `de-DE` instead of the active i18n locale.
-  **→ pending: `lib/format.js#formatDate` (preserve current locale per site).**
+- **Date formatting** — `new Date(x).toLocaleDateString('de-DE', …)` was inlined
+  ~15 times, half hard-coding `de-DE` instead of the active i18n locale.
+  **→ extracted to `lib/format.js` (`formatDate`, `formatTime`); every inline
+  date/time site migrated with its *existing* locale preserved, so output is
+  byte-identical.** Follow-up (behaviour-changing, out of scope here): the bare
+  `cup.date` sites are still non-anchored, unlike the `formatCupDate` sites —
+  unifying them onto the noon anchor would fix a latent same-day-across-screens
+  TZ drift but must be its own PR.
 
 ### P2 — God screens
 `CasualScreen` (1120 LOC), `MatchesScreen` (1079), `MatchDetailScreen` (978),
@@ -144,8 +149,11 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
-- [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
-      replacing the inlined variants without changing rendered output.
+- [x] `lib/format.js` — `formatDate` / `formatTime` (+ tests); migrated the ~15
+      inlined `toLocaleDateString`/`toLocaleTimeString` sites, preserving each
+      site's locale so rendered output is unchanged.
+- [ ] `lib/format.js` — `initials`, `formatRelative` (+ tests), replacing the
+      inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.

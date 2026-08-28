@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { uploadCupCover, clearCupCover } from '../lib/photo'
+import { formatDate } from '../lib/format'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -540,7 +541,7 @@ export default function CupScreen() {
                   {cup.has_edit_password && <span className="text-lock"><LockIcon /></span>}
                 </p>
                 <p className="text-xs mt-0.5 text-inkMuted flex items-center gap-1.5 flex-wrap">
-                  <span>{new Date(cup.date + 'T12:00:00').toLocaleDateString()}</span>
+                  <span>{formatDate(cup.date + 'T12:00:00')}</span>
                   <span className="text-inkDim">·</span>
                   <span className="text-teamA">{cup.team_a_name}</span>
                   <span className="text-inkDim">vs</span>

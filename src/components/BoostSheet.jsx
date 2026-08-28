@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
-import { fmtEur } from '../lib/format'
+import { fmtEur, formatDate } from '../lib/format'
 
 const TIERS = [
   { id: 'top',       icon: '↑', prices: { 3: 499, 7: 999, 14: 1499 } },
@@ -72,7 +72,7 @@ export default function BoostSheet({ cup, onClose }) {
             <div className="rounded-xl bg-accent/10 border border-accent/30 px-4 py-3 text-xs text-accent">
               {t('sheets.boost.alreadyActive', {
                 tier: cup.promo_tier,
-                date: activeUntil.toLocaleDateString(lang),
+                date: formatDate(activeUntil, undefined, lang),
               })}
             </div>
           )}
