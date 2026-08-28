@@ -7,6 +7,7 @@ import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '../lib/dealbuddy'
 import { buildReferralLink } from '../lib/referral'
 import { profileInitial } from '../lib/names'
+import { fmtHc } from '../lib/format'
 import { SUPPORTED_LANGUAGES } from '../lib/i18n'
 import { THEMES, getCurrentTheme, applyTheme } from '../lib/theme'
 import AvatarPicker from '../components/AvatarPicker'
@@ -306,7 +307,7 @@ export default function ProfileScreen() {
           {target.home_club && <span>{target.home_club}</span>}
           {target.home_club && target.hcp !== null && target.hcp !== undefined && <span>·</span>}
           {target.hcp !== null && target.hcp !== undefined && (
-            <span className="tabular-nums">HC {Number(target.hcp).toFixed(1)}</span>
+            <span className="tabular-nums">HC {fmtHc(target.hcp)}</span>
           )}
           {target.elo_rating !== null && target.elo_rating !== undefined && target.games_played > 0 && (
             <>
