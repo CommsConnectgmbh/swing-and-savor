@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { usePublicResource } from '../lib/usePublicResource'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 36 }) {
@@ -50,28 +50,12 @@ function CupRow({ cup }) {
 export default function CrewScreen() {
   const { t } = useTranslation()
   const { slug } = useParams()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true); setErr(null)
-    fetch(`${functionUrl('public-crew')}?slug=${encodeURIComponent(slug)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.group.name} · Crew · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [slug])
+  const { data, loading, error: err } = usePublicResource(
+    'public-crew', { slug },
+    { onLoad: (j) => { document.title = `${j.group.name} · Crew · Swing & Savor` } },
+  )
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 

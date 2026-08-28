@@ -1,37 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { usePublicResource } from '../lib/usePublicResource'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
   const { inviteCode } = useParams()
-  const [cup, setCup] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    fetch(`${functionUrl('public-cup')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setCup(j.cup)
-        setLoading(false)
-        // OG-Meta-Tags client-side patchen (für Share-Previews wenn Crawler JS rendert)
-        document.title = `${j.cup.name} · Swing & Savor`
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [inviteCode])
+  const { data, loading, error: err } = usePublicResource(
+    'public-cup', { invite: inviteCode },
+    // OG-Meta-Tags client-side patchen (für Share-Previews wenn Crawler JS rendert)
+    { onLoad: (j) => { document.title = `${j.cup.name} · Swing & Savor` } },
+  )
+  const cup = data?.cup
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-bg"><LoadingSpinner /></div>
   if (err || !cup) {
