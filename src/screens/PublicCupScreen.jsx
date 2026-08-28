@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
+import { currentUrl } from '../lib/share'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 export default function PublicCupScreen() {
@@ -53,7 +54,7 @@ export default function PublicCupScreen() {
 
   const fmt = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1)
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareUrl = currentUrl()
   const shareText = cup.status === 'finished' && winner
     ? t('share.cupResultText', { winner, cup: cup.name, url: shareUrl })
     : t('share.cupShareText', { url: shareUrl })

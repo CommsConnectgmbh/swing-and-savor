@@ -1,6 +1,15 @@
 // Cross-platform share helpers.
 // Web-Share API on iOS Safari / Android Chrome; falls back to a manual sheet of share targets.
 
+// The current page's URL, guarded for non-browser (SSR / prerender) contexts
+// where `window` is undefined. Used as the default share target on the public
+// pages (cup, recap, invitational, season, crew, hall-of-fame, Savor offer),
+// which each previously inlined this exact guard. Centralising it keeps the
+// SSR fallback ('') consistent and prevents a new share page from forgetting it.
+export function currentUrl() {
+  return typeof window !== 'undefined' ? window.location.href : ''
+}
+
 export function canNativeShare() {
   try { return typeof navigator !== 'undefined' && typeof navigator.share === 'function' } catch { return false }
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
+import { currentUrl } from '../lib/share'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
@@ -73,7 +74,7 @@ export default function CrewScreen() {
     return () => { cancelled = true }
   }, [slug])
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareUrl = currentUrl()
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-bg"><LoadingSpinner /></div>
   if (err || !data) {

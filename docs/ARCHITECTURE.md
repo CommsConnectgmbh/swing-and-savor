@@ -142,6 +142,11 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
+- [x] `lib/share.js#currentUrl` — SSR-guarded current-page URL (`typeof window
+      !== 'undefined' ? window.location.href : ''`) was inlined verbatim in the
+      seven public share pages (Savor offer, PublicCup, Season, Recap, Crew,
+      Invitational, Hall of Fame); extracted + tested and all call sites migrated,
+      so the SSR fallback can no longer drift or be forgotten on a new share page.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),

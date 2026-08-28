@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
+import { currentUrl } from '../lib/share'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
@@ -68,7 +69,7 @@ export default function InvitationalScreen() {
     return () => { cancelled = true }
   }, [inviteCode])
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareUrl = currentUrl()
 
   const shareText = useMemo(() => {
     if (!data) return ''
