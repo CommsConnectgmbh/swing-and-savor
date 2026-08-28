@@ -120,12 +120,12 @@ functions (rather than each call site reinventing it) would make failures
 observable; the `lib/profiles.js` helpers currently degrade to an empty result
 but do not yet log.
 
-### P6 — Tooling drift
-`package.json`'s `lint` script invokes ESLint with `.eslintrc`-style flags, but
-no ESLint config exists in the repo and the installed ESLint is v9+/flat-config
-only — so `npm run lint` cannot run. Build (`vite build`) and tests (`vitest`,
-21→29 passing) are healthy. Restoring a working lint config is a low-risk,
-high-leverage fix.
+### P6 — Tooling drift  ✅ resolved
+Previously `package.json`'s `lint` script invoked ESLint with `.eslintrc`-style
+flags against no config, so `npm run lint` could not run. A flat config
+(`eslint.config.js`) was restored and wired into CI; `npm run lint` now passes
+(0 errors, ~70 warnings tracked for later cleanup). Build (`vite build`) and
+tests (`vitest`) remain healthy.
 
 ## 5. Refactoring strategy (rules of engagement)
 
@@ -142,11 +142,15 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
-- [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
-      MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] Migrate remaining profile-map sites to `lib/profiles.js`: DiscoverScreen
+      (`fetchProfileMap`), MatchesScreen/CasualScreen (`fetchFriendProfiles`),
+      MessagesScreen + ProfileScreen block-list (`fetchProfileList`),
+      ConversationScreen (`fetchProfile`), MatchDetailScreen (`indexById`).
+      Added a `fetchProfile` single-row helper (+ tests) for the last inline
+      `.eq('id').maybeSingle()` profile lookup.
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
-- [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
+- [x] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.
 - [ ] Move client-side stat aggregation (`lib/stats.js`) behind a Postgres view/RPC.
