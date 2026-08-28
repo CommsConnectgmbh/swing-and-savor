@@ -14,7 +14,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
-import { fmtPts, formatCupDate } from '../lib/format'
+import { fmtPts, fmtFactor, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -615,7 +615,7 @@ export default function MatchDetailScreen() {
           </p>
           {hasFactor && (
             <p className="text-[10px] font-bold tracking-wide uppercase text-accent mt-1">
-              Faktor {factorA.toFixed(2)} / {factorB.toFixed(2)}
+              Faktor {fmtFactor(factorA)} / {fmtFactor(factorB)}
             </p>
           )}
         </div>
