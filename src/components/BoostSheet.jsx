@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
-import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { getAccessToken, callFunction } from '../lib/functions'
 import { fmtEur } from '../lib/format'
 
 const TIERS = [
@@ -33,15 +32,12 @@ export default function BoostSheet({ cup, onClose }) {
     if (!instantConsent) { setErr(t('sheets.boost.consentRequired')); return }
     setBusy(true); setErr(null)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error(t('sheets.boost.mustLogin'))
-      const res = await fetch(functionUrl('create-boost-checkout'), {
-        method: 'POST',
-        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true }),
+      const { res, data: j } = await callFunction('create-boost-checkout', {
+        token: jwt,
+        body: { tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true },
       })
-      const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
         setErr(j.error || 'checkout_failed'); return
       }

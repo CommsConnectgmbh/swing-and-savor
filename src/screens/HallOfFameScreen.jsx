@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { callPublicFunction } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -60,11 +60,8 @@ export default function HallOfFameScreen() {
 
   useEffect(() => {
     if (!handle) return
-    fetch(`${functionUrl('public-rivalries')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => r.ok ? r.json() : null)
-      .then((j) => { if (j?.rivalries) setRivalries(j.rivalries) })
+    callPublicFunction('public-rivalries', { query: { handle } })
+      .then(({ res, data }) => { if (res.ok && data?.rivalries) setRivalries(data.rivalries) })
       .catch(() => {})
   }, [handle])
 
@@ -72,13 +69,10 @@ export default function HallOfFameScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+    callPublicFunction('public-hall', { query: { handle } })
+      .then(({ res, data: j }) => {
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
+        if (!res.ok) { setErr(j?.error || 'error'); setLoading(false); return }
         setData(j)
         document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor`
         setLoading(false)
