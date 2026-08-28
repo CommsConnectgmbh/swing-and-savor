@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { subscribeToTables } from './realtime'
 import { pushToast } from './toast'
 import { debounce } from './debounce'
 
@@ -20,7 +21,7 @@ export function startLiveEvents(user) {
   let myConvIds = new Set()
   let myMatchIds = new Set()
   let myProfilesById = {} // sender_id → handle/name
-  let chMsgs = null, chRest = null, chMatches = null
+  let stopMsgs = null, stopRest = null, stopMatches = null
 
   async function refreshMine() {
     const [{ data: convs }, { data: cups }] = await Promise.all([
@@ -51,73 +52,69 @@ export function startLiveEvents(user) {
   }
 
   refreshMine().then(() => {
-    chMsgs = supabase.channel('live-msgs')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },
-        async ({ new: msg }) => {
-          if (msg.sender_id === user.id) return
-          if (!myConvIds.has(msg.conversation_id)) return
-          const p = await profileFor(msg.sender_id)
-          pushToast({
-            icon: '💬',
-            title: p ? `${p.display_name}` : 'Neue Nachricht',
-            body: msg.body.length > 90 ? msg.body.slice(0, 87) + '…' : msg.body,
-            action: `/messages/${msg.conversation_id}`,
-          })
+    stopMsgs = subscribeToTables('live-msgs', [
+      { event: 'INSERT', table: 'messages', handler: async ({ new: msg }) => {
+        if (msg.sender_id === user.id) return
+        if (!myConvIds.has(msg.conversation_id)) return
+        const p = await profileFor(msg.sender_id)
+        pushToast({
+          icon: '💬',
+          title: p ? `${p.display_name}` : 'Neue Nachricht',
+          body: msg.body.length > 90 ? msg.body.slice(0, 87) + '…' : msg.body,
+          action: `/messages/${msg.conversation_id}`,
         })
-      .subscribe()
+      } },
+    ])
 
-    chRest = supabase.channel('live-social')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_reactions' },
-        async ({ new: r }) => {
-          if (r.user_id === user.id) return
-          if (!myMatchIds.has(r.match_id)) return
-          const p = await profileFor(r.user_id)
-          pushToast({
-            icon: '❤️',
-            title: p ? `${p.display_name} hat geliked` : 'Like erhalten',
-            body: 'Tap um zum Match',
-            action: `/matches/${r.match_id}`,
-          })
+    stopRest = subscribeToTables('live-social', [
+      { event: 'INSERT', table: 'match_reactions', handler: async ({ new: r }) => {
+        if (r.user_id === user.id) return
+        if (!myMatchIds.has(r.match_id)) return
+        const p = await profileFor(r.user_id)
+        pushToast({
+          icon: '❤️',
+          title: p ? `${p.display_name} hat geliked` : 'Like erhalten',
+          body: 'Tap um zum Match',
+          action: `/matches/${r.match_id}`,
         })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_comments' },
-        async ({ new: c }) => {
-          if (c.user_id === user.id) return
-          if (!myMatchIds.has(c.match_id)) return
-          const p = await profileFor(c.user_id)
-          pushToast({
-            icon: '💬',
-            title: p ? `${p.display_name} kommentiert` : 'Neuer Kommentar',
-            body: c.body.length > 90 ? c.body.slice(0, 87) + '…' : c.body,
-            action: `/matches/${c.match_id}`,
-          })
+      } },
+      { event: 'INSERT', table: 'match_comments', handler: async ({ new: c }) => {
+        if (c.user_id === user.id) return
+        if (!myMatchIds.has(c.match_id)) return
+        const p = await profileFor(c.user_id)
+        pushToast({
+          icon: '💬',
+          title: p ? `${p.display_name} kommentiert` : 'Neuer Kommentar',
+          body: c.body.length > 90 ? c.body.slice(0, 87) + '…' : c.body,
+          action: `/matches/${c.match_id}`,
         })
-      .subscribe()
+      } },
+    ])
 
-    chMatches = supabase.channel('live-matches')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' },
-        async ({ new: m, old: o }) => {
-          if (!myMatchIds.has(m.id)) {
-            // Unbekanntes Match: evtl. ein neuer eigener Cup. Refresh nur
-            // gebündelt anstoßen und dieses Event verwerfen (kein await pro
-            // Fremd-Update). Folge-Events nach dem Refresh treffen die Toasts.
-            debouncedRefreshMine()
-            return
-          }
-          if (o.status !== 'active' && m.status === 'active') {
-            pushToast({ icon: '⛳', title: 'Match ist live',
-              body: 'Das Live-Tracking läuft.', action: `/matches/${m.id}` })
-          } else if (o.status !== 'finished' && m.status === 'finished') {
-            pushToast({ icon: '🏁', title: 'Match beendet',
-              body: 'Ergebnis ist final.', action: `/matches/${m.id}` })
-          }
-        })
-      .subscribe()
+    stopMatches = subscribeToTables('live-matches', [
+      { event: 'UPDATE', table: 'matches', handler: async ({ new: m, old: o }) => {
+        if (!myMatchIds.has(m.id)) {
+          // Unbekanntes Match: evtl. ein neuer eigener Cup. Refresh nur
+          // gebündelt anstoßen und dieses Event verwerfen (kein await pro
+          // Fremd-Update). Folge-Events nach dem Refresh treffen die Toasts.
+          debouncedRefreshMine()
+          return
+        }
+        if (o.status !== 'active' && m.status === 'active') {
+          pushToast({ icon: '⛳', title: 'Match ist live',
+            body: 'Das Live-Tracking läuft.', action: `/matches/${m.id}` })
+        } else if (o.status !== 'finished' && m.status === 'finished') {
+          pushToast({ icon: '🏁', title: 'Match beendet',
+            body: 'Ergebnis ist final.', action: `/matches/${m.id}` })
+        }
+      } },
+    ])
   })
 
   return () => {
     debouncedRefreshMine.cancel()
-    if (chMsgs)    supabase.removeChannel(chMsgs)
-    if (chRest)    supabase.removeChannel(chRest)
-    if (chMatches) supabase.removeChannel(chMatches)
+    stopMsgs?.()
+    stopRest?.()
+    stopMatches?.()
   }
 }
