@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
+import LockPlaceholder from '../components/LockPlaceholder'
+import { PencilIcon, CloseIcon } from '../components/icons'
 import { isUnlocked } from '../lib/tournamentGate'
 
 function validateHC(val) {
@@ -14,45 +16,6 @@ function validateHC(val) {
   return null
 }
 
-function PencilIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  )
-}
-
-function LockPlaceholder({ onUnlock }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-8 gap-4 animate-fade-up">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-lock/10 border border-lock/30">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f5b94a"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0110 0v4"/>
-        </svg>
-      </div>
-      <div className="text-center">
-        <p className="font-bold text-sm text-ink">Turnier geschützt</p>
-        <p className="text-xs mt-1 text-inkMuted">Passwort eingeben, um Spieler zu sehen</p>
-      </div>
-      <button onClick={onUnlock}
-        className="px-6 py-2.5 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform">
-        Passwort eingeben
-      </button>
-    </div>
-  )
-}
 
 
 const emptyForm = { name: '', handicap: '', team: 'A' }
@@ -246,7 +209,7 @@ export default function TeamsScreen() {
 
       {/* Player lists */}
       {loading ? <LoadingSpinner /> : locked && !showViewGate ? (
-        <LockPlaceholder onUnlock={() => setShowViewGate(true)} />
+        <LockPlaceholder onUnlock={() => setShowViewGate(true)} subtitle="Passwort eingeben, um Spieler zu sehen" />
       ) : !locked && (
         <>
           {[
