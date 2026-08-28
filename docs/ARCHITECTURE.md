@@ -144,6 +144,10 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] `lib/promo.js` — `isPromoActive` / `promoState` (+ tests); de-dup the
+      inlined cup boost/promotion gating (had drifted between
+      `new Date(x).getTime() > now` and `new Date(x) > new Date()`) across
+      DiscoverScreen (feed sort + row), CupScreen (Boost button) and BoostSheet.
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.

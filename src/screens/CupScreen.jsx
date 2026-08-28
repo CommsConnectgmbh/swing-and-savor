@@ -12,6 +12,7 @@ import CupExtrasSheet from '../components/CupExtrasSheet'
 import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
 import { isUnlocked } from '../lib/tournamentGate'
+import { isPromoActive } from '../lib/promo'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 
 const emptyForm = {
@@ -564,13 +565,13 @@ export default function CupScreen() {
                   <button
                     onClick={() => setBoostCup(cup)}
                     className={`text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-md active:scale-95 transition-transform border ${
-                      cup.promoted_until && new Date(cup.promoted_until) > new Date()
+                      isPromoActive(cup)
                         ? 'bg-accent text-brandDark border-accent'
                         : 'bg-surface text-inkMuted border-line hover:text-accent hover:border-accent/40'
                     }`}
                     title="Nach oben schieben / Highlight"
                   >
-                    {cup.promoted_until && new Date(cup.promoted_until) > new Date() ? 'Boost ●' : 'Boost'}
+                    {isPromoActive(cup) ? 'Boost ●' : 'Boost'}
                   </button>
                 )}
                 {cup.owner_id === user?.id && pendingCounts[cup.id] > 0 && (
