@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { functionUrl, publicFunctionHeaders, readPublicJson } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -57,9 +57,9 @@ export default function InvitationalScreen() {
       headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+        const { ok, error, data: j } = await readPublicJson(r)
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
+        if (!ok) { setErr(error); setLoading(false); return }
         setData(j)
         document.title = `${j.cup.name} · Swing & Savor`
         setLoading(false)
