@@ -1,3 +1,5 @@
+import { functionUrl } from './functions'
+
 // Shared helpers for the Savor marketplace screens (home / category / offer).
 //
 // Each of the three Savor screens previously carried a byte-identical copy of
@@ -9,7 +11,10 @@ import { useEffect, useState } from 'react'
 
 // Base URL of the public-savor Supabase edge function. Append a query string
 // such as `?mode=home`, `?mode=category&category=…` or `?mode=offer&slug=…`.
-export const SAVOR_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
+// Derived from `functionUrl` so the `/functions/v1/` path lives in exactly one
+// place (this module previously hand-built the same string that `functions.js`
+// already owns).
+export const SAVOR_FUNCTIONS_URL = functionUrl('public-savor')
 
 // Display label for an offer's price.
 // Priority: an explicit price_label, then a formatted EUR amount, then a
