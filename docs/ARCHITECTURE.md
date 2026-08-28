@@ -142,8 +142,14 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
+- [x] Extract the byte-identical public-cup list row (`CupRow`) that was
+      copy-pasted into `CrewScreen`, `HallOfFameScreen` and `SeasonScreen` into
+      a shared `components/CupRow.jsx` (+ render test). Three copies → one.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [ ] De-dup the near-identical public `Avatar`/`Initials` sub-components across
+      the public share screens (Crew/HallOfFame/Recap/Invitational) — they differ
+      only in default size, so a single `<Avatar>` with a `size` prop would do.
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
