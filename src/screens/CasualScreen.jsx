@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { useSheetBody } from '../lib/useSheet'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
@@ -43,10 +44,7 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
 
-  useEffect(() => {
-    document.body.classList.add('sheet-open')
-    return () => document.body.classList.remove('sheet-open')
-  }, [])
+  useSheetBody()
 
   useEffect(() => {
     let cancelled = false
@@ -132,10 +130,7 @@ function GuestSheet({ onAdd, onClose }) {
   const [name, setName] = useState('')
   const [hcp, setHcp] = useState('')
 
-  useEffect(() => {
-    document.body.classList.add('sheet-open')
-    return () => document.body.classList.remove('sheet-open')
-  }, [])
+  useSheetBody()
 
   function submit(e) {
     e.preventDefault()
@@ -193,10 +188,7 @@ function CourseSetupSheet({ initialPars, initialHcps, onSave, onClose }) {
     return Array.from({ length: 18 }, (_, i) => i + 1)
   })
 
-  useEffect(() => {
-    document.body.classList.add('sheet-open')
-    return () => document.body.classList.remove('sheet-open')
-  }, [])
+  useSheetBody()
 
   function setPar(i, v) {
     const n = parseInt(v, 10)
