@@ -190,7 +190,7 @@
 **Canvas Card Renderers:**
 - Purpose: Generate shareable image cards without external image libraries
 - Location: `src/lib/shareCard.js` (match recap, 1080×1080), `src/lib/cardRenderer.js` (winner card, story overlay, portrait card)
-- Pattern: Canvas 2D API only, `document.createElement('canvas')` at runtime
+- Pattern: Canvas 2D API only, `document.createElement('canvas')` at runtime. Shared primitives (`roundRect`, `fitText`, `canvasToBlob`, `shareImageOrDownload`, `loadImage`) live in `src/lib/canvas.js`; both renderers import them instead of re-implementing.
 
 **WatchBridge:**
 - Purpose: Isolates all Apple Watch (Capacitor) interaction; no-ops cleanly on non-iOS platforms
@@ -273,7 +273,7 @@
 **Validation:** Input validation inline within lib functions (e.g., `scoring.js` validates strokes/par as positive integers; `referral.js` validates ref code format with regex)
 **Authentication:** `useAuth()` hook everywhere; `AuthProvider` in `src/lib/auth.jsx` is the single gate
 **Internationalisation:** `useTranslation()` hook in all UI components; 5 locales in `src/locales/`; language stored in `localStorage` key `sns_lang`
-**Canvas rendering:** Two independent canvas modules (`shareCard.js`, `cardRenderer.js`) both use only Canvas 2D API primitives with no shared code — consider extracting shared helpers if a third renderer is needed
+**Canvas rendering:** Two canvas renderers (`shareCard.js`, `cardRenderer.js`) build cards from Canvas 2D API primitives; their shared helpers (rounded-rect, text truncation, PNG export, share/download) are centralised in `src/lib/canvas.js` and imported by both
 
 ---
 

@@ -29,3 +29,50 @@ export function loadImage(src) {
     img.src = src
   })
 }
+
+/**
+ * Truncate a single line of text with a trailing ellipsis so it fits within
+ * maxWidth for the context's current font. Returns the text unchanged when it
+ * already fits. Caller must set `ctx.font` before measuring.
+ */
+export function fitText(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text
+  let s = text
+  while (s.length > 1 && ctx.measureText(s + '…').width > maxWidth) s = s.slice(0, -1)
+  return s + '…'
+}
+
+/**
+ * Export a canvas to a PNG, resolving with both the Blob (for sharing/upload)
+ * and a data URL (for inline <img> previews).
+ */
+export function canvasToBlob(canvas) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve({ blob, dataUrl: canvas.toDataURL('image/png') })
+    }, 'image/png', 0.95)
+  })
+}
+
+/**
+ * Share a generated PNG via the Web Share API (with the file attached) and
+ * fall back to a plain download when sharing is unavailable or declined.
+ * Returns 'shared' | 'cancelled' | 'downloaded'.
+ */
+export async function shareImageOrDownload({ blob, filename, title, text, url }) {
+  const file = new File([blob], filename, { type: 'image/png' })
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title, text, url })
+      return 'shared'
+    } catch (e) {
+      if (e?.name === 'AbortError') return 'cancelled'
+    }
+  }
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl; a.download = filename
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(objectUrl)
+  return 'downloaded'
+}
