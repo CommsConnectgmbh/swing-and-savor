@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { nameInitial } from '../lib/names'
 import { useAuth } from '../lib/auth'
 import { openDealBuddyChallenge, challengeFriendOnDealBuddy } from '../lib/dealbuddy'
 import { fetchProfileMap, searchProfiles, PROFILE_CARD_COLUMNS } from '../lib/profiles'
@@ -455,7 +456,7 @@ function Avatar({ p }) {
     <div className="w-7 h-7 rounded-full bg-accent/15 border border-accent/30 overflow-hidden flex items-center justify-center flex-shrink-0">
       {p?.avatar_url
         ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
-        : <span className="font-condensed font-black text-xs text-accent">{p?.display_name?.[0]?.toUpperCase() || '?'}</span>}
+        : <span className="font-condensed font-black text-xs text-accent">{nameInitial(p?.display_name)}</span>}
     </div>
   )
 }
