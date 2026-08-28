@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { getStoredReferralCode, clearStoredReferralCode } from './referral'
 import { logDebug } from './debug'
-import { functionUrl, authFunctionHeaders } from './functions'
+import { postFunction } from './functions'
 
 async function claimReferralIfAny() {
   const code = getStoredReferralCode()
@@ -11,10 +11,9 @@ async function claimReferralIfAny() {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
     if (!token) return
-    const res = await fetch(functionUrl('claim-referral'), {
-      method: 'POST',
-      headers: { ...authFunctionHeaders(token), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref_code: code }),
+    const res = await postFunction('claim-referral', {
+      token,
+      body: { ref_code: code },
     })
     if (res.ok) {
       clearStoredReferralCode()

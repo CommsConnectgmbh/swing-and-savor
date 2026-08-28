@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { postFunction } from '../lib/functions'
 import { fileExt } from '../lib/format'
 import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
 
@@ -128,10 +128,9 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
 
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
-      const res = await fetch(functionUrl('scorecard-ocr'), {
-        method: 'POST',
-        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ upload_id: row.id }),
+      const res = await postFunction('scorecard-ocr', {
+        token: jwt,
+        body: { upload_id: row.id },
       })
       const j = await res.json()
       if (!res.ok) throw new Error(j.error || 'ocr_failed')
