@@ -7,7 +7,7 @@
 //   - championCard  → 1080×1080 solid Dark-Luxury card (Feed / WhatsApp).
 //   - portraitCard  → 1080×1350 solid vertical card (WhatsApp / Pinterest).
 
-import { roundRect, loadImage } from './canvas'
+import { loadImage, fitText } from './canvas'
 
 const CHAMPAGNE      = '#D9C9A8'
 const CHAMPAGNE_DEEP = '#A8956A'
@@ -18,13 +18,6 @@ const HAIRLINE       = 'rgba(244,241,234,0.18)'
 function loadFont(family, weight = 500) {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve()
   try { return document.fonts.load(`${weight} 64px "${family}"`) } catch { return Promise.resolve() }
-}
-
-function fitText(ctx, text, maxWidth) {
-  if (ctx.measureText(text).width <= maxWidth) return text
-  let s = text
-  while (s.length > 1 && ctx.measureText(s + '…').width > maxWidth) s = s.slice(0, -1)
-  return s + '…'
 }
 
 function bottomBrand(ctx, w, h, opts = {}) {
