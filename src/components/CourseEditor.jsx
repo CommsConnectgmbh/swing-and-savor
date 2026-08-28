@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { applyCourseEdit } from '../lib/courses'
+import { sumPars } from '../lib/scoring'
 
 // Normalize an 18-entry int array, with fallback default.
 function fillArr(arr, len = 18, fallback = 0) {
@@ -16,7 +17,7 @@ export default function CourseEditor({ course, sourceMatchId = null, onClose, on
   const [busy,  setBusy]  = useState(false)
   const [error, setError] = useState(null)
 
-  const totalPar = pars.reduce((s, p) => s + (p || 0), 0)
+  const totalPar = sumPars(pars)
 
   function updatePar(i, delta) {
     setPars(p => p.map((v, idx) => idx === i ? Math.max(3, Math.min(6, v + delta)) : v))

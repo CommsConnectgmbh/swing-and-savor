@@ -68,6 +68,17 @@ export function stablefordPoints(strokes, par) {
   return 0
 }
 
+// Gesamt-Par eines Loch-Layouts (Summe der Loch-Pars).
+// Fehlende oder nicht-endliche Einträge (null/undefined/NaN) zählen als 0,
+// Nicht-Arrays liefern 0. Dieser Wert wurde zuvor in CourseEditor und
+// CasualScreen mehrfach inline berechnet (mal via `p || 0`, mal via
+// `Number.isFinite(p) ? p : 0`); für Loch-Par-Arrays aus Zahlen/null sind
+// beide Varianten identisch.
+export function sumPars(pars) {
+  if (!Array.isArray(pars)) return 0
+  return pars.reduce((sum, p) => sum + (Number.isFinite(p) ? p : 0), 0)
+}
+
 // HCP-Schläge pro Loch nach Stroke-Index (SI).
 // playingHcp = ganze Schläge, die der Spieler über 18 Löcher kriegt.
 // hcps = Array[18] mit SI 1..18 (1 = schwerstes, 18 = leichtestes).

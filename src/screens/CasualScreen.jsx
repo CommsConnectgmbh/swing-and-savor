@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
+import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults, sumPars } from '../lib/scoring'
 import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -207,7 +207,7 @@ function CourseSetupSheet({ initialPars, initialHcps, onSave, onClose }) {
     setHcps(arr => arr.map((h, idx) => idx === i ? (Number.isFinite(n) && n >= 1 && n <= 18 ? n : h) : h))
   }
 
-  const totalPar = pars.reduce((s, p) => s + (p || 0), 0)
+  const totalPar = sumPars(pars)
   const hcpsValid = (() => {
     const set = new Set(hcps)
     return set.size === 18 && [...set].every(v => v >= 1 && v <= 18)
@@ -371,7 +371,7 @@ function ParCell({ value, onChange, disabled }) {
 function LiveStanding({ round, playersList, scores }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : null
   const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
-  const totalPar = pars ? pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0) : 0
+  const totalPar = sumPars(pars)
 
   const rows = playersList.map(p => {
     const own = scores.filter(s => s.player_idx === p.idx)
@@ -500,7 +500,7 @@ function LiveStanding({ round, playersList, scores }) {
 function Scorecard({ round, playersList, scores, isOwner, onScoreChange, onParChange }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : Array(18).fill(0)
   const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
-  const totalPar = pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0)
+  const totalPar = sumPars(pars)
   const hasPars = pars.some(x => x > 0)
 
   function strokesFor(playerIdx, hole) {
@@ -976,7 +976,7 @@ export default function CasualScreen() {
           const patch = {}
           if (!courseHasPars && !isDefaultPars) {
             patch.hole_pars = pars
-            patch.total_par = pars.reduce((s, p) => s + (p || 0), 0)
+            patch.total_par = sumPars(pars)
           }
           if (!courseHasHcps && !isDefaultHcps) {
             patch.hole_handicaps = hcps
@@ -1222,7 +1222,7 @@ export default function CasualScreen() {
         <p className="px-4 -mt-1 mb-3 text-[11px] text-inkMuted flex items-center gap-2 flex-wrap">
           <span>{active.course_name}</span>
           {active.hole_pars?.length === 18 && active.hole_pars.some(x => x > 0) && (
-            <span>· Par {active.hole_pars.reduce((s, p) => s + (p || 0), 0)}</span>
+            <span>· Par {sumPars(active.hole_pars)}</span>
           )}
           {isOwner && (
             <button onClick={() => setShowSetupSheet(true)}
