@@ -54,6 +54,17 @@ export function suggestFactors(sizeA, sizeB) {
 
 function round2(n) { return Math.round(n * 100) / 100 }
 
+// Course par = Summe der Loch-Pars, leere/ungültige Einträge zählen als 0.
+// Bisher stand diese Reduktion an mehreren Stellen inline (CourseEditor,
+// CasualScreen). Zwei Schreibweisen kursierten – `(p || 0)` und
+// `(Number.isFinite(p) ? p : 0)` –, die für die real genutzten Par-Arrays
+// (Zahlen bzw. leere Slots) identisch sind; hier vereinheitlicht und gegen
+// Nicht-Arrays (null/undefined) abgesichert.
+export function sumPars(pars) {
+  if (!Array.isArray(pars)) return 0
+  return pars.reduce((sum, p) => sum + (Number.isFinite(p) ? p : 0), 0)
+}
+
 // Brutto-Stableford pro Loch.
 // 4 = Eagle, 3 = Birdie, 2 = Par, 1 = Bogey, 0 = Doppel-Bogey oder schlimmer.
 // strokes/par müssen positive Integers sein, sonst null.
