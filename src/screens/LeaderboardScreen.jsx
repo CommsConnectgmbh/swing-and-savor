@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { otherUserId } from '../lib/pairs'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -30,7 +31,7 @@ export default function LeaderboardScreen() {
         .select('user_a,user_b').eq('status', 'accepted')
         .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
       const friendIds = new Set()
-      for (const f of (fs || [])) friendIds.add(f.user_a === user.id ? f.user_b : f.user_a)
+      for (const f of (fs || [])) friendIds.add(otherUserId(f, user.id))
       friendIds.add(user.id)
       if (friendIds.size === 0) { setRows([]); setLoading(false); return }
       q = q.in('id', [...friendIds])
