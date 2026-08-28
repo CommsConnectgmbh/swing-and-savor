@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { usePublicFunctionData } from '../hooks/usePublicFunctionData'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -52,9 +53,6 @@ function CupRow({ cup }) {
 export default function HallOfFameScreen() {
   const { t } = useTranslation()
   const { handle } = useParams()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [rivalries, setRivalries] = useState([])
 
@@ -68,24 +66,10 @@ export default function HallOfFameScreen() {
       .catch(() => {})
   }, [handle])
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setErr(null)
-    fetch(`${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [handle])
+  const { data, loading, err } = usePublicFunctionData(
+    `${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`,
+    (j) => { document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor` },
+  )
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
