@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { savorFetch, formatOfferPrice } from '../lib/savor'
 
 const DISCORD_INVITE = 'https://discord.gg/jT2GpZqZVE'
 
@@ -131,9 +131,7 @@ export default function SavorScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetch(`${SAVOR_FUNCTIONS_URL}?mode=home`, {
-      headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
-    })
+    savorFetch({ mode: 'home' })
       .then(async (r) => r.ok ? r.json() : { featured: [], counts: {}, preview_by_category: {} })
       .then((j) => { if (!cancelled) { setData(j); setLoading(false) } })
       .catch(() => { if (!cancelled) setLoading(false) })
