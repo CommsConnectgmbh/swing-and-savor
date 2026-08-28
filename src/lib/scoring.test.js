@@ -1,5 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals, formatToPar } from './scoring'
+
+describe('formatToPar', () => {
+  it('renders even par as "E"', () => {
+    expect(formatToPar(0)).toBe('E')
+  })
+
+  it('prefixes over-par diffs with "+"', () => {
+    expect(formatToPar(1)).toBe('+1')
+    expect(formatToPar(12)).toBe('+12')
+  })
+
+  it('keeps the sign for under-par diffs', () => {
+    expect(formatToPar(-1)).toBe('-1')
+    expect(formatToPar(-7)).toBe('-7')
+  })
+
+  it('returns null for null/undefined so it renders nothing', () => {
+    expect(formatToPar(null)).toBeNull()
+    expect(formatToPar(undefined)).toBeNull()
+  })
+})
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
