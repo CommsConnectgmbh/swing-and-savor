@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
 import { suggestFactors } from '../lib/scoring'
+import { clamp } from '../lib/math'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -67,7 +68,7 @@ const emptyForm = {
 function expandedSize(type, size) {
   if (type === 'singles') return 1
   if (type === 'doubles') return 2
-  return Math.max(1, Math.min(4, size | 0))
+  return clamp(size | 0, 1, 4)
 }
 
 // 1..4 chip-selector
@@ -307,7 +308,7 @@ export default function MatchesScreen() {
   }
 
   function setFactor(side, raw) {
-    const v = Math.max(0.1, Math.min(5, parseFloat(String(raw).replace(',', '.')) || 0))
+    const v = clamp(parseFloat(String(raw).replace(',', '.')) || 0, 0.1, 5)
     setForm(f => ({
       ...f,
       factorTouched: true,
