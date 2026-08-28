@@ -35,6 +35,15 @@ export async function fetchProfileMap(ids, columns = PROFILE_CARD_COLUMNS) {
   return indexById(await fetchProfileList(ids, columns))
 }
 
+// Fetch a single profile by id (null if `id` is falsy or the row is missing).
+// Mirrors the inlined `from('profiles').select(...).eq('id', id).maybeSingle()`
+// idiom used across the DM and profile screens.
+export async function fetchProfile(id, columns = PROFILE_CARD_COLUMNS) {
+  if (!id) return null
+  const { data } = await supabase.from('profiles').select(columns).eq('id', id).maybeSingle()
+  return data ?? null
+}
+
 // Search profiles by handle (prefix) or display name (contains). `query` may
 // include a leading `@`. Callers are still responsible for any minimum-length
 // gating before they choose to search.
