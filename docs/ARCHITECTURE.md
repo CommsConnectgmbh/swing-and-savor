@@ -146,6 +146,11 @@ high-leverage fix.
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
+- [x] Extract the duplicated public `CupRow` (name + location·date meta +
+      champion line + Recap/Live tag) into `components/CupRow.jsx` (+ render
+      test); migrate SeasonScreen, CrewScreen, HallOfFameScreen. The three copies
+      were byte-identical (Season only differed in JSX whitespace). Date kept
+      un-anchored to stay byte-identical — not routed through `formatCupDate`.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.
