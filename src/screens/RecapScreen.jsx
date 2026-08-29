@@ -327,7 +327,7 @@ export default function RecapScreen() {
         {poweredBy && (
           <div className="mt-10 flex flex-col items-center gap-3 hairline-t pt-8">
             <span className="text-[9px] tracking-[0.36em] uppercase text-inkDim">Powered by</span>
-            <a href={poweredBy.website_url || '#'} target="_blank" rel="noopener"
+            <a href={poweredBy.website_url || '#'} target="_blank" rel="noopener noreferrer"
                className="flex items-center gap-3">
               {poweredBy.logo_url && (
                 <img src={poweredBy.logo_url} alt={poweredBy.name} className="h-8 object-contain"
