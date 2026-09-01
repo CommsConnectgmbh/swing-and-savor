@@ -6,6 +6,7 @@
 // endpoint must stay identical across screens), so they live here now.
 
 import { useEffect, useState } from 'react'
+import { publicFunctionHeaders } from './functions'
 
 // Base URL of the public-savor Supabase edge function. Append a query string
 // such as `?mode=home`, `?mode=category&category=…` or `?mode=offer&slug=…`.
@@ -45,7 +46,7 @@ let _savorPromise = null
 function resolveSavor() {
   if (_savorPromise) return _savorPromise
   _savorPromise = fetch(`${SAVOR_FUNCTIONS_URL}?mode=home`, {
-    headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
+    headers: publicFunctionHeaders(),
   })
     .then((r) => (r.ok ? r.json() : { counts: {} }))
     .then((j) => {
