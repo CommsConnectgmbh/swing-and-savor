@@ -18,6 +18,7 @@ import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
+import { matchDeepLink } from '../lib/links'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import ScorecardSheet from '../components/ScorecardSheet'
 import {
@@ -366,7 +367,7 @@ export default function MatchDetailScreen() {
       await shareOrDownload({
         blob, filename: `swingandsavor-${matchId.slice(0, 8)}.png`,
         title: 'Swing & Savor', text: 'Schau das Match!',
-        url: `https://app.swingandsavor.at/matches/${matchId}`,
+        url: matchDeepLink(matchId),
       })
     } catch (e) { console.error('[match] share', e) }
   }
@@ -1013,7 +1014,7 @@ export default function MatchDetailScreen() {
       <WinnerCardSheet
         open={storyOpen}
         onClose={() => setStoryOpen(false)}
-        shareUrl={`https://app.swingandsavor.at/matches/${matchId}`}
+        shareUrl={matchDeepLink(matchId)}
         payload={{
           playerName:   match?.winner === 'A'
                           ? (flightNames.A.join(' · ') || match?.tournament?.team_a_name || 'Team A')
