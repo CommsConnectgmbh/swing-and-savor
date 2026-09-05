@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { verifyPassword, markUnlocked } from '../lib/tournamentGate'
+import LockIcon from './LockIcon'
 
 export default function PasswordGate({ tournamentId, onSuccess, onCancel, viewMode = false }) {
   const [pw, setPw] = useState('')
@@ -30,11 +31,7 @@ export default function PasswordGate({ tournamentId, onSuccess, onCancel, viewMo
 
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-lock/10 border border-lock/30">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5b94a"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
+            <LockIcon size={18} stroke="#f5b94a" />
           </div>
           <div>
             <p className="font-bold text-sm text-ink">{viewMode ? 'Tournament protected' : 'Write protection active'}</p>

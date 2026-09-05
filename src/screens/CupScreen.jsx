@@ -11,6 +11,7 @@ import ShareSheet from '../components/ShareSheet'
 import CupExtrasSheet from '../components/CupExtrasSheet'
 import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
+import LockIcon from '../components/LockIcon'
 import { isUnlocked } from '../lib/tournamentGate'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 
@@ -55,16 +56,6 @@ function TrashIcon() {
       <polyline points="3 6 5 6 21 6"/>
       <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
       <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-    </svg>
-  )
-}
-
-function LockIcon({ size = 11 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0110 0v4"/>
     </svg>
   )
 }
@@ -537,7 +528,7 @@ export default function CupScreen() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm leading-tight text-ink flex items-center gap-1.5">
                   {cup.name}
-                  {cup.has_edit_password && <span className="text-lock"><LockIcon /></span>}
+                  {cup.has_edit_password && <span className="text-lock"><LockIcon size={11} strokeWidth={2.5} /></span>}
                 </p>
                 <p className="text-xs mt-0.5 text-inkMuted flex items-center gap-1.5 flex-wrap">
                   <span>{new Date(cup.date + 'T12:00:00').toLocaleDateString()}</span>

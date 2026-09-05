@@ -14,6 +14,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
+import LockIcon from '../components/LockIcon'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
@@ -795,11 +796,7 @@ export default function MatchDetailScreen() {
       {locked && !done && (
         <div className="mx-3 mb-2 rounded-xl px-4 py-3 flex items-center justify-between bg-lock/8 border border-lock/25">
           <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5b94a"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0110 0v4"/>
-            </svg>
+            <LockIcon size={14} stroke="#f5b94a" />
             <span className="text-xs font-semibold text-lock">Schreibgeschützt</span>
           </div>
           <button
