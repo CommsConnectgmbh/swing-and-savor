@@ -14,22 +14,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(__dirname, "output");
 
-const SHARED_CANDIDATES = [
-  "/Volumes/Code/ClaudeCode/.env.shared",
-  "C:/Claude Code/.env.shared",
-];
-const env = (() => {
-  const o = {};
-  for (const p of SHARED_CANDIDATES) {
-    if (!fs.existsSync(p)) continue;
-    for (const l of fs.readFileSync(p, "utf8").split(/\r?\n/)) {
-      const m = /^([A-Z][A-Z0-9_]*)=(.*)$/.exec(l.trim());
-      if (m) o[m[1]] = m[2];
-    }
-    break;
-  }
-  return o;
-})();
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets).
+const env = (await import((await import("node:os")).homedir() + "/.local/lib/roloff/secrets.mjs")).readSecrets();
 const KEY_ID = env.ASC_KEY_ID_SWINGSAVOR;
 const ISSUER = env.ASC_ISSUER_ID_SWINGSAVOR;
 const KEY_PATH = env.ASC_API_KEY_PATH_SWINGSAVOR;

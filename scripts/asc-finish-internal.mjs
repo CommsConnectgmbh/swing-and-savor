@@ -11,10 +11,7 @@
 import { readFileSync } from 'node:fs'
 import { SignJWT, importPKCS8 } from 'jose'
 
-const ENV = Object.fromEntries(
-  readFileSync('/Volumes/Code/ClaudeCode/.env.shared', 'utf8')
-    .split('\n').map(l => l.match(/^([A-Z0-9_]+)=(.*)$/)).filter(Boolean).map(m => [m[1], m[2].trim()]),
-)
+const ENV = (await import((await import('node:os')).homedir() + '/.local/lib/roloff/secrets.mjs')).readSecrets()
 const KEY_ID = ENV.ASC_KEY_ID_SWINGSAVOR, ISSUER = ENV.ASC_ISSUER_ID_SWINGSAVOR, KEY_PATH = ENV.ASC_API_KEY_PATH_SWINGSAVOR
 const INTERNAL_GROUP = '36595275-94ef-41e9-8bc3-33ff52a24a0f'
 const i = process.argv.indexOf('--email')

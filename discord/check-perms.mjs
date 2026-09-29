@@ -1,17 +1,17 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import dotenv from "dotenv";
 import { Client, GatewayIntentBits } from "discord.js";
 
-dotenv.config({
-  path: join(dirname(fileURLToPath(import.meta.url)), ".env"),
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets), Zuordnung aus dem env-manifest.
+(await import((await import("node:os")).homedir() + "/.local/lib/roloff/secrets.mjs")).loadSecrets({
+  dir: dirname(fileURLToPath(import.meta.url)),
 });
 
 const c = new Client({ intents: [GatewayIntentBits.Guilds] });
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 if (!GUILD_ID) {
-  console.error("DISCORD_GUILD_ID missing in discord/.env");
+  console.error("DISCORD_GUILD_ID missing im Tresor (roloff-secrets)");
   process.exit(1);
 }
 

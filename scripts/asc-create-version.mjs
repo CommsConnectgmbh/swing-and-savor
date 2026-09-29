@@ -7,10 +7,7 @@ import { SignJWT, importPKCS8 } from 'jose'
 const TARGET = process.argv[2]
 if (!TARGET) { console.error('Usage: asc-create-version.mjs <versionString>'); process.exit(1) }
 
-const ENV = Object.fromEntries(
-  readFileSync('/Volumes/Code/ClaudeCode/.env.shared', 'utf8')
-    .split('\n').filter(Boolean).map(l => l.split('=')).filter(p => p.length === 2)
-)
+const ENV = (await import((await import('node:os')).homedir() + '/.local/lib/roloff/secrets.mjs')).readSecrets()
 const KEY_ID    = ENV.ASC_KEY_ID_SWINGSAVOR
 const ISSUER_ID = ENV.ASC_ISSUER_ID_SWINGSAVOR
 const KEY_PATH  = ENV.ASC_API_KEY_PATH_SWINGSAVOR

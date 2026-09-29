@@ -6,29 +6,14 @@
 //
 // Lookup-Reihenfolge pro Var:
 //   1. process.env
-//   2. /Volumes/Code/ClaudeCode/.env.shared (oder relative Heuristik)
+//   2. Tresor (roloff-secrets)
 
 const fs = require('fs');
 const path = require('path');
 
 function loadSharedEnv() {
-  const candidates = [
-    '/Volumes/Code/ClaudeCode/.env.shared',
-    'C:/Claude Code/.env.shared',
-    path.resolve(__dirname, '../../../.env.shared'),
-    path.resolve(__dirname, '../../.env.shared'),
-  ];
-  for (const p of candidates) {
-    if (!fs.existsSync(p)) continue;
-    const txt = fs.readFileSync(p, 'utf8');
-    const out = {};
-    for (const line of txt.split(/\r?\n/)) {
-      const m = /^([A-Z][A-Z0-9_]*)=(.*)$/.exec(line.trim());
-      if (m) out[m[1]] = m[2];
-    }
-    return out;
-  }
-  return {};
+  // Secrets zur Laufzeit aus dem Tresor (roloff-secrets).
+  return require(require('os').homedir() + '/.local/lib/roloff/secrets.cjs').readSecrets({ dir: __dirname });
 }
 
 const sharedEnv = loadSharedEnv();

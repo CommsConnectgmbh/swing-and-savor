@@ -1,10 +1,10 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import dotenv from "dotenv";
 import { Client, GatewayIntentBits, ChannelType } from "discord.js";
 
-dotenv.config({
-  path: join(dirname(fileURLToPath(import.meta.url)), ".env"),
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets), Zuordnung aus dem env-manifest.
+(await import((await import("node:os")).homedir() + "/.local/lib/roloff/secrets.mjs")).loadSecrets({
+  dir: dirname(fileURLToPath(import.meta.url)),
 });
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN;

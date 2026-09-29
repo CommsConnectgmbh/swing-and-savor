@@ -12,13 +12,8 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 
 const APP_ID = "6770264388";
-const SHARED = "/Volumes/Code/ClaudeCode/.env.shared";
-
-const env = {};
-for (const l of fs.readFileSync(SHARED, "utf8").split(/\r?\n/)) {
-  const m = /^([A-Z][A-Z0-9_]*)=(.*)$/.exec(l.trim());
-  if (m) env[m[1]] = m[2];
-}
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets).
+const env = (await import((await import("node:os")).homedir() + "/.local/lib/roloff/secrets.mjs")).readSecrets();
 const KEY_ID = env.ASC_KEY_ID_SWINGSAVOR;
 const ISSUER = env.ASC_ISSUER_ID_SWINGSAVOR;
 const KEY_PATH = env.ASC_API_KEY_PATH_SWINGSAVOR;

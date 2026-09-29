@@ -15,11 +15,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
 
-const envPath = new URL('../.env.local', import.meta.url);
-for (const line of readFileSync(envPath, 'utf8').split('\n')) {
-  const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-  if (m) process.env[m[1]] ??= m[2];
-}
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets), Zuordnung aus dem env-manifest.
+(await import((await import('node:os')).homedir() + '/.local/lib/roloff/secrets.mjs')).loadSecrets({
+  dir: (await import('node:url')).fileURLToPath(new URL('..', import.meta.url)),
+});
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY_SWINGSAVOR;

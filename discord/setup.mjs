@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import dotenv from "dotenv";
 import {
   Client,
   GatewayIntentBits,
@@ -9,19 +8,20 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 
-dotenv.config({
-  path: join(dirname(fileURLToPath(import.meta.url)), ".env"),
+// Secrets zur Laufzeit aus dem Tresor (roloff-secrets), Zuordnung aus dem env-manifest.
+(await import((await import("node:os")).homedir() + "/.local/lib/roloff/secrets.mjs")).loadSecrets({
+  dir: dirname(fileURLToPath(import.meta.url)),
 });
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 if (!TOKEN) {
-  console.error("DISCORD_BOT_TOKEN missing in discord/.env");
+  console.error("DISCORD_BOT_TOKEN missing im Tresor (roloff-secrets)");
   process.exit(1);
 }
 if (!GUILD_ID) {
-  console.error("DISCORD_GUILD_ID missing in discord/.env");
+  console.error("DISCORD_GUILD_ID missing im Tresor (roloff-secrets)");
   process.exit(1);
 }
 
@@ -295,7 +295,7 @@ client.once("clientReady", async () => {
       console.error("invite err:", e.message);
     }
 
-    console.log("\n=== ENV-Updates für .env.shared ===");
+    console.log("\n=== ENV-Updates für den Tresor (roloff-secrets) ===");
     console.log("DISCORD_INVITE_URL=" + (inviteUrl || "(failed)"));
     for (const [name, url] of Object.entries(webhooks)) {
       const key = name.replace(/-/g, "_").toUpperCase();

@@ -17,14 +17,13 @@ Idempotenter Server-Builder. Re-runs sind safe.
 
 ```bash
 cd /Volumes/Code/Projects/swing-and-savor/discord
-cp .env.example .env
-# .env mit DISCORD_BOT_TOKEN + DISCORD_GUILD_ID + DISCORD_CLIENT_ID befüllen
+# DISCORD_BOT_TOKEN + DISCORD_GUILD_ID + DISCORD_CLIENT_ID kommen zur Laufzeit aus dem Tresor (roloff-secrets)
 npm install
 npm run check-perms   # prüft ob Bot Admin-Perms hat
 npm run setup         # legt Rollen, Kategorien, Channels, Webhooks, Invite an
 ```
 
-Output enthält `DISCORD_INVITE_URL` + Webhook-URLs für `.env.shared`.
+Output enthält `DISCORD_INVITE_URL` + Webhook-URLs für den Tresor (roloff-secrets).
 
 ## Was angelegt wird
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Generate atmospheric landing-page imagery via OpenAI gpt-image-1.
-// Reads OPENAI_API_KEY from /Volumes/Code/ClaudeCode/.env.shared
+// Reads OPENAI_API_KEY from the Tresor (roloff-secrets)
 
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -11,10 +11,8 @@ const ROOT = resolve(__dirname, '..')
 const OUT  = resolve(ROOT, 'img')
 mkdirSync(OUT, { recursive: true })
 
-const SHARED = '/Volumes/Code/ClaudeCode/.env.shared'
-const envText = readFileSync(SHARED, 'utf-8')
-const key = envText.match(/^OPENAI_API_KEY=(.+)$/m)?.[1]?.trim()
-if (!key) { console.error('OPENAI_API_KEY missing in .env.shared'); process.exit(1) }
+const key = (await import((await import('node:os')).homedir() + '/.local/lib/roloff/secrets.mjs')).readSecrets().OPENAI_API_KEY?.trim()
+if (!key) { console.error('OPENAI_API_KEY missing im Tresor (roloff-secrets)'); process.exit(1) }
 
 const NEGATIVE = 'no text, no letters, no logos, no watermarks, no people in foreground, no UI mockups'
 

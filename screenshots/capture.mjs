@@ -25,7 +25,7 @@ const REVIEWER_EMAIL = 'apple-review@swingandsavor.at'
 // Direct in-browser Auth via admin-generated OTP, no UI involvement.
 const ACCESS_TOKEN_MGMT = process.env.SUPABASE_ACCESS_TOKEN
 if (!ACCESS_TOKEN_MGMT) {
-  console.error('SUPABASE_ACCESS_TOKEN missing — source /Volumes/Code/ClaudeCode/.env.shared')
+  console.error('SUPABASE_ACCESS_TOKEN missing — mit roloff-secrets run -- node screenshots/capture.mjs starten (Tresor)')
   process.exit(1)
 }
 

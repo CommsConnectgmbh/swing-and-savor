@@ -7,13 +7,13 @@
 // Aufruf:
 //   node scripts/asc-add-tester.mjs --email <addr> [--first <name>] [--last <name>] [--group "<group name>"] [--dry]
 //
-// Voraussetzungen in /Volumes/Code/ClaudeCode/.env.shared:
+// Voraussetzungen im Tresor (roloff-secrets):
 //   ASC_KEY_ID_SWINGSAVOR, ASC_ISSUER_ID_SWINGSAVOR, ASC_API_KEY_PATH_SWINGSAVOR
 
 import { readFileSync } from 'node:fs'
 import { SignJWT, importPKCS8 } from 'jose'
 
-const ENV       = parseEnv('/Volumes/Code/ClaudeCode/.env.shared')
+const ENV       = (await import((await import('node:os')).homedir() + '/.local/lib/roloff/secrets.mjs')).readSecrets()
 const KEY_ID    = ENV.ASC_KEY_ID_SWINGSAVOR
 const ISSUER_ID = ENV.ASC_ISSUER_ID_SWINGSAVOR
 const KEY_PATH  = ENV.ASC_API_KEY_PATH_SWINGSAVOR
