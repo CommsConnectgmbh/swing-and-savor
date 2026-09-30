@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
+import { savorFetch, formatOfferPrice } from '../lib/savor'
 
 const CATEGORY_META = {
   tee_times:   { label: 'Tee Times',   blurb: 'Kuratierte Greenfees und Flights.' },
@@ -23,11 +23,9 @@ export default function SavorCategoryScreen() {
     if (!meta) return
     let cancelled = false
     setLoading(true)
-    const params = new URLSearchParams({ mode: 'category', category })
-    if (city) params.set('city', city)
-    fetch(`${SAVOR_FUNCTIONS_URL}?${params}`, {
-      headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
-    })
+    const params = { mode: 'category', category }
+    if (city) params.city = city
+    savorFetch(params)
       .then(async (r) => r.ok ? r.json() : { offers: [] })
       .then((j) => { if (!cancelled) { setOffers(j.offers || []); setLoading(false) } })
       .catch(() => { if (!cancelled) setLoading(false) })
