@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { subscribeToTables } from '../lib/realtime'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -104,7 +105,8 @@ export default function MatchDetailScreen() {
   const holesRef = useRef(holes)
   const flightNamesRef = useRef(flightNames)
   const courseRef = useRef(null)
-  const channelRef = useRef(null)
+  // Holds the idempotent teardown returned by subscribeToTables (not the raw channel).
+  const unsubscribeRef = useRef(null)
   const loadTokenRef = useRef(0)
 
   useEffect(() => { holesRef.current = holes }, [holes])
@@ -116,7 +118,7 @@ export default function MatchDetailScreen() {
     return () => {
       // Invalidate in-flight loads and tear down realtime on match switch/unmount.
       loadTokenRef.current++
-      if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
+      if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId])
@@ -306,24 +308,28 @@ export default function MatchDetailScreen() {
   // Server-Filter (match_id / id) statt globaler Stream. Eingehende Holes werden
   // gemergt; lokal noch unbestätigte Tipp-Eingaben werden NICHT überschrieben.
   function subscribeRealtime(token) {
-    if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
-    const ch = supabase.channel(`match-${matchId}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'hole_results', filter: `match_id=eq.${matchId}` },
-        ({ new: hr }) => {
+    if (unsubscribeRef.current) { unsubscribeRef.current(); unsubscribeRef.current = null }
+    unsubscribeRef.current = subscribeToTables(`match-${matchId}`, [
+      {
+        table: 'hole_results',
+        filter: `match_id=eq.${matchId}`,
+        handler: ({ new: hr }) => {
           if (token !== loadTokenRef.current || !hr?.hole_number) return
           mergeRemoteHole(hr)
-        })
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` },
-        ({ new: m }) => {
+        },
+      },
+      {
+        event: 'UPDATE',
+        table: 'matches',
+        filter: `id=eq.${matchId}`,
+        handler: ({ new: m }) => {
           if (token !== loadTokenRef.current || !m) return
           const merged = { ...(matchRef.current || {}), status: m.status, winner: m.winner }
           matchRef.current = merged
           setMatch(merged)
-        })
-      .subscribe()
-    channelRef.current = ch
+        },
+      },
+    ])
   }
 
   function mergeRemoteHole(hr) {
