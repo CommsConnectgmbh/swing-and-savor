@@ -146,6 +146,9 @@ high-leverage fix.
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
+- [x] `lib/format.js#fmtFactor` — the `Number(v).toFixed(2)` team-factor
+      display, duplicated in BoardScreen, MatchesScreen and MatchDetailScreen,
+      lifted into one helper (+ tests) so the 2-decimal format cannot drift.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.

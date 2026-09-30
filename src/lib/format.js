@@ -24,6 +24,14 @@ export function fmtPts(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1)
 }
 
+// Team-Faktor (Handicap-Multiplikator eines Teams) auf zwei Nachkommastellen,
+// z. B. 0.5 → "0.50". Wird im Match-Header von Board/Matches/MatchDetail
+// gezeigt; als eigene Funktion, damit die 2-Stellen-Darstellung nicht zwischen
+// den drei Screens auseinanderläuft.
+export function fmtFactor(v) {
+  return Number(v).toFixed(2)
+}
+
 // Turnierdatum formatieren. Der 'T12:00:00'-Anker verhindert, dass ein reines
 // 'YYYY-MM-DD' je nach Zeitzone auf den Vortag zurückrutscht.
 // opts entspricht den Intl.DateTimeFormat-Optionen des jeweiligen Aufrufers;

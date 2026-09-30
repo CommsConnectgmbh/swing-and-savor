@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
 import { suggestFactors } from '../lib/scoring'
+import { fmtFactor } from '../lib/format'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -760,7 +761,7 @@ export default function MatchesScreen() {
                     </span>
                     {hasFactor && (
                       <span className="text-[9px] font-bold tracking-wider uppercase text-accent bg-accent/10 border border-accent/25 px-1.5 py-0.5 rounded">
-                        ×{Number(m.team_a_factor).toFixed(2)}/{Number(m.team_b_factor).toFixed(2)}
+                        ×{fmtFactor(m.team_a_factor)}/{fmtFactor(m.team_b_factor)}
                       </span>
                     )}
                   </div>

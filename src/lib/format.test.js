@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, fmtFactor, formatCupDate, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -38,6 +38,22 @@ describe('fmtPts', () => {
 
   it('keeps one decimal for halves', () => {
     expect(fmtPts(2.5)).toBe('2.5')
+  })
+})
+
+describe('fmtFactor', () => {
+  it('always renders two decimals', () => {
+    expect(fmtFactor(1)).toBe('1.00')
+    expect(fmtFactor(0.5)).toBe('0.50')
+    expect(fmtFactor(0.75)).toBe('0.75')
+  })
+
+  it('coerces numeric strings, matching the previous inline Number(v).toFixed(2)', () => {
+    expect(fmtFactor('0.5')).toBe('0.50')
+  })
+
+  it('rounds to two decimals', () => {
+    expect(fmtFactor(0.666)).toBe('0.67')
   })
 })
 
