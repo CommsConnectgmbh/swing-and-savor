@@ -1,5 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { functionUrl, publicFunctionHeaders, authFunctionHeaders } from './functions'
+import {
+  functionUrl,
+  publicFunctionHeaders,
+  authFunctionHeaders,
+  getAccessToken,
+} from './functions'
+import { supabase } from './supabase'
+
+vi.mock('./supabase', () => ({
+  supabase: { auth: { getSession: vi.fn() } },
+}))
 
 describe('lib/functions', () => {
   beforeEach(() => {
@@ -34,6 +44,20 @@ describe('lib/functions', () => {
       apikey: 'anon-key-123',
       Authorization: 'Bearer jwt-abc',
       'Content-Type': 'application/json',
+    })
+  })
+
+  describe('getAccessToken', () => {
+    it('returns the access token from the active session', async () => {
+      supabase.auth.getSession.mockResolvedValueOnce({
+        data: { session: { access_token: 'jwt-from-session' } },
+      })
+      await expect(getAccessToken()).resolves.toBe('jwt-from-session')
+    })
+
+    it('returns undefined when there is no active session', async () => {
+      supabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } })
+      await expect(getAccessToken()).resolves.toBeUndefined()
     })
   })
 })
