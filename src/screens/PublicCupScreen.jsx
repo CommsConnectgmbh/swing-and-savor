@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { functionUrl, publicFunctionHeaders, readPublicJson } from '../lib/functions'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
@@ -21,9 +21,9 @@ export default function PublicCupScreen() {
       headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+        const { ok, error, data: j } = await readPublicJson(r)
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
+        if (!ok) { setErr(error); setLoading(false); return }
         setCup(j.cup)
         setLoading(false)
         // OG-Meta-Tags client-side patchen (für Share-Previews wenn Crawler JS rendert)

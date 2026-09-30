@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { functionUrl, publicFunctionHeaders, readPublicJson } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -76,9 +76,9 @@ export default function HallOfFameScreen() {
       headers: publicFunctionHeaders(),
     })
       .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+        const { ok, error, data: j } = await readPublicJson(r)
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
+        if (!ok) { setErr(error); setLoading(false); return }
         setData(j)
         document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor`
         setLoading(false)

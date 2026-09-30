@@ -28,3 +28,28 @@ export function authFunctionHeaders(token) {
     Authorization: `Bearer ${token}`,
   }
 }
+
+/**
+ * Normalise a public edge-function Response into a plain result object.
+ *
+ * Every public share screen (cup, recap, crew, season, invitational,
+ * hall-of-fame, savor-offer) read the response body and mapped a non-2xx
+ * status to an error the exact same way, byte-for-byte:
+ *
+ *   const j = await r.json().catch(() => ({}))
+ *   if (!r.ok) { setErr(j?.error || 'error'); … }
+ *
+ * The body is parsed defensively — a non-JSON payload yields `{}` instead of
+ * throwing — and a failed request surfaces the body's `error` field, falling
+ * back to the string 'error' when it is absent. Callers keep ownership of
+ * their own loading flags and cancellation, so this stays a side-effect-free
+ * reader that is trivial to unit-test.
+ *
+ * @param {Response} r
+ * @returns {Promise<{ ok: boolean, error: string|null, data: any }>}
+ */
+export async function readPublicJson(r) {
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) return { ok: false, error: data?.error || 'error', data }
+  return { ok: true, error: null, data }
+}
