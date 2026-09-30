@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { fetchPublicFunction } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 36 }) {
@@ -58,15 +58,12 @@ export default function CrewScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr(null)
-    fetch(`${functionUrl('public-crew')}?slug=${encodeURIComponent(slug)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+    fetchPublicFunction('public-crew', { slug })
+      .then(({ ok, body }) => {
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.group.name} · Crew · Swing & Savor`
+        if (!ok) { setErr(body?.error || 'error'); setLoading(false); return }
+        setData(body)
+        document.title = `${body.group.name} · Crew · Swing & Savor`
         setLoading(false)
       })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })

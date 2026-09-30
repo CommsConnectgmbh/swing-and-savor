@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { fetchPublicFunction } from '../lib/functions'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
@@ -41,15 +41,12 @@ export default function SeasonScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr(null)
-    fetch(`${functionUrl('public-season')}?slug=${encodeURIComponent(slug)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
+    fetchPublicFunction('public-season', { slug })
+      .then(({ ok, body }) => {
         if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.season.name} · Season · Swing & Savor`
+        if (!ok) { setErr(body?.error || 'error'); setLoading(false); return }
+        setData(body)
+        document.title = `${body.season.name} · Season · Swing & Savor`
         setLoading(false)
       })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
