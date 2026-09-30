@@ -5,21 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
-import { initials as nameInitials } from '../lib/names'
-
-function Avatar({ src, name, size = 80 }) {
-  const initials = nameInitials(name)
-  return (
-    <div
-      className="rounded-full overflow-hidden bg-surface flex-shrink-0 flex items-center justify-center"
-      style={{ width: size, height: size, border: '1px solid rgba(244,241,234,0.16)' }}
-    >
-      {src
-        ? <img src={src} alt={name || ''} className="w-full h-full object-cover" loading="lazy" />
-        : <span className="font-display text-ink uppercase tracking-wider" style={{ fontSize: size / 3.2 }}>{initials}</span>}
-    </div>
-  )
-}
+import Avatar from '../components/Avatar'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'

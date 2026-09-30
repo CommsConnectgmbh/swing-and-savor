@@ -6,28 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
-import { initials as nameInitials } from '../lib/names'
-
-function Initials({ name }) {
-  return (
-    <span className="w-full h-full flex items-center justify-center font-display text-[12px] text-ink uppercase tracking-wider">
-      {nameInitials(name)}
-    </span>
-  )
-}
-
-function Avatar({ src, name, size = 40 }) {
-  return (
-    <div
-      className="rounded-full overflow-hidden bg-surface flex-shrink-0"
-      style={{ width: size, height: size, border: '1px solid rgba(244,241,234,0.16)' }}
-    >
-      {src
-        ? <img src={src} alt={name || ''} className="w-full h-full object-cover" loading="lazy" />
-        : <Initials name={name} />}
-    </div>
-  )
-}
+import Avatar from '../components/Avatar'
 
 function PackageBadge({ pkg }) {
   if (!pkg || pkg === 'free') return null
@@ -166,7 +145,7 @@ export default function InvitationalScreen() {
             <PackageBadge pkg={cup.package_type} />
             {captain && (
               <div className="flex items-center gap-2">
-                <Avatar src={captain.avatar_url} name={captain.display_name || captain.handle} size={26} />
+                <Avatar src={captain.avatar_url} name={captain.display_name || captain.handle} size={26} fontSize={12} />
                 <div className="flex flex-col">
                   <span className="text-[9px] tracking-[0.32em] uppercase text-inkDim leading-none">Captain</span>
                   <span className="text-[12px] text-inkMuted leading-tight">
@@ -213,7 +192,7 @@ export default function InvitationalScreen() {
                 <ul className="space-y-2.5">
                   {team.list.map((p, i) => (
                     <li key={i} className="flex items-center gap-2.5">
-                      <Avatar src={p.avatar_url} name={p.name} size={28} />
+                      <Avatar src={p.avatar_url} name={p.name} size={28} fontSize={12} />
                       <span className="text-[13px] text-ink truncate">{p.name}</span>
                     </li>
                   ))}
