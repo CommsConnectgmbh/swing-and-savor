@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchTournaments } from '../lib/tournaments'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -74,9 +75,8 @@ export default function TeamsScreen() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.from('tournaments').select('*').order('date', { ascending: false })
-      .then(({ data }) => {
-        const list = data || []
+    fetchTournaments()
+      .then((list) => {
         setTournaments(list)
         const tid = searchParams.get('tid')
         const preselect = tid && list.find(t => t.id === tid)
