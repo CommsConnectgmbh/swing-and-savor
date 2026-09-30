@@ -8,6 +8,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import ShareSheet from '../components/ShareSheet'
+import { copyToClipboard } from '../lib/share'
 import CupExtrasSheet from '../components/CupExtrasSheet'
 import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
@@ -549,7 +550,7 @@ export default function CupScreen() {
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation();
-                        navigator.clipboard?.writeText(cup.invite_code) }}
+                        copyToClipboard(cup.invite_code) }}
                       className="text-[10px] font-bold tracking-[0.15em] uppercase text-inkDim hover:text-accent transition-colors tabular-nums"
                       title={t('common.copy')}>
                       #{cup.invite_code}
