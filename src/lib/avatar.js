@@ -1,7 +1,5 @@
-import { supabase } from './supabase'
-import { stripFileMetadataForUpload } from './stripImageMetadata'
+import { BUCKETS, uploadPublic } from './storage'
 
-const BUCKET = 'avatars'
 const MAX_DIM = 512
 
 // Best-effort downscale. Falls back to original blob if the browser doesn't
@@ -35,16 +33,14 @@ export async function uploadAvatar(userId, file) {
   // Bucket ist public-read. Der Canvas-Weg oben verwirft das EXIF ohnehin, der
   // Fallback (aelteres Safari, kein createImageBitmap) reicht aber das
   // Originalfile durch — dort steckt das GPS des Handys drin.
-  const bytes = await stripFileMetadataForUpload(blob, BUCKET)
-  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
-    contentType: blob.type || 'image/jpeg',
-    upsert: true,
-    cacheControl: '3600',
-  })
-  if (error) {
+  try {
+    return await uploadPublic(BUCKETS.avatars, path, blob, {
+      contentType: blob.type || 'image/jpeg',
+      upsert: true,
+      cacheControl: '3600',
+    })
+  } catch (error) {
     console.error('[avatar] upload error:', error)
     throw error
   }
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return data.publicUrl
 }
