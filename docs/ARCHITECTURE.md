@@ -93,6 +93,13 @@ codebase-wide grep:
 - **Date formatting** — `new Date(x).toLocaleDateString('de-DE', …)` is inlined
   ~16 times, half hard-coding `de-DE` instead of the active i18n locale.
   **→ pending: `lib/format.js#formatDate` (preserve current locale per site).**
+- **Total par of a hole layout** (`pars.reduce((s, p) => s + (p || 0), 0)`) was
+  inlined 6× across `CourseEditor` and `CasualScreen`, in two spellings (`p || 0`
+  vs `Number.isFinite(p) ? p : 0`) that produce identical output for par arrays
+  of numbers/null. **→ extracted to `lib/scoring.js#sumPars`; all 6 sites
+  migrated.** Follow-up: the sibling *gross-to-par diff*
+  (`own.reduce((d, s) => d + (s.strokes - (pars[s.hole_number - 1] || 0)), 0)`)
+  is still triplicated inside `CasualScreen`.
 
 ### P2 — God screens
 `CasualScreen` (1120 LOC), `MatchesScreen` (1079), `MatchDetailScreen` (978),
