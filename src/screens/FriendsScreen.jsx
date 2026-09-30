@@ -8,6 +8,7 @@ import { pushToast } from '../lib/toast'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { fetchFriendships, otherUserId } from '../lib/friendships'
 import { fetchProfileMap, searchProfiles } from '../lib/profiles'
+import { fmtHcp } from '../lib/format'
 
 // FriendsScreen additionally renders the friend's home club.
 const FRIEND_LIST_COLUMNS = 'id, handle, display_name, hcp, home_club, avatar_url'
@@ -246,7 +247,7 @@ function FriendRow({ profile, idx, rightSlot }) {
         <p className="font-semibold text-sm text-ink truncate">{profile.display_name}</p>
         <p className="text-xs text-inkMuted truncate">
           @{profile.handle}
-          {profile.hcp !== null && profile.hcp !== undefined && <span className="tabular-nums"> · HC {Number(profile.hcp).toFixed(1)}</span>}
+          {profile.hcp !== null && profile.hcp !== undefined && <span className="tabular-nums"> · HC {fmtHcp(profile.hcp)}</span>}
         </p>
       </div>
       {rightSlot && <div className="flex items-center gap-2 flex-shrink-0">{rightSlot}</div>}
