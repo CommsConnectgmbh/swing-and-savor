@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
+import { supabase, getAccessToken } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { uploadCupCover, clearCupCover } from '../lib/photo'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -125,8 +125,7 @@ export default function CupScreen() {
     setPremiumConsentCup(null)
     setUpgrading(cup.id)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error('no_session')
       const res = await fetch(functionUrl('create-premium-checkout'), {
         method: 'POST',

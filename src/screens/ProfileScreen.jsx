@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
+import { supabase, getAccessToken } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '../lib/dealbuddy'
@@ -110,8 +110,7 @@ export default function ProfileScreen() {
     setDeleting(true)
     setDeleteError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
+      const token = await getAccessToken()
       if (!token) throw new Error('Keine Session — bitte neu anmelden')
       const res = await fetch(functionUrl('delete-account'), {
         method: 'POST',
