@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { loadWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { getAccessToken } from '../lib/session'
 import { fmtEur } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -55,8 +55,7 @@ export default function WiderrufScreen() {
     if (!emailValid) { setErr('invalid_email'); return }
     setBusy(true); setErr(null)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error(t('widerruf.mustLogin'))
       const res = await fetch(functionUrl('widerruf'), {
         method: 'POST',

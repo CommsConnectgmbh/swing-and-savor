@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useProAccess } from '../lib/proAccess'
+import { getAccessToken } from '../lib/session'
 import {
   launchMonitorPlatformSupported,
   probeLaunchMonitor,
@@ -53,8 +53,7 @@ export default function RangeScreen() {
     if (!consent) { setErr(t('range.consentRequired', 'Please confirm to continue.')); return }
     setErr(null); setBusy(true)
     try {
-      const { data: sess } = await supabase.auth.getSession()
-      const jwt = sess?.session?.access_token
+      const jwt = await getAccessToken()
       if (!jwt) throw new Error('no_session')
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pro-checkout`, {
         method: 'POST',

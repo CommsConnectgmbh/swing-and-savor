@@ -150,3 +150,8 @@ high-leverage fix.
 - [ ] Extract data hooks from the God screens (`useCasualRound`, `useMatch`, …).
 - [ ] Evaluate a shared query/cache hook to retire per-screen fetch boilerplate.
 - [ ] Move client-side stat aggregation (`lib/stats.js`) behind a Postgres view/RPC.
+- [x] `lib/session.js` — `getAccessToken()` (+ tests): collapse the
+      `supabase.auth.getSession() → access_token` idiom that was hand-copied
+      (in two spellings) before every authenticated edge-function call
+      (BoostSheet, RangeScreen, CupScreen, ScorecardSheet, ProfileScreen,
+      WiderrufScreen, `auth.jsx`). Pairs with `lib/functions#authFunctionHeaders`.
