@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSheetBody } from '../lib/useSheet'
 
 /**
  * Bottom-Sheet, das vom zentralen [+] in der BottomNav geöffnet wird.
@@ -8,18 +8,7 @@ import { useNavigate } from 'react-router-dom'
 export default function CreateSheet({ open, onClose }) {
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    document.body.classList.add('sheet-open')
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-      document.body.classList.remove('sheet-open')
-    }
-  }, [open, onClose])
+  useSheetBody({ active: open, lockScroll: true, onEscape: onClose })
 
   if (!open) return null
 
