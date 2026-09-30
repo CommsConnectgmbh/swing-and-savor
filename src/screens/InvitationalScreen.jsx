@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { pluralize } from '../lib/format'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -188,7 +189,7 @@ export default function InvitationalScreen() {
             The Lineup
           </h2>
           <span className="text-[11px] tracking-[0.28em] uppercase text-inkDim">
-            {participants.length} {participants.length === 1 ? 'Player' : 'Players'}
+            {participants.length} {pluralize(participants.length, 'Player', 'Players')}
           </span>
         </div>
 

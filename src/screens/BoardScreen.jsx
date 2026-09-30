@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
-import { fmtPts, formatCupDate } from '../lib/format'
+import { fmtPts, formatCupDate, pluralize } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
 import { isUnlocked } from '../lib/tournamentGate'
@@ -292,7 +292,7 @@ export default function BoardScreen() {
         {/* Stats row */}
         <div className="flex justify-center gap-6 py-2.5">
           <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-inkMuted tabular-nums">
-            {matches.length} {matches.length === 1 ? 'Match' : 'Matches'}
+            {matches.length} {pluralize(matches.length, 'Match', 'Matches')}
           </span>
           {liveCount > 0 && (
             <span className="text-[10px] font-semibold tracking-[0.18em] uppercase flex items-center gap-1.5 text-accent tabular-nums">

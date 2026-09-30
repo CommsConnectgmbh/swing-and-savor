@@ -37,6 +37,15 @@ export function formatCupDate(d, opts, locale = 'de-DE') {
   }
 }
 
+// Singular/Plural-Wort nach Anzahl wählen: pluralize(1, 'Match', 'Matches')
+// → 'Match', jede andere Zahl (0, 2, …) → 'Matches'. Kapselt das überall
+// wiederholte `n === 1 ? one : other`-Muster (Match/Matches, Player/Players,
+// Loch/Löcher, …). Sprachneutral – die konkreten Wörter bleiben beim Aufrufer,
+// die Anzahl selbst rendert der Aufrufer wie bisher davor.
+export function pluralize(n, one, other) {
+  return n === 1 ? one : other
+}
+
 /**
  * Format a cents amount as a localised EUR currency string.
  */

@@ -14,7 +14,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
-import { fmtPts, formatCupDate } from '../lib/format'
+import { fmtPts, formatCupDate, pluralize } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -666,7 +666,7 @@ export default function MatchDetailScreen() {
                   {done ? 'beendet'
                     : mpStatus.decided ? 'entschieden'
                     : mpStatus.dormie ? 'Dormie'
-                    : `noch ${mpStatus.remaining} ${mpStatus.remaining === 1 ? 'Loch' : 'Löcher'}`}
+                    : `noch ${mpStatus.remaining} ${pluralize(mpStatus.remaining, 'Loch', 'Löcher')}`}
                 </p>
               </div>
             </div>

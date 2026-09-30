@@ -7,7 +7,7 @@ import { calcMatchStanding, calcStablefordTotals } from '../lib/scoring'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { fetchProfileMap, indexById } from '../lib/profiles'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { formatCupDate } from '../lib/format'
+import { formatCupDate, pluralize } from '../lib/format'
 import { useTranslation } from 'react-i18next'
 import { useProAccess } from '../lib/proAccess'
 import { probeLaunchMonitor } from '../lib/launchMonitor'
@@ -575,7 +575,7 @@ function CupGroup({ tournament, matches, holesByMatch, social, myLikes, isFirst,
           <p className="text-[10px] tracking-[0.22em] uppercase mt-0.5 text-inkDim">
             {cupDate && <span style={{ color: cupAccent }}>{cupDate}</span>}
             {cupDate && ' · '}
-            <span>{matchCount} {matchCount === 1 ? 'Match' : 'Matches'}</span>
+            <span>{matchCount} {pluralize(matchCount, 'Match', 'Matches')}</span>
             {cupLive > 0 && (
               <>
                 {' · '}

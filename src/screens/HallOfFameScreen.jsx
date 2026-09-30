@@ -6,6 +6,7 @@ import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
+import { pluralize } from '../lib/format'
 
 function Avatar({ src, name, size = 80 }) {
   const initials = nameInitials(name)
@@ -185,7 +186,7 @@ export default function HallOfFameScreen() {
                       {row.wins}
                     </span>
                     <span className="text-[10px] tracking-[0.28em] uppercase text-inkDim">
-                      {row.wins === 1 ? 'Win' : 'Wins'}
+                      {pluralize(row.wins, 'Win', 'Wins')}
                     </span>
                   </div>
                 </li>
@@ -241,7 +242,7 @@ export default function HallOfFameScreen() {
                         {r.opponent.display_name || `@${r.opponent.handle}`}
                       </p>
                       <p className="text-[10px] tracking-[0.22em] uppercase text-inkDim">
-                        {r.matches_total} {r.matches_total === 1 ? 'duel' : 'duels'}
+                        {r.matches_total} {pluralize(r.matches_total, 'duel', 'duels')}
                       </p>
                     </div>
                   </div>
