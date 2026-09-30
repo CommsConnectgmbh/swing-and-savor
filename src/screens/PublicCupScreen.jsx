@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { formatCupDate, fmtEur } from '../lib/format'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
@@ -47,9 +48,9 @@ export default function PublicCupScreen() {
     ? (cup.score_a > cup.score_b ? cup.team_a_name : cup.score_b > cup.score_a ? cup.team_b_name : null)
     : null
 
-  const dateFmt = new Date(cup.date).toLocaleDateString(i18n.resolvedLanguage || 'en', {
+  const dateFmt = formatCupDate(cup.date, {
     day: '2-digit', month: 'long', year: 'numeric',
-  })
+  }, i18n.resolvedLanguage || 'en')
 
   const fmt = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1)
 
@@ -72,7 +73,7 @@ export default function PublicCupScreen() {
     if (ec.gender)             ecEntries.push([t('cup.entry.gender'),    String(ec.gender)])
     if (ec.dress_code)         ecEntries.push([t('cup.entry.dressCode'), String(ec.dress_code)])
     if (ec.entry_fee_cents != null) {
-      const eur = (ec.entry_fee_cents / 100).toLocaleString(i18n.resolvedLanguage || 'de', { style: 'currency', currency: 'EUR' })
+      const eur = fmtEur(ec.entry_fee_cents, i18n.resolvedLanguage || 'de')
       ecEntries.push([t('cup.entry.entryFee'), eur])
     }
     if (ec.payout)             ecEntries.push([t('cup.entry.payout'),    String(ec.payout)])

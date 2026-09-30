@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { formatCupDate } from '../lib/format'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -23,8 +24,7 @@ function Avatar({ src, name, size = 80 }) {
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
-  const date = new Date(cup.date).toLocaleDateString('de-DE',
-    { day: '2-digit', month: 'short', year: 'numeric' })
+  const date = formatCupDate(cup.date, { day: '2-digit', month: 'short', year: 'numeric' })
   return (
     <Link to={finished ? `/recap/${cup.invite_code}` : `/i/${cup.invite_code}`}
           className="flex items-center justify-between hairline-b py-5 active:bg-surface/40 transition-colors">
