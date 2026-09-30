@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ShareSheet from '../components/ShareSheet'
+import { currentUrl } from '../lib/share'
 import { SAVOR_FUNCTIONS_URL, formatOfferPrice } from '../lib/savor'
 
 export default function SavorOfferScreen() {
@@ -68,7 +69,7 @@ export default function SavorOfferScreen() {
     )
   }
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareUrl = currentUrl()
 
   return (
     <div className="max-w-lg mx-auto pb-32 animate-fade-up">

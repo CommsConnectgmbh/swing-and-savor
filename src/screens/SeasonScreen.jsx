@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
+import { currentUrl } from '../lib/share'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 function CupRow({ cup }) {
@@ -72,7 +73,7 @@ export default function SeasonScreen() {
     season.ends_on   && new Date(season.ends_on).toLocaleDateString('de-DE',   { month: 'short', year: 'numeric' }),
   ].filter(Boolean).join('  →  ')
   const typeLabel = { season: 'Season', league: 'League', city_rivalry: 'City Rivalry', tour: 'Tour' }[season.type] || 'Season'
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareUrl = currentUrl()
 
   return (
     <div className="min-h-screen bg-bg text-ink">
