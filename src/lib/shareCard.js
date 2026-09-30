@@ -3,6 +3,8 @@
  * Format 1080x1080 (Instagram-/WhatsApp-tauglich). Nutzt nur Canvas-Primitives,
  * keine externen Libraries → null Bundle-Overhead.
  */
+import { roundRect, fitText, canvasToBlob, shareImageOrDownload } from './canvas'
+
 const BG    = '#0A1A12'
 const SURF  = '#102822'
 const EDGE  = '#1F4537'
@@ -11,24 +13,6 @@ const TEAMA = '#9BB5C9'
 const TEAMB = '#D9A38E'
 const INK   = '#F4F1EA'
 const MUTED = '#9C968C'
-
-function rounded(ctx, x, y, w, h, r) {
-  const rad = Math.min(r, w / 2, h / 2)
-  ctx.beginPath()
-  ctx.moveTo(x + rad, y)
-  ctx.arcTo(x + w, y,     x + w, y + h, rad)
-  ctx.arcTo(x + w, y + h, x,     y + h, rad)
-  ctx.arcTo(x,     y + h, x,     y,     rad)
-  ctx.arcTo(x,     y,     x + w, y,     rad)
-  ctx.closePath()
-}
-
-function trunc(ctx, txt, maxW) {
-  if (ctx.measureText(txt).width <= maxW) return txt
-  let s = txt
-  while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1)
-  return s + '…'
-}
 
 export async function renderMatchShareCard({
   type, namesA, namesB, teamANameLabel, teamBNameLabel,
@@ -61,7 +45,7 @@ export async function renderMatchShareCard({
   ctx.fillText((type || '').toUpperCase(), SIZE / 2, 180)
 
   // Center match card
-  rounded(ctx, 80, 280, SIZE - 160, 520, 32)
+  roundRect(ctx, 80, 280, SIZE - 160, 520, 32)
   ctx.fillStyle = SURF; ctx.fill()
   ctx.strokeStyle = EDGE; ctx.lineWidth = 2; ctx.stroke()
 
@@ -74,7 +58,7 @@ export async function renderMatchShareCard({
   ctx.fillStyle = INK
   ctx.font = '700 38px -apple-system, "Helvetica Neue", Arial'
   const labelA = (namesA || []).join(' · ') || '—'
-  ctx.fillText(trunc(ctx, labelA, SIZE - 260), 130, 415)
+  ctx.fillText(fitText(ctx, labelA, SIZE - 260), 130, 415)
 
   // VS line
   ctx.strokeStyle = EDGE; ctx.lineWidth = 1
@@ -93,10 +77,10 @@ export async function renderMatchShareCard({
   ctx.fillStyle = INK
   ctx.font = '700 38px -apple-system, "Helvetica Neue", Arial'
   const labelB = (namesB || []).join(' · ') || '—'
-  ctx.fillText(trunc(ctx, labelB, SIZE - 260), 130, 595)
+  ctx.fillText(fitText(ctx, labelB, SIZE - 260), 130, 595)
 
   // Score-Box
-  rounded(ctx, SIZE / 2 - 220, 640, 440, 130, 24)
+  roundRect(ctx, SIZE / 2 - 220, 640, 440, 130, 24)
   ctx.fillStyle = '#0A1A12'; ctx.fill()
   ctx.strokeStyle = ACC; ctx.lineWidth = 2; ctx.stroke()
   ctx.fillStyle = ACC
@@ -114,7 +98,7 @@ export async function renderMatchShareCard({
   if (meta) {
     ctx.fillStyle = MUTED
     ctx.font = '500 24px -apple-system, "Helvetica Neue", Arial'
-    ctx.fillText(trunc(ctx, meta, SIZE - 160), SIZE / 2, 880)
+    ctx.fillText(fitText(ctx, meta, SIZE - 160), SIZE / 2, 880)
   }
 
   // Footer URL
@@ -126,11 +110,7 @@ export async function renderMatchShareCard({
   ctx.fillStyle = grad
   ctx.fillRect(0, 1016, SIZE, 4)
 
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve({ blob, dataUrl: canvas.toDataURL('image/png') })
-    }, 'image/png', 0.95)
-  })
+  return canvasToBlob(canvas)
 }
 
 /**
@@ -165,14 +145,14 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   // Title (course)
   ctx.fillStyle = INK
   ctx.font = '700 46px -apple-system, "Helvetica Neue", Arial'
-  ctx.fillText(trunc(ctx, title || 'Casual-Runde', SIZE - 160), SIZE / 2, 250)
+  ctx.fillText(fitText(ctx, title || 'Casual-Runde', SIZE - 160), SIZE / 2, 250)
 
   // Leaderboard card
   const list = (rows || []).slice(0, 6)
   const rowH = 104
   const top = 300
   const cardH = Math.max(1, list.length) * rowH + 40
-  rounded(ctx, 80, top, SIZE - 160, cardH, 32)
+  roundRect(ctx, 80, top, SIZE - 160, cardH, 32)
   ctx.fillStyle = SURF; ctx.fill()
   ctx.strokeStyle = EDGE; ctx.lineWidth = 2; ctx.stroke()
 
@@ -180,7 +160,7 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
     const y = top + 20 + i * rowH
     const cy = y + rowH / 2 - 10
     if (r.winner) {
-      rounded(ctx, 96, y + 8, SIZE - 192, rowH - 16, 20)
+      roundRect(ctx, 96, y + 8, SIZE - 192, rowH - 16, 20)
       ctx.fillStyle = 'rgba(217,201,168,0.10)'; ctx.fill()
     }
     // Rank
@@ -195,11 +175,11 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
     ctx.textAlign = 'left'
     ctx.fillStyle = INK
     ctx.font = '700 40px -apple-system, "Helvetica Neue", Arial'
-    ctx.fillText(trunc(ctx, r.name || '—', 540), 220, cy - 2)
+    ctx.fillText(fitText(ctx, r.name || '—', 540), 220, cy - 2)
     if (r.sub) {
       ctx.fillStyle = MUTED
       ctx.font = '500 24px -apple-system, "Helvetica Neue", Arial'
-      ctx.fillText(trunc(ctx, r.sub, 560), 220, cy + 34)
+      ctx.fillText(fitText(ctx, r.sub, 560), 220, cy + 34)
     }
     // Total
     ctx.textAlign = 'right'
@@ -213,7 +193,7 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   // Lochspiel-Ergebnis (nur bei Match-Play): wer mit wie vielen Löchern.
   if (matchResult) {
     const bx = 100, bw = SIZE - 200, bh = 150
-    rounded(ctx, bx, cursorY, bw, bh, 24)
+    roundRect(ctx, bx, cursorY, bw, bh, 24)
     ctx.fillStyle = '#0A1A12'; ctx.fill()
     ctx.strokeStyle = ACC; ctx.lineWidth = 2; ctx.stroke()
     ctx.textAlign = 'left'
@@ -222,11 +202,11 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
     ctx.fillText('LOCHSPIEL', bx + 40, cursorY + 48)
     ctx.fillStyle = INK
     ctx.font = '700 42px -apple-system, "Helvetica Neue", Arial'
-    ctx.fillText(trunc(ctx, matchResult.text || '—', bw - 280), bx + 40, cursorY + 96)
+    ctx.fillText(fitText(ctx, matchResult.text || '—', bw - 280), bx + 40, cursorY + 96)
     if (matchResult.sub) {
       ctx.fillStyle = MUTED
       ctx.font = '500 22px -apple-system, "Helvetica Neue", Arial'
-      ctx.fillText(trunc(ctx, matchResult.sub, bw - 80), bx + 40, cursorY + 130)
+      ctx.fillText(fitText(ctx, matchResult.sub, bw - 80), bx + 40, cursorY + 130)
     }
     if (matchResult.label) {
       ctx.textAlign = 'right'
@@ -242,7 +222,7 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   ctx.fillStyle = MUTED
   ctx.font = '600 24px -apple-system, "Helvetica Neue", Arial'
   const footMeta = [String(statusLabel || '').toUpperCase(), dateLabel].filter(Boolean).join('  ·  ')
-  ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, cursorY + 30)
+  ctx.fillText(fitText(ctx, footMeta, SIZE - 160), SIZE / 2, cursorY + 30)
 
   // Footer URL
   ctx.fillStyle = ACC
@@ -251,29 +231,8 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   ctx.fillStyle = grad
   ctx.fillRect(0, 1016, SIZE, 4)
 
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve({ blob, dataUrl: canvas.toDataURL('image/png') })
-    }, 'image/png', 0.95)
-  })
+  return canvasToBlob(canvas)
 }
 
 /** Versucht Web-Share-API mit File, fällt zurück auf Download. */
-export async function shareOrDownload({ blob, filename, title, text, url }) {
-  const file = new File([blob], filename, { type: 'image/png' })
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title, text, url })
-      return 'shared'
-    } catch (e) {
-      if (e?.name === 'AbortError') return 'cancelled'
-    }
-  }
-  // Fallback: Download
-  const objectUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = objectUrl; a.download = filename
-  document.body.appendChild(a); a.click(); a.remove()
-  URL.revokeObjectURL(objectUrl)
-  return 'downloaded'
-}
+export const shareOrDownload = shareImageOrDownload
