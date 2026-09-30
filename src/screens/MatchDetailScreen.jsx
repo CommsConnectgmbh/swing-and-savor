@@ -8,6 +8,7 @@ import CourseEditor from '../components/CourseEditor'
 import CoursePicker from '../components/CoursePicker'
 import SocialBar from '../components/SocialBar'
 import CommentsThread from '../components/CommentsThread'
+import { indexById } from '../lib/profiles'
 import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
@@ -248,7 +249,7 @@ export default function MatchDetailScreen() {
       const { data: pls } = await supabase.from('players')
         .select('id,name,handicap,profile_id,team').in('id', allIds)
       if (token !== loadTokenRef.current) return
-      const byId = Object.fromEntries((pls || []).map(p => [p.id, p]))
+      const byId = indexById(pls)
       setFlightNames({
         A: aIds.map(id => byId[id]?.name).filter(Boolean),
         B: bIds.map(id => byId[id]?.name).filter(Boolean),

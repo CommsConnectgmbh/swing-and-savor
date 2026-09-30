@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
+import { fetchProfile } from '../lib/profiles'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -42,8 +43,7 @@ export default function ConversationScreen() {
     if (!c) { setLoading(false); return }
     setConv(c)
     const otherId = c.user_a === user.id ? c.user_b : c.user_a
-    const { data: p } = await supabase.from('profiles')
-      .select('id,handle,display_name,avatar_url').eq('id', otherId).maybeSingle()
+    const p = await fetchProfile(otherId, 'id,handle,display_name,avatar_url')
     setOther(p)
 
     const { data: msgs } = await supabase.from('messages')
