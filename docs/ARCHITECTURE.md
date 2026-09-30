@@ -144,6 +144,11 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] `lib/shareImage.js#shareImageOrDownload` — one copy of the "share a
+      generated PNG via the Web Share API, else download" routine that was
+      duplicated byte-for-byte as `shareCard.js#shareOrDownload` and
+      `cardRenderer.js#shareCard`; both now delegate to it (+ tests). The
+      `QrCodeSheet` variant is intentionally left as-is (different shape).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.

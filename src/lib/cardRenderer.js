@@ -8,6 +8,7 @@
 //   - portraitCard  → 1080×1350 solid vertical card (WhatsApp / Pinterest).
 
 import { roundRect, loadImage } from './canvas'
+import { shareImageOrDownload } from './shareImage'
 
 const CHAMPAGNE      = '#D9C9A8'
 const CHAMPAGNE_DEEP = '#A8956A'
@@ -348,21 +349,6 @@ function canvasToBlob(canvas) {
   })
 }
 
-/** Share or download a generated PNG. */
-export async function shareCard({ blob, filename, title, text, url }) {
-  const file = new File([blob], filename, { type: 'image/png' })
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title, text, url })
-      return 'shared'
-    } catch (e) {
-      if (e?.name === 'AbortError') return 'cancelled'
-    }
-  }
-  const objectUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = objectUrl; a.download = filename
-  document.body.appendChild(a); a.click(); a.remove()
-  URL.revokeObjectURL(objectUrl)
-  return 'downloaded'
-}
+/** Share or download a generated PNG.
+ *  Delegates to the shared `lib/shareImage` helper (single source of truth). */
+export const shareCard = shareImageOrDownload

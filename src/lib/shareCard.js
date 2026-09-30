@@ -3,6 +3,8 @@
  * Format 1080x1080 (Instagram-/WhatsApp-tauglich). Nutzt nur Canvas-Primitives,
  * keine externen Libraries → null Bundle-Overhead.
  */
+import { shareImageOrDownload } from './shareImage'
+
 const BG    = '#0A1A12'
 const SURF  = '#102822'
 const EDGE  = '#1F4537'
@@ -258,22 +260,6 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   })
 }
 
-/** Versucht Web-Share-API mit File, fällt zurück auf Download. */
-export async function shareOrDownload({ blob, filename, title, text, url }) {
-  const file = new File([blob], filename, { type: 'image/png' })
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title, text, url })
-      return 'shared'
-    } catch (e) {
-      if (e?.name === 'AbortError') return 'cancelled'
-    }
-  }
-  // Fallback: Download
-  const objectUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = objectUrl; a.download = filename
-  document.body.appendChild(a); a.click(); a.remove()
-  URL.revokeObjectURL(objectUrl)
-  return 'downloaded'
-}
+/** Versucht Web-Share-API mit File, fällt zurück auf Download.
+ *  Delegiert an den gemeinsamen `lib/shareImage`-Helper (single source of truth). */
+export const shareOrDownload = shareImageOrDownload
