@@ -68,6 +68,16 @@ export function stablefordPoints(strokes, par) {
   return 0
 }
 
+// Score relativ zu Par als kompaktes Label: 0 → "E" (even/Par gespielt),
+// positive Werte über Par ("+3"), negative unter Par ("-2"). Wird für die
+// Brutto-/Netto-Diffs auf den Casual-Karten und die Team-Deltas in der
+// Match-Detailansicht genutzt. null/undefined → null (rendert nichts).
+export function formatToPar(diff) {
+  if (diff == null) return null
+  if (diff === 0) return 'E'
+  return diff > 0 ? `+${diff}` : String(diff)
+}
+
 // HCP-Schläge pro Loch nach Stroke-Index (SI).
 // playingHcp = ganze Schläge, die der Spieler über 18 Löcher kriegt.
 // hcps = Array[18] mit SI 1..18 (1 = schwerstes, 18 = leichtestes).
