@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { loadWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
-import { fmtEur } from '../lib/format'
+import { fmtEur, formatDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Online-Widerrufsfunktion gemäß Art. 11a Verbraucherrechte-RL (verpflichtend ab 19.06.2026).
@@ -118,7 +118,7 @@ export default function WiderrufScreen() {
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink truncate">{it.label}</p>
                   <p className="text-[11px] text-inkMuted mt-0.5">
-                    {t('widerruf.paidOn', { date: new Date(it.paid_at).toLocaleDateString(lang) })}
+                    {t('widerruf.paidOn', { date: formatDate(it.paid_at, undefined, lang) })}
                     {' · '}
                     {t('widerruf.daysLeft', { count: it.days_remaining })}
                   </p>

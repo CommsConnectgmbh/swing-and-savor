@@ -37,6 +37,31 @@ export function formatCupDate(d, opts, locale = 'de-DE') {
   }
 }
 
+// Faithful wrapper around Date#toLocaleDateString for values that are already
+// unambiguous timestamps (`created_at`, `paid_at`, a live `new Date()`, …) or
+// that the caller has already anchored. Unlike formatCupDate it deliberately
+// does NOT inject a 'T12:00:00' anchor, so it reproduces the inlined
+// `new Date(x).toLocaleDateString(locale, opts)` call sites byte-for-byte.
+// `locale` is left undefined by default so bare `toLocaleDateString()` sites
+// keep using the runtime default; pass the site's existing locale to preserve
+// it. Accepts a Date or anything the Date constructor understands; falsy or
+// unparseable input degrades to '' (matching the other formatters here).
+export function formatDate(value, opts, locale) {
+  if (!value) return ''
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString(locale, opts)
+}
+
+// As formatDate, but for the time-of-day (`toLocaleTimeString`) variant used by
+// the DM timestamp. Same null/locale/opts semantics.
+export function formatTime(value, opts, locale) {
+  if (!value) return ''
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString(locale, opts)
+}
+
 /**
  * Format a cents amount as a localised EUR currency string.
  */

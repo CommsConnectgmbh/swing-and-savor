@@ -5,11 +5,11 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { formatDate } from '../lib/format'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
-  const date = new Date(cup.date).toLocaleDateString('de-DE',
-    { day: '2-digit', month: 'short', year: 'numeric' })
+  const date = formatDate(cup.date, { day: '2-digit', month: 'short', year: 'numeric' }, 'de-DE')
   return (
     <Link to={finished ? `/recap/${cup.invite_code}` : `/i/${cup.invite_code}`}
           className="flex items-center justify-between hairline-b py-5 active:bg-surface/40 transition-colors">
@@ -68,8 +68,8 @@ export default function SeasonScreen() {
 
   const { season, stats, standings, cups, group } = data
   const range = [
-    season.starts_on && new Date(season.starts_on).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' }),
-    season.ends_on   && new Date(season.ends_on).toLocaleDateString('de-DE',   { month: 'short', year: 'numeric' }),
+    season.starts_on && formatDate(season.starts_on, { month: 'short', year: 'numeric' }, 'de-DE'),
+    season.ends_on   && formatDate(season.ends_on,   { month: 'short', year: 'numeric' }, 'de-DE'),
   ].filter(Boolean).join('  →  ')
   const typeLabel = { season: 'Season', league: 'League', city_rivalry: 'City Rivalry', tour: 'Tour' }[season.type] || 'Season'
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
