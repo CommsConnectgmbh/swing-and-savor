@@ -7,6 +7,7 @@ import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
+import { formatCupDate } from '../lib/format'
 
 function Avatar({ src, name, size = 32 }) {
   const initials = nameInitials(name)
@@ -116,9 +117,11 @@ export default function RecapScreen() {
 
   const { cup, captain, participants, finished_matches: matches, photos, awards, sponsors = [] } = data
   const poweredBy = sponsors.find((s) => s.placement_type === 'powered_by')
-  const dateFmt = new Date(cup.date).toLocaleDateString(i18n.resolvedLanguage || 'de-DE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
+  const dateFmt = formatCupDate(
+    cup.date,
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+    i18n.resolvedLanguage || 'de-DE',
+  )
   const teamAList = participants.filter((p) => p.team === 'A')
   const teamBList = participants.filter((p) => p.team === 'B')
 
