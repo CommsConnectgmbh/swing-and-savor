@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
+import CupRow from '../components/CupRow'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
@@ -18,34 +19,6 @@ function Avatar({ src, name, size = 80 }) {
         ? <img src={src} alt={name || ''} className="w-full h-full object-cover" loading="lazy" />
         : <span className="font-display text-ink uppercase tracking-wider" style={{ fontSize: size / 3.2 }}>{initials}</span>}
     </div>
-  )
-}
-
-function CupRow({ cup }) {
-  const finished = cup.status === 'finished'
-  const date = new Date(cup.date).toLocaleDateString('de-DE',
-    { day: '2-digit', month: 'short', year: 'numeric' })
-  return (
-    <Link to={finished ? `/recap/${cup.invite_code}` : `/i/${cup.invite_code}`}
-          className="flex items-center justify-between hairline-b py-5 active:bg-surface/40 transition-colors">
-      <div className="min-w-0 flex-1 pr-4">
-        <p className="font-display text-ink text-[20px] leading-tight"
-           style={{ fontWeight: 500, letterSpacing: '-0.01em' }}>
-          {cup.name}
-        </p>
-        <p className="text-[11px] tracking-[0.22em] uppercase text-inkDim mt-1">
-          {[cup.location_name, date].filter(Boolean).join('  ·  ')}
-        </p>
-        {cup.champion && (
-          <p className="text-[12px] text-accent tracking-wide mt-1">
-            Champion: {cup.champion}
-          </p>
-        )}
-      </div>
-      <span className="text-[10px] tracking-[0.28em] uppercase text-inkMuted">
-        {finished ? 'Recap' : 'Live'}
-      </span>
-    </Link>
   )
 }
 
