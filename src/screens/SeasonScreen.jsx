@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { functionUrl } from '../lib/functions'
+import { usePublicFunctionData } from '../hooks/usePublicFunctionData'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
@@ -33,28 +34,12 @@ function CupRow({ cup }) {
 export default function SeasonScreen() {
   const { t } = useTranslation()
   const { slug } = useParams()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true); setErr(null)
-    fetch(`${functionUrl('public-season')}?slug=${encodeURIComponent(slug)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.season.name} · Season · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [slug])
+  const { data, loading, err } = usePublicFunctionData(
+    `${functionUrl('public-season')}?slug=${encodeURIComponent(slug)}`,
+    (j) => { document.title = `${j.season.name} · Season · Swing & Savor` },
+  )
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-bg"><LoadingSpinner /></div>
   if (err || !data) {
