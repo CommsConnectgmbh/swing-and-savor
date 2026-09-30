@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { relTime, fmtPts, formatCupDate, fmtEur, fileExt } from './format'
+import { relTime, fmtPts, fmtHc, formatCupDate, fmtEur, fileExt } from './format'
 
 describe('relTime', () => {
   afterEach(() => vi.useRealTimers())
@@ -38,6 +38,24 @@ describe('fmtPts', () => {
 
   it('keeps one decimal for halves', () => {
     expect(fmtPts(2.5)).toBe('2.5')
+  })
+})
+
+describe('fmtHc', () => {
+  it('always renders exactly one decimal place', () => {
+    expect(fmtHc(12)).toBe('12.0')
+    expect(fmtHc(8.4)).toBe('8.4')
+    expect(fmtHc(0)).toBe('0.0')
+  })
+
+  it('coerces numeric strings like the previous Number(x) inline', () => {
+    expect(fmtHc('5.25')).toBe('5.3')
+  })
+
+  it('preserves the prior NaN behaviour for non-numeric input', () => {
+    // The call sites guarded null/undefined themselves; the bare formatter
+    // matched `Number(x).toFixed(1)` exactly, including "NaN" for junk input.
+    expect(fmtHc('abc')).toBe('NaN')
   })
 })
 
