@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { logDebug, getDebugSessionId, isDebug } from '../lib/debug'
+import { localStore, sessionStore } from '../lib/storage'
 import AvatarPicker from '../components/AvatarPicker'
 
 function deriveHandle(email) {
@@ -24,8 +25,8 @@ async function hardReset() {
       const names = await caches.keys()
       for (const n of names) await caches.delete(n)
     }
-    try { localStorage.clear() } catch {}
-    try { sessionStorage.clear() } catch {}
+    localStore.clear()
+    sessionStore.clear()
   } finally {
     window.location.replace('/?fresh=' + Date.now())
   }

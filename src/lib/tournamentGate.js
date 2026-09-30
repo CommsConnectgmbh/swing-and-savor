@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { sessionStore } from './storage'
 
 // Liefert true, wenn das Turnier ein Schreib-/Sicht-Passwort besitzt.
 // Liest NUR das boolesche Schatten-Flag (has_edit_password); das Klartext-
@@ -11,11 +12,11 @@ export function hasPassword(t) {
 // erfolgreicher serverseitiger Prüfung gesetzt.
 export function isUnlocked(t) {
   if (!hasPassword(t)) return true
-  try { return sessionStorage.getItem(`golf_unlocked_${t.id}`) === '1' } catch { return false }
+  return sessionStore.get(`golf_unlocked_${t.id}`) === '1'
 }
 
 export function markUnlocked(tournamentId) {
-  try { sessionStorage.setItem(`golf_unlocked_${tournamentId}`, '1') } catch {}
+  sessionStore.set(`golf_unlocked_${tournamentId}`, '1')
 }
 
 // Serverseitige Passwort-Prüfung via security-definer RPC. Gibt boolean.
