@@ -142,8 +142,12 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
-- [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
-      MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
+      ConversationScreen, ProfileScreen). Added `fetchProfile(id, columns)` for
+      the single-row `.eq('id', …).maybeSingle()` idiom and routed
+      ConversationScreen, ChallengesScreen and `liveEvents` through it; no
+      view-layer file opens a raw `from('profiles')` card query any more.
+      (MatchesScreen/CasualScreen never held one.)
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { openDealBuddyChallenge, challengeFriendOnDealBuddy } from '../lib/dealbuddy'
-import { fetchProfileMap, searchProfiles, PROFILE_CARD_COLUMNS } from '../lib/profiles'
+import { fetchProfileMap, fetchProfile, searchProfiles } from '../lib/profiles'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function ChallengesScreen() {
@@ -32,9 +32,7 @@ export default function ChallengesScreen() {
     if (!presetOpponentId) return
     let cancelled = false
     ;(async () => {
-      const { data } = await supabase.from('profiles')
-        .select(PROFILE_CARD_COLUMNS)
-        .eq('id', presetOpponentId).maybeSingle()
+      const data = await fetchProfile(presetOpponentId)
       if (!cancelled && data) {
         setPresetOpponent(data)
         setCreating(true)
