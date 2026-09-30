@@ -15,6 +15,7 @@ import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
+import { indexById } from '../lib/profiles'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -248,7 +249,7 @@ export default function MatchDetailScreen() {
       const { data: pls } = await supabase.from('players')
         .select('id,name,handicap,profile_id,team').in('id', allIds)
       if (token !== loadTokenRef.current) return
-      const byId = Object.fromEntries((pls || []).map(p => [p.id, p]))
+      const byId = indexById(pls)
       setFlightNames({
         A: aIds.map(id => byId[id]?.name).filter(Boolean),
         B: bIds.map(id => byId[id]?.name).filter(Boolean),
