@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { fmtPts } from '../lib/format'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
@@ -50,8 +51,6 @@ export default function PublicCupScreen() {
   const dateFmt = new Date(cup.date).toLocaleDateString(i18n.resolvedLanguage || 'en', {
     day: '2-digit', month: 'long', year: 'numeric',
   })
-
-  const fmt = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1)
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
   const shareText = cup.status === 'finished' && winner
@@ -108,13 +107,13 @@ export default function PublicCupScreen() {
             <div className="text-center">
               <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">{t('matchDetail.teamA')}</p>
               <p className="font-condensed font-bold text-sm mt-1 leading-tight">{cup.team_a_name}</p>
-              <p className="font-condensed font-black text-4xl text-ink mt-2 tabular-nums">{fmt(cup.score_a)}</p>
+              <p className="font-condensed font-black text-4xl text-ink mt-2 tabular-nums">{fmtPts(cup.score_a)}</p>
             </div>
             <div className="text-center text-inkDim font-condensed font-black text-2xl">—</div>
             <div className="text-center">
               <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-inkMuted">{t('matchDetail.teamB')}</p>
               <p className="font-condensed font-bold text-sm mt-1 leading-tight">{cup.team_b_name}</p>
-              <p className="font-condensed font-black text-4xl text-ink mt-2 tabular-nums">{fmt(cup.score_b)}</p>
+              <p className="font-condensed font-black text-4xl text-ink mt-2 tabular-nums">{fmtPts(cup.score_b)}</p>
             </div>
           </div>
 
