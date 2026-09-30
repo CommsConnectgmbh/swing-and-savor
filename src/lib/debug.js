@@ -2,6 +2,8 @@
 // `client_debug` table via PostgREST so we can diagnose reload-loop bugs
 // from the server side. Sessions are tagged with a stable per-tab id.
 
+import { readLocal, writeLocal } from './storage'
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -30,10 +32,10 @@ export function isDebug() {
   try {
     if (typeof window === 'undefined') return false
     if (new URLSearchParams(window.location.search).has('debug')) {
-      try { localStorage.setItem('sns_debug', '1') } catch {}
+      writeLocal('sns_debug', '1')
       return true
     }
-    return localStorage.getItem('sns_debug') === '1'
+    return readLocal('sns_debug') === '1'
   } catch {
     return false
   }

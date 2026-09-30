@@ -6,6 +6,8 @@
 // Tailwind tokens (bg, surface, ink, accent …) resolve to those variables, so
 // a single attribute switch repaints the whole app.
 
+import { readLocal, writeLocal } from './storage'
+
 const STORAGE_KEY = 'sw_theme'
 export const THEMES = ['dark', 'light']
 // App startet hell; Dunkel ist optional über den Umschalter im Profil.
@@ -15,12 +17,8 @@ const DEFAULT_THEME = 'light'
 const THEME_COLOR = { dark: '#0A1A12', light: '#EFEBE1' }
 
 export function getStoredTheme() {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY)
-    return THEMES.includes(v) ? v : DEFAULT_THEME
-  } catch {
-    return DEFAULT_THEME
-  }
+  const v = readLocal(STORAGE_KEY)
+  return THEMES.includes(v) ? v : DEFAULT_THEME
 }
 
 // Reflect a theme onto the document and persist it. Safe to call before React
@@ -33,7 +31,7 @@ export function applyTheme(theme) {
   root.style.colorScheme = next
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', THEME_COLOR[next])
-  try { localStorage.setItem(STORAGE_KEY, next) } catch {}
+  writeLocal(STORAGE_KEY, next)
   return next
 }
 

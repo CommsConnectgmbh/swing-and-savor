@@ -17,6 +17,7 @@ import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
+import { readLocalJson, writeLocalJson, removeLocal } from '../lib/storage'
 import { useAuth } from '../lib/auth'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import ScorecardSheet from '../components/ScorecardSheet'
@@ -212,10 +213,10 @@ export default function MatchDetailScreen() {
   }, [matchId])
 
   function getPars() {
-    try { return JSON.parse(localStorage.getItem(`par_${matchId}`)) || null } catch { return null }
+    return readLocalJson(`par_${matchId}`)
   }
   function setPars(holesArr) {
-    try { localStorage.setItem(`par_${matchId}`, JSON.stringify(holesArr.map(h => h.par))) } catch {}
+    writeLocalJson(`par_${matchId}`, holesArr.map(h => h.par))
   }
 
   async function loadAll(token = loadTokenRef.current) {
@@ -269,7 +270,7 @@ export default function MatchDetailScreen() {
     // Verlässt sich eine DB-Quelle auf Pars, ist der lokale Cache obsolet →
     // invalidieren, damit er nach Course-Wechsel nicht stale weiterlebt.
     if (matchPars || coursePars) {
-      try { localStorage.removeItem(`par_${matchId}`) } catch {}
+      removeLocal(`par_${matchId}`)
     }
 
     const next = initHoles()
