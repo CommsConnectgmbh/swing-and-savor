@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { fmtHcp } from '../lib/format'
 import { useAuth } from '../lib/auth'
 import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '../lib/dealbuddy'
@@ -306,7 +307,7 @@ export default function ProfileScreen() {
           {target.home_club && <span>{target.home_club}</span>}
           {target.home_club && target.hcp !== null && target.hcp !== undefined && <span>·</span>}
           {target.hcp !== null && target.hcp !== undefined && (
-            <span className="tabular-nums">HC {Number(target.hcp).toFixed(1)}</span>
+            <span className="tabular-nums">HC {fmtHcp(target.hcp)}</span>
           )}
           {target.elo_rating !== null && target.elo_rating !== undefined && target.games_played > 0 && (
             <>

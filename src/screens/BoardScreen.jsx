@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
-import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
+import { calcTeamPoints, calcMatchStanding, matchTypeLabel, resolvePlayerIds } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -59,12 +59,8 @@ export default function BoardScreen() {
     const nameById = Object.fromEntries((pl || []).map(p => [p.id, p.name]))
     const matchList = (m || []).map(mm => ({
       ...mm,
-      _namesA: (mm.team_a_player_ids?.length ? mm.team_a_player_ids
-                : [mm.team_a_player1_id, mm.team_a_player2_id].filter(Boolean))
-                .map(id => nameById[id]).filter(Boolean),
-      _namesB: (mm.team_b_player_ids?.length ? mm.team_b_player_ids
-                : [mm.team_b_player1_id, mm.team_b_player2_id].filter(Boolean))
-                .map(id => nameById[id]).filter(Boolean),
+      _namesA: resolvePlayerIds(mm, 'a').map(id => nameById[id]).filter(Boolean),
+      _namesB: resolvePlayerIds(mm, 'b').map(id => nameById[id]).filter(Boolean),
     }))
     setMatches(matchList)
 
@@ -322,9 +318,7 @@ export default function BoardScreen() {
           const standing = calcMatchStanding(holes)
           const playersA = (m._namesA?.length ? m._namesA : [m.pa1?.name, m.pa2?.name].filter(Boolean)).join(' · ')
           const playersB = (m._namesB?.length ? m._namesB : [m.pb1?.name, m.pb2?.name].filter(Boolean)).join(' · ')
-          const typeLbl  = m.type === 'singles' ? 'Singles'
-                          : m.type === 'doubles' ? 'Doubles'
-                          : `Flight ${m._namesA?.length ?? 0}v${m._namesB?.length ?? 0}`
+          const typeLbl  = matchTypeLabel(m.type, m._namesA?.length ?? 0, m._namesB?.length ?? 0)
           const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
 
           let standColor = '#9C968C'

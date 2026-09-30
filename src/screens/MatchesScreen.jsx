@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { suggestSingles, suggestDoubles, suggestFlight } from '../lib/autopair'
-import { suggestFactors } from '../lib/scoring'
+import { suggestFactors, matchTypeLabel, resolvePlayerIds } from '../lib/scoring'
+import { fmtHcp } from '../lib/format'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -195,10 +196,8 @@ export default function MatchesScreen() {
 
   function openEdit(m) {
     guarded(() => {
-      const a = (m.team_a_player_ids?.length ? m.team_a_player_ids
-                : [m.team_a_player1_id, m.team_a_player2_id]).filter(Boolean)
-      const b = (m.team_b_player_ids?.length ? m.team_b_player_ids
-                : [m.team_b_player1_id, m.team_b_player2_id]).filter(Boolean)
+      const a = resolvePlayerIds(m, 'a').filter(Boolean)
+      const b = resolvePlayerIds(m, 'b').filter(Boolean)
       const padded = (arr) => [...arr, '', '', '', ''].slice(0, 4)
       setForm({
         type: m.type,
@@ -738,15 +737,11 @@ export default function MatchesScreen() {
       ) : !locked && (
         <div className="border-t border-lineSoft">
           {matches.map((m, idx) => {
-            const aIds = m.team_a_player_ids?.length ? m.team_a_player_ids
-                       : [m.team_a_player1_id, m.team_a_player2_id].filter(Boolean)
-            const bIds = m.team_b_player_ids?.length ? m.team_b_player_ids
-                       : [m.team_b_player1_id, m.team_b_player2_id].filter(Boolean)
+            const aIds = resolvePlayerIds(m, 'a')
+            const bIds = resolvePlayerIds(m, 'b')
             const playersA = aIds.map(id => playerById(id)?.name).filter(Boolean).join(' · ')
             const playersB = bIds.map(id => playerById(id)?.name).filter(Boolean).join(' · ')
-            const typeLabel = m.type === 'singles' ? 'Singles'
-                            : m.type === 'doubles' ? 'Doubles'
-                            : `Flight ${aIds.length}v${bIds.length}`
+            const typeLabel = matchTypeLabel(m.type, aIds.length, bIds.length)
             const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
             return (
               <div key={m.id} className="px-4 py-4 border-b border-lineSoft"
@@ -851,7 +846,7 @@ function PlayerSelect({
         {picked ? (
           <span className="text-ink truncate">
             {picked.name}
-            <span className="text-inkMuted ml-1.5 text-xs tabular-nums">HC {Number(picked.handicap).toFixed(1)}</span>
+            <span className="text-inkMuted ml-1.5 text-xs tabular-nums">HC {fmtHcp(picked.handicap)}</span>
           </span>
         ) : (
           <span className="text-inkDim">{label} wählen…</span>
@@ -999,7 +994,7 @@ function PlayerPickSheet({
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-ink truncate">{p.name}</p>
                     <p className="text-[11px] text-inkMuted tabular-nums">
-                      HC {Number(p.handicap).toFixed(1)}
+                      HC {fmtHcp(p.handicap)}
                       {isTaken && ' · in anderem Slot'}
                       {isSelf && ' · aktuell gewählt'}
                     </p>
@@ -1029,7 +1024,7 @@ function PlayerPickSheet({
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-ink truncate">{f.display_name}</p>
                   <p className="text-[11px] text-inkMuted truncate">
-                    @{f.handle}{f.hcp != null && ` · HC ${Number(f.hcp).toFixed(1)}`}
+                    @{f.handle}{f.hcp != null && ` · HC ${fmtHcp(f.hcp)}`}
                   </p>
                 </div>
                 <span className="text-[10px] font-bold tracking-wider uppercase text-accent flex-shrink-0">

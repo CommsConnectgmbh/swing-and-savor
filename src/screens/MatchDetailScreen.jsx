@@ -12,7 +12,7 @@ import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
+import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun, matchTypeLabel, resolvePlayerIds } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
@@ -181,9 +181,7 @@ export default function MatchDetailScreen() {
     const fn = flightNamesRef.current || { A: [], B: [] }
     const namesA = fn.A?.length ? fn.A : [m.pa1?.name, m.pa2?.name].filter(Boolean)
     const namesB = fn.B?.length ? fn.B : [m.pb1?.name, m.pb2?.name].filter(Boolean)
-    const baseTypeLbl = m.type === 'singles' ? 'Singles'
-      : m.type === 'doubles' ? 'Doubles'
-      : `Flight ${namesA.length}v${namesB.length}`
+    const baseTypeLbl = matchTypeLabel(m.type, namesA.length, namesB.length)
     const typeLabel = m.format === 'stableford' ? `${baseTypeLbl} · Stableford` : baseTypeLbl
     const payload = buildWatchPayload({
       match: m, holes: holesRef.current, tournament: m.tournament,
@@ -239,10 +237,8 @@ export default function MatchDetailScreen() {
     setCourse(m?.course || null)
 
     // Bei Flights/Doubles: alle Spielernamen anhand der Arrays nachladen
-    const aIds = m?.team_a_player_ids?.length ? m.team_a_player_ids
-                 : [m?.team_a_player1_id, m?.team_a_player2_id].filter(Boolean)
-    const bIds = m?.team_b_player_ids?.length ? m.team_b_player_ids
-                 : [m?.team_b_player1_id, m?.team_b_player2_id].filter(Boolean)
+    const aIds = resolvePlayerIds(m, 'a')
+    const bIds = resolvePlayerIds(m, 'b')
     const allIds = [...aIds, ...bIds]
     if (allIds.length > 0) {
       const { data: pls } = await supabase.from('players')
@@ -344,9 +340,7 @@ export default function MatchDetailScreen() {
     try {
       const namesA = flightNames.A.length ? flightNames.A : [match.pa1?.name, match.pa2?.name].filter(Boolean)
       const namesB = flightNames.B.length ? flightNames.B : [match.pb1?.name, match.pb2?.name].filter(Boolean)
-      const typeStr = match.type === 'singles' ? 'Singles'
-                     : match.type === 'doubles' ? 'Doubles'
-                     : `Flight ${namesA.length}v${namesB.length}`
+      const typeStr = matchTypeLabel(match.type, namesA.length, namesB.length)
       const scoreLine = match.status === 'finished'
         ? (match.winner === 'A' ? (match.tournament?.team_a_name || 'TEAM A')
           : match.winner === 'B' ? (match.tournament?.team_b_name || 'TEAM B')
@@ -507,9 +501,7 @@ export default function MatchDetailScreen() {
   const nameB  = namesB.join(' · ')
   const isFlight     = match.type === 'flight'
   const isStableford = match.format === 'stableford'
-  const baseTypeLbl  = match.type === 'singles' ? 'Singles'
-                      : match.type === 'doubles' ? 'Doubles'
-                      : `Flight ${namesA.length}v${namesB.length}`
+  const baseTypeLbl  = matchTypeLabel(match.type, namesA.length, namesB.length)
   const typeLbl   = isStableford ? `${baseTypeLbl} · Stableford` : baseTypeLbl
   const factorA   = Number(match.team_a_factor ?? 1)
   const factorB   = Number(match.team_b_factor ?? 1)

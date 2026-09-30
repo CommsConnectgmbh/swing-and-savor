@@ -24,6 +24,13 @@ export function fmtPts(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1)
 }
 
+// Handicap mit genau einer Nachkommastelle: 12 → "12.0", 5.25 → "5.3".
+// Zuvor als `Number(x).toFixed(1)` über ~9 Screens verstreut. Der Aufrufer
+// bleibt weiterhin für die "HC "-Beschriftung und den null-Guard zuständig.
+export function fmtHcp(v) {
+  return Number(v).toFixed(1)
+}
+
 // Turnierdatum formatieren. Der 'T12:00:00'-Anker verhindert, dass ein reines
 // 'YYYY-MM-DD' je nach Zeitzone auf den Vortag zurückrutscht.
 // opts entspricht den Intl.DateTimeFormat-Optionen des jeweiligen Aufrufers;

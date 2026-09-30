@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals, matchTypeLabel, resolvePlayerIds } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -246,5 +246,42 @@ describe('calcStablefordTotals', () => {
   it('handles empty/undefined input', () => {
     expect(calcStablefordTotals([])).toEqual({ a: 0, b: 0 })
     expect(calcStablefordTotals(undefined)).toEqual({ a: 0, b: 0 })
+  })
+})
+
+describe('matchTypeLabel', () => {
+  it('maps singles/doubles to fixed labels', () => {
+    expect(matchTypeLabel('singles', 1, 1)).toBe('Singles')
+    expect(matchTypeLabel('doubles', 2, 2)).toBe('Doubles')
+  })
+
+  it('renders flights from the two side counts', () => {
+    expect(matchTypeLabel('flight', 4, 3)).toBe('Flight 4v3')
+    expect(matchTypeLabel('flight', 2, 2)).toBe('Flight 2v2')
+  })
+
+  it('treats any non-singles/doubles type as a flight', () => {
+    expect(matchTypeLabel(undefined, 0, 0)).toBe('Flight 0v0')
+  })
+})
+
+describe('resolvePlayerIds', () => {
+  it('prefers a populated array column', () => {
+    const m = {
+      team_a_player_ids: ['x', 'y'],
+      team_a_player1_id: 'legacy1',
+      team_a_player2_id: 'legacy2',
+    }
+    expect(resolvePlayerIds(m, 'a')).toEqual(['x', 'y'])
+  })
+
+  it('falls back to the legacy pair, dropping falsy ids', () => {
+    expect(resolvePlayerIds({ team_b_player1_id: 'p1', team_b_player2_id: null }, 'b')).toEqual(['p1'])
+    expect(resolvePlayerIds({ team_a_player_ids: [] }, 'a')).toEqual([])
+  })
+
+  it('is null-safe for a missing match', () => {
+    expect(resolvePlayerIds(null, 'a')).toEqual([])
+    expect(resolvePlayerIds(undefined, 'b')).toEqual([])
   })
 })
