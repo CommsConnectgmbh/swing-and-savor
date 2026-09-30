@@ -1,3 +1,5 @@
+import { clamp } from './math'
+
 export function calcMatchStanding(holeResults) {
   let scoreA = 0
   let scoreB = 0
@@ -44,8 +46,8 @@ function factor(match, side) {
 // Vorschlag für faire Faktoren bei asymmetrischen Flights.
 // Größeres Team bekommt < 1.0, kleineres Team behält 1.0.
 export function suggestFactors(sizeA, sizeB) {
-  const a = Math.max(1, Math.min(4, sizeA | 0))
-  const b = Math.max(1, Math.min(4, sizeB | 0))
+  const a = clamp(sizeA | 0, 1, 4)
+  const b = clamp(sizeB | 0, 1, 4)
   if (a === b) return { team_a_factor: 1, team_b_factor: 1 }
   return a > b
     ? { team_a_factor: round2(b / a), team_b_factor: 1 }
