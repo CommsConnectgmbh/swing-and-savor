@@ -3,10 +3,14 @@
 // und committed das Release. Idempotent NUR im Sinne von "neue Edits sind billig".
 
 import { readFileSync, statSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { homedir } from 'node:os'
 import { GoogleAuth } from 'google-auth-library'
 
 const PKG = 'de.commsconnect.swingandsavor'
-const SA  = '/Volumes/Code/Projects/commsos/.local-secrets/play-service-account-commsos.json'
+// Service-Account kommt als Anhang aus dem Tresor (roloff-tresor), nie als Datei
+const SA = JSON.parse(execFileSync(`${homedir()}/.local/bin/roloff-tresor`,
+  ['attachment', 'play-service-account-commsos.json'], { stdio: ['ignore', 'pipe', 'inherit'] }))
 const AAB = process.argv[2] || '/Users/rainer/Downloads/play-console-fixes/swingsavor-1.0-build1.aab'
 const TRACK = 'internal'
 const RELEASE_NAME = '1.0 (1)'
@@ -16,7 +20,7 @@ const stat = statSync(AAB)
 console.log(`AAB: ${AAB} (${(stat.size / 1024 / 1024).toFixed(2)} MB)`)
 
 const auth = new GoogleAuth({
-  keyFile: SA,
+  credentials: SA,
   scopes: ['https://www.googleapis.com/auth/androidpublisher'],
 })
 const client = await auth.getClient()
