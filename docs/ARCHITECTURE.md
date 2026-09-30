@@ -144,6 +144,11 @@ high-leverage fix.
       FriendsScreen, CommentsThread, JoinRequestsSheet.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] `components/Avatar.jsx` — extract the duplicated read-only circular avatar
+      from the public share screens (Recap, Crew, Invitational, Hall of Fame);
+      per-screen monogram font size preserved via `initialsFontSize`. Next: the
+      differently-shaped `Avatar` in ChallengesScreen / MessagesScreen (keyed on
+      a whole `profile`) is a separate consolidation.
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.

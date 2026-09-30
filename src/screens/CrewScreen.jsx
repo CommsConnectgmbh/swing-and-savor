@@ -5,19 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
-import { initials as nameInitials } from '../lib/names'
-
-function Avatar({ src, name, size = 36 }) {
-  const initials = nameInitials(name)
-  return (
-    <div className="rounded-full overflow-hidden bg-surface flex-shrink-0 flex items-center justify-center"
-         style={{ width: size, height: size, border: '1px solid rgba(244,241,234,0.16)' }}>
-      {src
-        ? <img src={src} alt={name || ''} className="w-full h-full object-cover" loading="lazy" />
-        : <span className="font-display text-ink uppercase tracking-wider" style={{ fontSize: size / 3.4 }}>{initials}</span>}
-    </div>
-  )
-}
+import Avatar from '../components/Avatar'
 
 function CupRow({ cup }) {
   const finished = cup.status === 'finished'
@@ -164,7 +152,7 @@ export default function CrewScreen() {
               {members.map((m) => (
                 <li key={m.profile.id} className="flex flex-col items-center text-center">
                   <Link to={`/u/${m.profile.handle}`} className="contents">
-                    <Avatar src={m.profile.avatar_url} name={m.profile.display_name || m.profile.handle} size={56} />
+                    <Avatar src={m.profile.avatar_url} name={m.profile.display_name || m.profile.handle} size={56} initialsFontSize={(s) => s / 3.4} />
                     <p className="text-[12px] text-ink truncate mt-2 w-full">{m.profile.display_name || `@${m.profile.handle}`}</p>
                     {m.role === 'captain' && (
                       <p className="text-[8px] tracking-[0.32em] uppercase text-accent mt-0.5">Captain</p>
