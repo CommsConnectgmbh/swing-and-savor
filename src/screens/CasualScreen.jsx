@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchFriendProfiles } from '../lib/friendships'
+import { monogram } from '../lib/names'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const HOLES = Array.from({ length: 18 }, (_, i) => i + 1)
@@ -103,7 +104,7 @@ function FriendPickerSheet({ excludeIds, onPick, onClose }) {
                   {f.avatar_url
                     ? <img src={f.avatar_url} alt="" className="w-full h-full object-cover" />
                     : <span className="text-xs font-bold text-inkMuted">
-                        {f.display_name.slice(0, 2).toUpperCase()}
+                        {monogram(f.display_name)}
                       </span>}
                 </div>
                 <div className="flex-1 text-left min-w-0">

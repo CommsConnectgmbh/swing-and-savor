@@ -22,3 +22,15 @@ export function initials(name) {
 export function profileInitial(profile) {
   return (profile?.display_name || profile?.handle || '?')[0]?.toUpperCase() || '?'
 }
+
+// First-two-characters monogram from a name string, e.g.
+//   "Ada"        → "AD"
+//   "bob lee"    → "BO"
+//   "" / null    → ""
+// This is the compact avatar fallback used by the match & casual friend
+// pickers — a *character* slice, distinct from `initials()` which takes the
+// first letter of each word. Centralised so the copy-pasted `.slice(0, 2)`
+// variants can't drift.
+export function monogram(name) {
+  return (name || '').slice(0, 2).toUpperCase()
+}
