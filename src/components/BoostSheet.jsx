@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import { fmtEur } from '../lib/format'
+import { isPromoActive } from '../lib/promo'
 
 const TIERS = [
   { id: 'top',       icon: '↑', prices: { 3: 499, 7: 999, 14: 1499 } },
@@ -27,7 +28,7 @@ export default function BoostSheet({ cup, onClose }) {
   const def = TIERS.find(t => t.id === tier)
   const amount = def?.prices?.[duration]
   const activeUntil = cup?.promoted_until ? new Date(cup.promoted_until) : null
-  const stillActive = activeUntil && activeUntil > new Date()
+  const stillActive = isPromoActive(cup)
 
   async function startCheckout() {
     if (!instantConsent) { setErr(t('sheets.boost.consentRequired')); return }
