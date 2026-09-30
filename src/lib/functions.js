@@ -28,3 +28,30 @@ export function authFunctionHeaders(token) {
     Authorization: `Bearer ${token}`,
   }
 }
+
+/**
+ * Fire an authenticated `POST` at an edge function.
+ *
+ * Wraps the request shape that was hand-copied across every checkout / account
+ * flow (BoostSheet, CupScreen, RangeScreen, ProfileScreen, WiderrufScreen,
+ * ScorecardSheet, claim-referral): `POST` to `functionUrl(name)`, the
+ * `authFunctionHeaders(token)` pair plus a JSON `Content-Type`, and a
+ * JSON-stringified body. Callers keep owning session retrieval and response
+ * handling — this only standardises the request the same way `functionUrl` /
+ * `authFunctionHeaders` already standardise the URL and headers, so the last
+ * hand-rolled `/functions/v1/` string (RangeScreen) is retired too.
+ *
+ * @param {string} name  edge-function name, e.g. 'create-boost-checkout'
+ * @param {{ token?: string, body?: unknown }} [opts]
+ *   `token` — bearer access token; `body` — JSON payload (omit for a bodyless
+ *   POST, e.g. delete-account).
+ * @returns {Promise<Response>} the raw fetch `Response`, unparsed.
+ */
+export function postFunction(name, { token, body } = {}) {
+  const init = {
+    method: 'POST',
+    headers: { ...authFunctionHeaders(token), 'Content-Type': 'application/json' },
+  }
+  if (body !== undefined) init.body = JSON.stringify(body)
+  return fetch(functionUrl(name), init)
+}

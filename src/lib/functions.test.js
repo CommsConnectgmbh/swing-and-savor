@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { functionUrl, publicFunctionHeaders, authFunctionHeaders } from './functions'
+import { functionUrl, publicFunctionHeaders, authFunctionHeaders, postFunction } from './functions'
 
 describe('lib/functions', () => {
   beforeEach(() => {
@@ -34,6 +34,66 @@ describe('lib/functions', () => {
       apikey: 'anon-key-123',
       Authorization: 'Bearer jwt-abc',
       'Content-Type': 'application/json',
+    })
+  })
+
+  describe('postFunction', () => {
+    let fetchMock
+    beforeEach(() => {
+      fetchMock = vi.fn().mockResolvedValue({ ok: true })
+      vi.stubGlobal('fetch', fetchMock)
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('POSTs to the edge function with the auth headers, JSON content-type and stringified body', async () => {
+      await postFunction('create-boost-checkout', {
+        token: 'jwt-abc',
+        body: { tournament_id: 't1', tier: 'gold' },
+      })
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toBe('https://proj.supabase.co/functions/v1/create-boost-checkout')
+      expect(init).toEqual({
+        method: 'POST',
+        headers: {
+          apikey: 'anon-key-123',
+          Authorization: 'Bearer jwt-abc',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tournament_id: 't1', tier: 'gold' }),
+      })
+    })
+
+    it('omits the request body for a bodyless POST but keeps the JSON content-type', async () => {
+      await postFunction('delete-account', { token: 'jwt-abc' })
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toBe('https://proj.supabase.co/functions/v1/delete-account')
+      expect('body' in init).toBe(false)
+      expect(init.headers['Content-Type']).toBe('application/json')
+      expect(init.method).toBe('POST')
+    })
+
+    it('passes an undefined token straight through (Bearer undefined), matching the previous inline shape', async () => {
+      await postFunction('scorecard-ocr', { body: { upload_id: 'u1' } })
+      const [, init] = fetchMock.mock.calls[0]
+      expect(init.headers.Authorization).toBe('Bearer undefined')
+      expect(init.body).toBe(JSON.stringify({ upload_id: 'u1' }))
+    })
+
+    it('returns the fetch Response promise unparsed', async () => {
+      const response = { ok: true, json: () => ({}) }
+      fetchMock.mockResolvedValueOnce(response)
+      await expect(postFunction('widerruf', { token: 't', body: {} })).resolves.toBe(response)
+    })
+
+    it('tolerates being called with no options object', async () => {
+      await postFunction('claim-referral')
+      const [url, init] = fetchMock.mock.calls[0]
+      expect(url).toBe('https://proj.supabase.co/functions/v1/claim-referral')
+      expect('body' in init).toBe(false)
+      expect(init.headers.Authorization).toBe('Bearer undefined')
     })
   })
 })

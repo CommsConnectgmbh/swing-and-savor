@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { loadWiderrufbareKaeufe } from '../lib/widerruf'
-import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { postFunction } from '../lib/functions'
 import { fmtEur } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -58,15 +58,14 @@ export default function WiderrufScreen() {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
       if (!jwt) throw new Error(t('widerruf.mustLogin'))
-      const res = await fetch(functionUrl('widerruf'), {
-        method: 'POST',
-        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await postFunction('widerruf', {
+        token: jwt,
+        body: {
           purchase_table: selected.table,
           purchase_id: selected.id,
           full_name: fullName,
           email,
-        }),
+        },
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`)

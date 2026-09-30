@@ -142,6 +142,11 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
+- [x] `lib/functions.js` — `functionUrl` / `publicFunctionHeaders` /
+      `authFunctionHeaders` + `postFunction` (authenticated edge-function POST
+      request shape) + tests; migrated every checkout/account flow (BoostSheet,
+      CupScreen, RangeScreen, ProfileScreen, WiderrufScreen, ScorecardSheet,
+      claim-referral) and retired the last hand-rolled `/functions/v1/` string.
 - [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
       MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
