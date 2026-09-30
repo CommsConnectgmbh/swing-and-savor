@@ -5,6 +5,8 @@
 //
 // No PII in localStorage — only the 8-char code.
 
+import { SITE_ORIGIN } from './links'
+
 const STORAGE_KEY = 'sns_ref_code'
 
 export function captureReferralFromUrl() {
@@ -35,6 +37,6 @@ export function clearStoredReferralCode() {
 }
 
 export function buildReferralLink(refCode) {
-  if (!refCode) return 'https://swingandsavor.at'
-  return `https://swingandsavor.at?ref=${encodeURIComponent(refCode)}`
+  if (!refCode) return SITE_ORIGIN
+  return `${SITE_ORIGIN}?ref=${encodeURIComponent(refCode)}`
 }
