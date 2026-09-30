@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { fetchProfileList } from './profiles'
+import { otherUserId } from './pairs'
 
 // Centralised friendship data-access. A friendship row is symmetric
 // (`user_a` / `user_b`), so resolving "the other person relative to me" and
@@ -9,10 +10,9 @@ import { fetchProfileList } from './profiles'
 // The profile columns the friend-picker UIs render.
 export const FRIEND_PROFILE_COLUMNS = 'id, handle, display_name, hcp, avatar_url'
 
-// Given a friendship row, return the id of the *other* participant.
-export function otherUserId(row, myId) {
-  return row.user_a === myId ? row.user_b : row.user_a
-}
+// `otherUserId` is a generic symmetric-pair helper (see lib/pairs.js). Re-export
+// it here so friendship callers keep a single, on-topic import.
+export { otherUserId }
 
 // All friendship rows that touch me, in any status.
 export async function fetchFriendships(myId) {

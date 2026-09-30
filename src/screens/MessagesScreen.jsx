@@ -5,6 +5,7 @@ import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
 import { relTime } from '../lib/format'
 import { indexById } from '../lib/profiles'
+import { otherUserId } from '../lib/pairs'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -35,7 +36,7 @@ export default function MessagesScreen() {
     if (list.length === 0) { setItems([]); setLoading(false); return }
 
     // Andere User + letzte Message + Unread-Count je Conversation
-    const otherIds = list.map(c => c.user_a === user.id ? c.user_b : c.user_a)
+    const otherIds = list.map(c => otherUserId(c, user.id))
     const ids = list.map(c => c.id)
 
     const [{ data: profs }, { data: lastMsgs }, { data: unreadRows }] = await Promise.all([
@@ -57,7 +58,7 @@ export default function MessagesScreen() {
     }
 
     setItems(list.map(c => {
-      const otherId = c.user_a === user.id ? c.user_b : c.user_a
+      const otherId = otherUserId(c, user.id)
       return {
         id: c.id,
         other: profById[otherId] || { id: otherId, display_name: '—', handle: '' },

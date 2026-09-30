@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
 import { useAuth } from '../lib/auth'
+import { otherUserId } from '../lib/pairs'
 import { profileInitial } from '../lib/names'
 import LoadingSpinner from '../components/LoadingSpinner'
 
@@ -41,7 +42,7 @@ export default function ConversationScreen() {
       .select('id,user_a,user_b').eq('id', conversationId).maybeSingle()
     if (!c) { setLoading(false); return }
     setConv(c)
-    const otherId = c.user_a === user.id ? c.user_b : c.user_a
+    const otherId = otherUserId(c, user.id)
     const { data: p } = await supabase.from('profiles')
       .select('id,handle,display_name,avatar_url').eq('id', otherId).maybeSingle()
     setOther(p)
