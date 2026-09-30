@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { usePublicResource } from '../lib/usePublicResource'
 import { initials as nameInitials } from '../lib/names'
 
 function Avatar({ src, name, size = 80 }) {
@@ -52,40 +52,21 @@ function CupRow({ cup }) {
 export default function HallOfFameScreen() {
   const { t } = useTranslation()
   const { handle } = useParams()
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
   const [shareOpen, setShareOpen] = useState(false)
   const [rivalries, setRivalries] = useState([])
 
-  useEffect(() => {
-    if (!handle) return
-    fetch(`${functionUrl('public-rivalries')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => r.ok ? r.json() : null)
-      .then((j) => { if (j?.rivalries) setRivalries(j.rivalries) })
-      .catch(() => {})
-  }, [handle])
+  // Best-effort side panel: a failed rivalries fetch simply stays empty, so its
+  // loading/error state is intentionally ignored.
+  usePublicResource('public-rivalries', { handle }, {
+    onLoad: (j) => { if (j?.rivalries) setRivalries(j.rivalries) },
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setErr(null)
-    fetch(`${functionUrl('public-hall')}?handle=${encodeURIComponent(handle)}`, {
-      headers: publicFunctionHeaders(),
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}))
-        if (cancelled) return
-        if (!r.ok) { setErr(j?.error || 'error'); setLoading(false); return }
-        setData(j)
-        document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor`
-        setLoading(false)
-      })
-      .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false) } })
-    return () => { cancelled = true }
-  }, [handle])
+  const { data, loading, error: err } = usePublicResource(
+    'public-hall', { handle },
+    { onLoad: (j) => {
+      document.title = `${j.captain.display_name || handle} · Hall of Fame · Swing & Savor`
+    } },
+  )
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
