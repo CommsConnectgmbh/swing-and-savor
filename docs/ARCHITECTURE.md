@@ -142,8 +142,11 @@ high-leverage fix.
 - [x] `lib/profiles.js` — `fetchProfileMap` / `fetchProfileList` / `indexById` /
       `searchProfiles` + tests; migrate HomeScreen, ChallengesScreen,
       FriendsScreen, CommentsThread, JoinRequestsSheet.
-- [ ] Migrate remaining profile-map sites (MessagesScreen, DiscoverScreen,
-      MatchesScreen, CasualScreen, ConversationScreen, ProfileScreen).
+- [x] Migrate remaining profile-map sites: MessagesScreen, DiscoverScreen and
+      ProfileScreen (blocked users) now call `fetchProfileMap`/`fetchProfileList`;
+      ConversationScreen and `lib/liveEvents.js` use the new single-row
+      `fetchProfile` helper. (MatchesScreen/CasualScreen carry no `from('profiles')`
+      map idiom — nothing to migrate there.)
 - [ ] `lib/format.js` — `initials`, `formatDate`, `formatRelative` (+ tests),
       replacing the inlined variants without changing rendered output.
 - [ ] Restore a working ESLint flat config so `npm run lint` passes in CI.
