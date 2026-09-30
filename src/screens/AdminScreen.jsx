@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { fileExt } from '../lib/format'
-import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
+import { uploadPublicImage } from '../lib/photo'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const ADMIN_EMAIL = 'rainer.roloff@comms-connect.de'
@@ -62,14 +62,7 @@ async function uploadSavorImage(file, prefix) {
   if (!file) return null
   const ext = fileExt(file)
   const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`
-  // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
-  const bytes = await stripFileMetadataForUpload(file, 'savor-images')
-  const { error } = await supabase.storage.from('savor-images').upload(path, bytes, {
-    cacheControl: '3600', upsert: false, contentType: file.type || undefined,
-  })
-  if (error) throw error
-  const { data } = supabase.storage.from('savor-images').getPublicUrl(path)
-  return data.publicUrl
+  return uploadPublicImage('savor-images', path, file, { contentType: file.type || undefined })
 }
 
 function StatRow({ label, value }) {

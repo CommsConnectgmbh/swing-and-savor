@@ -15,7 +15,7 @@ import SocialBar from '../components/SocialBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { debounce } from '../lib/debounce'
 import { fileExt } from '../lib/format'
-import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
+import { uploadPublicImage } from '../lib/photo'
 
 const TEAM_A = '#9BB5C9'
 const TEAM_B = '#D9A38E'
@@ -225,14 +225,9 @@ export default function HomeScreen() {
     try {
       const ext = fileExt(file)
       const path = `${cupId}/cover-${Date.now()}.${ext}`
-      // Bucket ist public-read: EXIF/GPS raus, bevor die Bytes hochgehen.
-      const bytes = await stripFileMetadataForUpload(file, 'cup-covers')
-      const { error: upErr } = await supabase.storage
-        .from('cup-covers').upload(path, bytes, { upsert: false, cacheControl: '3600', contentType: file.type })
-      if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('cup-covers').getPublicUrl(path)
-      await supabase.from('tournaments').update({ cover_url: pub.publicUrl }).eq('id', cupId)
-      setCoverOverrides(o => ({ ...o, [cupId]: pub.publicUrl }))
+      const publicUrl = await uploadPublicImage('cup-covers', path, file)
+      await supabase.from('tournaments').update({ cover_url: publicUrl }).eq('id', cupId)
+      setCoverOverrides(o => ({ ...o, [cupId]: publicUrl }))
     } catch (err) {
       console.error('[cup-cover-upload]', err)
       alert('Cover-Upload fehlgeschlagen.')
