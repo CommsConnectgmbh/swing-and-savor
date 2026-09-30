@@ -195,7 +195,7 @@ export default function PublicCupScreen() {
 
         {/* DealBuddy hook */}
         {cup.status === 'finished' && (
-          <a href="https://deal-buddy.app" target="_blank" rel="noopener"
+          <a href="https://deal-buddy.app" target="_blank" rel="noopener noreferrer"
             className="mt-5 flex items-center justify-between rounded-card bg-surface border border-line p-4 active:scale-[0.98] transition-transform">
             <div className="flex items-center gap-3">
               <span className="text-2xl">💰</span>

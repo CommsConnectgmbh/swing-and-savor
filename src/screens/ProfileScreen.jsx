@@ -661,11 +661,11 @@ export default function ProfileScreen() {
           </button>
 
           <div className="flex gap-2 text-[11px] text-inkDim justify-center pt-1">
-            <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.impressum')}</a>
+            <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener noreferrer" className="hover:text-inkMuted">{t('profile.impressum')}</a>
             <span>·</span>
-            <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.datenschutz')}</a>
+            <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:text-inkMuted">{t('profile.datenschutz')}</a>
             <span>·</span>
-            <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.agb')}</a>
+            <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener noreferrer" className="hover:text-inkMuted">{t('profile.agb')}</a>
             <span>·</span>
             <a href="mailto:hi@swingandsavor.at" className="hover:text-inkMuted">{t('profile.support')}</a>
           </div>

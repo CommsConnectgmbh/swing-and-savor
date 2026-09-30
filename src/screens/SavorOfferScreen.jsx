@@ -156,7 +156,7 @@ export default function SavorOfferScreen() {
             <div className="flex-1 min-w-0">
               <p className="font-display text-ink text-[18px]" style={{ fontWeight: 500 }}>{offer.partner.name}</p>
               {offer.partner.website_url && (
-                <a href={offer.partner.website_url} target="_blank" rel="noopener"
+                <a href={offer.partner.website_url} target="_blank" rel="noopener noreferrer"
                    className="text-[11px] text-inkDim tracking-wide truncate block">
                   {offer.partner.website_url.replace(/^https?:\/\//, '')} ↗
                 </a>
@@ -173,7 +173,7 @@ export default function SavorOfferScreen() {
       <section className="px-5 py-8">
         <div className="flex flex-col gap-3">
           {offer.external_url ? (
-            <a href={offer.external_url} target="_blank" rel="noopener"
+            <a href={offer.external_url} target="_blank" rel="noopener noreferrer"
                className={`block w-full text-center py-5 text-[12px] font-medium tracking-[0.28em] uppercase active:scale-[0.99] transition-transform ${
                  offer.status === 'sold_out' ? 'hairline text-inkDim cursor-not-allowed pointer-events-none' : 'bg-accent text-brandDark'
                }`}>

@@ -91,7 +91,7 @@ export default function TourScreen() {
       {tab === 'live' && (
         <div className="mx-3 rounded-card overflow-hidden bg-surface border border-line">
           {TOUR_LINKS.map((l, idx) => (
-            <a key={l.url} href={l.url} target="_blank" rel="noopener"
+            <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-3.5 active:bg-bg/40 transition-colors"
               style={{ borderBottom: idx < TOUR_LINKS.length - 1 ? '1px solid #15302A' : 'none' }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent/12 border border-accent/30 text-accent">
