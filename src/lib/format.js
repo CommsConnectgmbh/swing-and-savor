@@ -24,6 +24,17 @@ export function fmtPts(v) {
   return v % 1 === 0 ? String(v) : v.toFixed(1)
 }
 
+// Golf-Score relativ zum Par in der üblichen Notation:
+//   0 → "E" (even/level par), +2 → "+2", -3 → "-3".
+// Der Plus-Fall bekommt explizit ein Vorzeichen, der Minus-Fall behält das
+// native "-"; die Ausgabe ist immer ein String, damit alle Aufrufer
+// (Brutto-/Netto-Badges, Live-Stand, Share-Karte, Match-Detail-Delta)
+// byte-identisch dieselbe Darstellung erhalten.
+export function formatToPar(diff) {
+  if (diff === 0) return 'E'
+  return diff > 0 ? `+${diff}` : `${diff}`
+}
+
 // Turnierdatum formatieren. Der 'T12:00:00'-Anker verhindert, dass ein reines
 // 'YYYY-MM-DD' je nach Zeitzone auf den Vortag zurückrutscht.
 // opts entspricht den Intl.DateTimeFormat-Optionen des jeweiligen Aufrufers;

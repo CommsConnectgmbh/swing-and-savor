@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { strokesPerHole, calcCasualMatchStanding, casualGrossStanding, casualHoleResults } from '../lib/scoring'
+import { formatToPar } from '../lib/format'
 import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -430,13 +431,13 @@ function LiveStanding({ round, playersList, scores }) {
               {r.played > 0 && r.grossDiff != null && (
                 <p className="text-[11px] text-inkMuted mt-0.5">
                   <span className={r.grossDiff > 0 ? 'text-danger' : r.grossDiff < 0 ? 'text-course' : 'text-inkMuted'}>
-                    Brutto {r.grossDiff === 0 ? 'E' : r.grossDiff > 0 ? `+${r.grossDiff}` : r.grossDiff}
+                    Brutto {formatToPar(r.grossDiff)}
                   </span>
                   {r.hasHcp && r.netDiff != null && (
                     <>
                       {' · '}
                       <span className={r.netDiff > 0 ? 'text-danger' : r.netDiff < 0 ? 'text-course' : 'text-inkMuted'}>
-                        Netto {r.netDiff === 0 ? 'E' : r.netDiff > 0 ? `+${r.netDiff}` : r.netDiff}
+                        Netto {formatToPar(r.netDiff)}
                       </span>
                     </>
                   )}
@@ -544,7 +545,7 @@ function Scorecard({ round, playersList, scores, isOwner, onScoreChange, onParCh
                 </p>
                 {diff != null && played > 0 && (
                   <p className="text-[10px] tracking-wider text-inkMuted mt-0.5">
-                    {played}/18 · {diff === 0 ? 'E' : diff > 0 ? `+${diff}` : diff}
+                    {played}/18 · {formatToPar(diff)}
                   </p>
                 )}
               </div>
@@ -854,7 +855,6 @@ export default function CasualScreen() {
     if (!active || sharing) return
     const pars = active.hole_pars?.length === 18 ? active.hole_pars : null
     const hcps = active.hole_handicaps?.length === 18 ? active.hole_handicaps : null
-    const fmt = d => d === 0 ? 'E' : d > 0 ? `+${d}` : `${d}`
 
     const rows = players.map(p => {
       const own = scores.filter(s => s.player_idx === p.idx)
@@ -913,7 +913,7 @@ export default function CasualScreen() {
       name: r.name,
       total: r.total,
       sub: r.grossDiff != null
-        ? `Brutto ${fmt(r.grossDiff)}${r.hasHcp && r.netDiff != null ? ` · Netto ${fmt(r.netDiff)}` : ''}`
+        ? `Brutto ${formatToPar(r.grossDiff)}${r.hasHcp && r.netDiff != null ? ` · Netto ${formatToPar(r.netDiff)}` : ''}`
         : `${r.played}/18`,
       winner: i === 0 && (finished || rows.length >= 2),
     }))

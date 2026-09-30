@@ -14,7 +14,7 @@ import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
 import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
-import { fmtPts, formatCupDate } from '../lib/format'
+import { fmtPts, formatCupDate, formatToPar } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
 import { useAuth } from '../lib/auth'
@@ -45,10 +45,11 @@ function calcWinner(sa, sb) {
   return 'halved'
 }
 
+// Behält die null-Sonderbehandlung dieser Ansicht (kein Delta → nichts rendern)
+// und delegiert die E/+n/-n-Notation an die zentrale formatToPar-Funktion.
 function fmtDelta(v) {
   if (v === null) return null
-  if (v === 0) return 'E'
-  return v > 0 ? `+${v}` : String(v)
+  return formatToPar(v)
 }
 
 function ResultDot({ winner }) {
