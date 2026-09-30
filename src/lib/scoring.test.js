@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, hasHandicapFactor, formatFactor, stablefordPoints, calcStablefordTotals } from './scoring'
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
@@ -200,6 +200,40 @@ describe('suggestFactors', () => {
 
   it('clamps inputs to 1..4', () => {
     expect(suggestFactors(0, 5)).toEqual({ team_a_factor: 1, team_b_factor: 0.25 })
+  })
+})
+
+describe('hasHandicapFactor', () => {
+  it('is false when both factors are 1.0', () => {
+    expect(hasHandicapFactor({ team_a_factor: 1, team_b_factor: 1 })).toBe(false)
+  })
+
+  it('treats missing factors as 1.0', () => {
+    expect(hasHandicapFactor({})).toBe(false)
+    expect(hasHandicapFactor(null)).toBe(false)
+    expect(hasHandicapFactor({ team_a_factor: null, team_b_factor: undefined })).toBe(false)
+  })
+
+  it('is true when either side deviates from 1.0', () => {
+    expect(hasHandicapFactor({ team_a_factor: 0.75, team_b_factor: 1 })).toBe(true)
+    expect(hasHandicapFactor({ team_a_factor: 1, team_b_factor: 0.5 })).toBe(true)
+  })
+
+  it('coerces string factors like the old inline predicate', () => {
+    expect(hasHandicapFactor({ team_a_factor: '1', team_b_factor: '1' })).toBe(false)
+    expect(hasHandicapFactor({ team_a_factor: '0.75', team_b_factor: '1' })).toBe(true)
+  })
+})
+
+describe('formatFactor', () => {
+  it('renders exactly two decimal places', () => {
+    expect(formatFactor(0.75)).toBe('0.75')
+    expect(formatFactor(1)).toBe('1.00')
+    expect(formatFactor(0.5)).toBe('0.50')
+  })
+
+  it('coerces numeric strings like the old inline Number(x).toFixed(2)', () => {
+    expect(formatFactor('0.5')).toBe('0.50')
   })
 })
 

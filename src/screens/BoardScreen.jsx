@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { subscribeToTables } from '../lib/realtime'
-import { calcTeamPoints, calcMatchStanding } from '../lib/scoring'
+import { calcTeamPoints, calcMatchStanding, hasHandicapFactor, formatFactor } from '../lib/scoring'
 import { fmtPts, formatCupDate } from '../lib/format'
 import LoadingSpinner from '../components/LoadingSpinner'
 import PasswordGate from '../components/PasswordGate'
@@ -325,7 +325,7 @@ export default function BoardScreen() {
           const typeLbl  = m.type === 'singles' ? 'Singles'
                           : m.type === 'doubles' ? 'Doubles'
                           : `Flight ${m._namesA?.length ?? 0}v${m._namesB?.length ?? 0}`
-          const hasFactor = Number(m.team_a_factor ?? 1) !== 1 || Number(m.team_b_factor ?? 1) !== 1
+          const hasFactor = hasHandicapFactor(m)
 
           let standColor = '#9C968C'
           let standBg = 'transparent'
@@ -368,7 +368,7 @@ export default function BoardScreen() {
                   {typeLbl}
                   {hasFactor && (
                     <span className="text-[9px] font-bold uppercase text-accent bg-accent/10 border border-accent/25 px-1 py-0.5 rounded tabular-nums">
-                      ×{Number(m.team_a_factor).toFixed(2)}/{Number(m.team_b_factor).toFixed(2)}
+                      ×{formatFactor(m.team_a_factor)}/{formatFactor(m.team_b_factor)}
                     </span>
                   )}
                 </span>

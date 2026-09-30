@@ -54,6 +54,21 @@ export function suggestFactors(sizeA, sizeB) {
 
 function round2(n) { return Math.round(n * 100) / 100 }
 
+// Ob für ein Match überhaupt Handicap-Faktoren wirksam sind: sobald einer der
+// beiden Team-Faktoren von 1.0 abweicht. Fehlende Werte gelten als 1.0. Ersetzt
+// das über Matches-/Board-/MatchDetail-Screen verstreute Inline-Predikat, damit
+// die Faktor-Anzeige überall nach derselben Regel ein-/ausgeblendet wird.
+export function hasHandicapFactor(match) {
+  return Number(match?.team_a_factor ?? 1) !== 1 || Number(match?.team_b_factor ?? 1) !== 1
+}
+
+// Einheitliche Faktor-Anzeige mit genau zwei Nachkommastellen: 0.75 → "0.75".
+// Entspricht dem bisherigen Inline-`Number(x).toFixed(2)` (inkl. Coercion), das
+// vorher in mehreren Screens dupliziert war.
+export function formatFactor(v) {
+  return Number(v).toFixed(2)
+}
+
 // Brutto-Stableford pro Loch.
 // 4 = Eagle, 3 = Birdie, 2 = Par, 1 = Bogey, 0 = Doppel-Bogey oder schlimmer.
 // strokes/par müssen positive Integers sein, sonst null.

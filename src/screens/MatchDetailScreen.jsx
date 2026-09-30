@@ -12,7 +12,7 @@ import { applyCourseEdit } from '../lib/courses'
 import { uploadMatchPhoto, clearMatchPhoto } from '../lib/photo'
 import { fetchSocialCounts, fetchMyReactions } from '../lib/social'
 import { renderMatchShareCard, shareOrDownload } from '../lib/shareCard'
-import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun } from '../lib/scoring'
+import { calcStablefordTotals, stablefordPoints, calcMatchPlayStatus, matchPlayHoleRun, hasHandicapFactor, formatFactor } from '../lib/scoring'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
@@ -513,7 +513,7 @@ export default function MatchDetailScreen() {
   const typeLbl   = isStableford ? `${baseTypeLbl} · Stableford` : baseTypeLbl
   const factorA   = Number(match.team_a_factor ?? 1)
   const factorB   = Number(match.team_b_factor ?? 1)
-  const hasFactor = !isStableford && (factorA !== 1 || factorB !== 1)
+  const hasFactor = !isStableford && hasHandicapFactor(match)
   const done   = match.status === 'finished'
   const locked = !isUnlocked(match.tournament)
 
@@ -615,7 +615,7 @@ export default function MatchDetailScreen() {
           </p>
           {hasFactor && (
             <p className="text-[10px] font-bold tracking-wide uppercase text-accent mt-1">
-              Faktor {factorA.toFixed(2)} / {factorB.toFixed(2)}
+              Faktor {formatFactor(factorA)} / {formatFactor(factorB)}
             </p>
           )}
         </div>
