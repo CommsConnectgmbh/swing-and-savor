@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { getPublicFunction } from '../lib/functions'
 
 export default function PublicCupScreen() {
   const { t, i18n } = useTranslation()
@@ -17,9 +17,7 @@ export default function PublicCupScreen() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    fetch(`${functionUrl('public-cup')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
+    getPublicFunction('public-cup', { invite: inviteCode })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))
         if (cancelled) return

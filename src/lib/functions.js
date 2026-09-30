@@ -28,3 +28,36 @@ export function authFunctionHeaders(token) {
     Authorization: `Bearer ${token}`,
   }
 }
+
+/**
+ * GET a public (anon-key only) Edge Function, with optional query params.
+ *
+ * Collapses the
+ *   `fetch(`${functionUrl(name)}?key=${encodeURIComponent(value)}`,
+ *          { headers: publicFunctionHeaders() })`
+ * idiom that was copy-pasted verbatim across every public share screen
+ * (public-cup, public-season, public-recap, public-crew, public-invitational,
+ * public-hall, public-rivalries). Each copy re-assembled the same URL string and
+ * header object by hand — the exact drift risk `functionUrl` was introduced to
+ * remove, one level up.
+ *
+ * The raw `fetch` Promise (a `Response`) is returned, so callers keep full
+ * control over response handling and this is a behaviour-preserving swap for the
+ * inline `fetch(...)` calls it replaces.
+ *
+ * @param {string} name  Edge-function name, e.g. 'public-cup'.
+ * @param {Record<string, string|number>} [params]  Query params, serialised in
+ *   insertion order as `key=encodeURIComponent(value)`. Keys are emitted as-is
+ *   (the call sites this replaces use URL-safe keys like `invite`/`slug`/`handle`).
+ * @returns {Promise<Response>}
+ */
+export function getPublicFunction(name, params) {
+  let url = functionUrl(name)
+  if (params) {
+    const qs = Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&')
+    if (qs) url += `?${qs}`
+  }
+  return fetch(url, { headers: publicFunctionHeaders() })
+}

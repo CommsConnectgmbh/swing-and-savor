@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
 import ShareSheet from '../components/ShareSheet'
 import WinnerCardSheet from '../components/WinnerCardSheet'
-import { functionUrl, publicFunctionHeaders } from '../lib/functions'
+import { getPublicFunction } from '../lib/functions'
 import { initials as nameInitials } from '../lib/names'
 
 function Initials({ name }) {
@@ -53,9 +53,7 @@ export default function InvitationalScreen() {
     let cancelled = false
     setLoading(true)
     setErr(null)
-    fetch(`${functionUrl('public-invitational')}?invite=${encodeURIComponent(inviteCode)}`, {
-      headers: publicFunctionHeaders(),
-    })
+    getPublicFunction('public-invitational', { invite: inviteCode })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}))
         if (cancelled) return
