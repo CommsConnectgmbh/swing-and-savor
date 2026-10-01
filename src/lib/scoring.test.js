@@ -1,5 +1,33 @@
 import { describe, it, expect } from 'vitest'
-import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals } from './scoring'
+import { calcMatchStanding, calcMatchPlayStatus, casualGrossStanding, casualHoleResults, matchPlayHoleRun, calcTeamPoints, suggestFactors, stablefordPoints, calcStablefordTotals, sumPars } from './scoring'
+
+describe('sumPars', () => {
+  it('sums a full 18-hole par array', () => {
+    expect(sumPars(Array(18).fill(4))).toBe(72)
+  })
+
+  it('treats blank/non-numeric entries as 0', () => {
+    expect(sumPars([4, null, undefined, NaN, 5])).toBe(9)
+  })
+
+  it('agrees for the two former inline spellings on real par data', () => {
+    const pars = [4, 3, 5, 4, 4, 0, 4, 3, 5]
+    const viaOr = pars.reduce((s, p) => s + (p || 0), 0)
+    const viaFinite = pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0)
+    expect(sumPars(pars)).toBe(viaOr)
+    expect(sumPars(pars)).toBe(viaFinite)
+  })
+
+  it('returns 0 for null/undefined/non-array input', () => {
+    expect(sumPars(null)).toBe(0)
+    expect(sumPars(undefined)).toBe(0)
+    expect(sumPars('nope')).toBe(0)
+  })
+
+  it('returns 0 for an empty array', () => {
+    expect(sumPars([])).toBe(0)
+  })
+})
 
 describe('calcMatchStanding', () => {
   it('returns all square with no holes', () => {
