@@ -279,7 +279,9 @@
       "entryFee": "Startgeld",
       "payout": "Preisgeld",
       "equipment": "Ausrüstung"
-    }
+    },
+    "discordAnnounce": "Im Discord-Server ankündigen",
+    "discordAnnounceHint": "Öffentliche Cups kündigen wir mit Name, Datum, Teamnamen, Beschreibung und Endstand in unserem Discord-Server an. Ohne Haken bleibt der Cup nur in der App."
   },
   "profile": {
     "title": "Profil",
@@ -429,5 +431,10 @@
     "cardOpenAria": "Launch Monitor öffnen",
     "cardSubPro": "AR-Launch-Monitor öffnen — Carry, Ballspeed & Spin.",
     "cardSub": "AR-Launch-Monitor — Carry, Ballspeed, Spin & Green Reader."
+  },
+  "tour": {
+    "consent": "Die Videos kommen von YouTube. Mit „Videos laden“ willigst du ein, dass dabei Daten wie deine IP-Adresse an Google/YouTube übertragen werden, auch in die USA.",
+    "privacyLink": "Datenschutzerklärung",
+    "loadVideos": "Videos laden"
   }
 }

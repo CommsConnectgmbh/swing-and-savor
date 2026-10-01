@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Tour-Screen v1 — Bridge zur grossen Welt des Pro-Golfs.
@@ -29,6 +30,7 @@ const TABS = [
 ]
 
 export default function TourScreen() {
+  const { t } = useTranslation()
   const [tab, setTab]       = useState('videos')
   const [active, setActive] = useState(CHANNELS[0])
   // YouTube erst nach Klick laden: vorher keine Verbindung zu Google/YouTube.
@@ -85,14 +87,13 @@ export default function TourScreen() {
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
                 <p className="text-[11px] text-inkMuted leading-snug">
-                  Die Videos kommen von YouTube. Beim Laden werden Daten wie deine IP-Adresse an
-                  Google übertragen. Mehr in der{' '}
-                  <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener noreferrer"
-                    className="underline">Datenschutzerklärung</a>.
+                  {t('tour.consent')}{' '}
+                  <a href="https://swingandsavor.at/datenschutz#youtube" target="_blank" rel="noopener noreferrer"
+                    className="underline">{t('tour.privacyLink')}</a>
                 </p>
                 <button type="button" onClick={() => setYtAllowed(true)}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-accent text-brandDark active:scale-95 transition-transform">
-                  Videos laden
+                  {t('tour.loadVideos')}
                 </button>
               </div>
             )}

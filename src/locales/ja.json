@@ -164,7 +164,9 @@
     "tieLabel": "引き分け",
     "playMatchPlay": "マッチプレー",
     "sideBetOnDealBuddy": "DealBuddy でリベンジ →",
-    "sideBetSub": "お金を賭けないリベンジ勝負。負けた人が罰ゲーム"
+    "sideBetSub": "お金を賭けないリベンジ勝負。負けた人が罰ゲーム",
+    "discordAnnounce": "Discord サーバーで告知する",
+    "discordAnnounceHint": "公開カップは、名前・日付・チーム名・説明・最終スコアを Discord サーバーで告知します。チェックを外すとアプリ内のみで公開されます。"
   },
   "profile": {
     "title": "プロフィール",
@@ -303,5 +305,10 @@
     "cardOpenAria": "ローンチモニターを開く",
     "cardSubPro": "ARローンチモニターを開く — キャリー、ボールスピード、スピン。",
     "cardSub": "ARローンチモニター — キャリー、ボールスピード、スピン、グリーンリーダー。"
+  },
+  "tour": {
+    "consent": "動画は YouTube から配信されます。「動画を読み込む」をタップすると、IP アドレスなどのデータが Google/YouTube（米国を含む）に送信されることに同意したものとみなされます。",
+    "privacyLink": "プライバシーポリシー",
+    "loadVideos": "動画を読み込む"
   }
 }

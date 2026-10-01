@@ -279,7 +279,9 @@
       "entryFee": "Entry fee",
       "payout": "Payout",
       "equipment": "Equipment"
-    }
+    },
+    "discordAnnounce": "Announce on our Discord server",
+    "discordAnnounceHint": "We announce public cups on our Discord server with name, date, team names, description and final score. Untick to keep the cup in the app only."
   },
   "profile": {
     "title": "Profile",
@@ -429,5 +431,10 @@
     "cardOpenAria": "Open Launch Monitor",
     "cardSubPro": "Open the AR launch monitor — carry, ball speed & spin.",
     "cardSub": "AR launch monitor — carry, ball speed, spin & green reader."
+  },
+  "tour": {
+    "consent": "These videos come from YouTube. By tapping “Load videos” you agree that data such as your IP address is sent to Google/YouTube, including to the USA.",
+    "privacyLink": "Privacy policy",
+    "loadVideos": "Load videos"
   }
 }

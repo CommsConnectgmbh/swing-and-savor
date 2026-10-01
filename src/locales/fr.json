@@ -164,7 +164,9 @@
     "tieLabel": "Égalité",
     "playMatchPlay": "Match Play",
     "sideBetOnDealBuddy": "Revanche sur DealBuddy →",
-    "sideBetSub": "Défi revanche sans argent : le perdant accomplit un gage"
+    "sideBetSub": "Défi revanche sans argent : le perdant accomplit un gage",
+    "discordAnnounce": "Annoncer sur notre serveur Discord",
+    "discordAnnounceHint": "Nous annonçons les tournois publics sur notre serveur Discord avec nom, date, noms des équipes, description et score final. Décoche pour garder le tournoi uniquement dans l’app."
   },
   "profile": {
     "title": "Profil",
@@ -303,5 +305,10 @@
     "cardOpenAria": "Ouvrir le Launch Monitor",
     "cardSubPro": "Ouvrez le launch monitor AR — carry, vitesse de balle et effet.",
     "cardSub": "Launch monitor AR — carry, vitesse de balle, effet et lecture de green."
+  },
+  "tour": {
+    "consent": "Les vidéos proviennent de YouTube. En appuyant sur « Charger les vidéos », tu acceptes que des données comme ton adresse IP soient transmises à Google/YouTube, y compris aux États-Unis.",
+    "privacyLink": "Politique de confidentialité",
+    "loadVideos": "Charger les vidéos"
   }
 }

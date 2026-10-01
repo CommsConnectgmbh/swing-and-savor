@@ -164,7 +164,9 @@
     "tieLabel": "Empate",
     "playMatchPlay": "Match Play",
     "sideBetOnDealBuddy": "Revancha en DealBuddy →",
-    "sideBetSub": "Reto de revancha sin dinero: quien pierde cumple una prenda"
+    "sideBetSub": "Reto de revancha sin dinero: quien pierde cumple una prenda",
+    "discordAnnounce": "Anunciar en nuestro servidor de Discord",
+    "discordAnnounceHint": "Anunciamos los cups públicos en nuestro servidor de Discord con nombre, fecha, nombres de equipo, descripción y resultado final. Desmárcalo para dejar el cup solo en la app."
   },
   "profile": {
     "title": "Perfil",
@@ -303,5 +305,10 @@
     "cardOpenAria": "Abrir el Launch Monitor",
     "cardSubPro": "Abre el monitor de lanzamiento AR: carry, velocidad de bola y efecto.",
     "cardSub": "Monitor de lanzamiento AR: carry, velocidad de bola, efecto y lectura de green."
+  },
+  "tour": {
+    "consent": "Los vídeos vienen de YouTube. Al pulsar «Cargar vídeos» aceptas que se envíen datos como tu dirección IP a Google/YouTube, también a EE. UU.",
+    "privacyLink": "Política de privacidad",
+    "loadVideos": "Cargar vídeos"
   }
 }
