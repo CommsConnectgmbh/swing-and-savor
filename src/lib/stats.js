@@ -1,53 +1,50 @@
 import { supabase } from './supabase'
 
-// Aggregates per-profile match-play stats by joining matches/holes via tournament players.
-// Returns: { matchesPlayed, wins, losses, halved, holesWon, holesPlayed, winRate, holePct }
-export async function fetchPlayerStats(profileId) {
-  // 1) tournaments the player ever played in via name match — but we need a stable link.
-  //    For now we link by tournament_invites+owner OR by player rows where name matches profile display_name.
-  //    Simplest stable approach: only count matches where this user owns the tournament OR is owner of joined-match.
-  //    For richer stats we'd add a profile_id FK to players (next iteration).
+const EMPTY = Object.freeze({
+  matchesPlayed: 0, wins: 0, losses: 0, halved: 0, winRate: 0,
+  holesWon: 0, holesPlayed: 0, holePct: 0,
+})
 
-  const { data: invites } = await supabase
-    .from('tournament_invites')
-    .select('tournament_id')
-    .eq('profile_id', profileId)
+// Auf welcher Seite ('A' | 'B') steht einer der Spieler-Slots in diesem Match?
+// Berücksichtigt Singles/Doubles-Slots und Flight-Arrays. null = nicht dabei.
+export function sideInMatch(match, playerIds) {
+  if (!match || !playerIds?.size) return null
+  const a = [match.team_a_player1_id, match.team_a_player2_id, ...(match.team_a_player_ids || [])]
+  const b = [match.team_b_player1_id, match.team_b_player2_id, ...(match.team_b_player_ids || [])]
+  if (a.some(id => id && playerIds.has(id))) return 'A'
+  if (b.some(id => id && playerIds.has(id))) return 'B'
+  return null
+}
 
-  const { data: owned } = await supabase
-    .from('tournaments')
-    .select('id')
-    .eq('owner_id', profileId)
-
-  const tournamentIds = new Set([
-    ...(owned ?? []).map(t => t.id),
-    ...(invites ?? []).map(i => i.tournament_id),
-  ])
-
-  if (tournamentIds.size === 0) {
-    return { matchesPlayed: 0, wins: 0, losses: 0, halved: 0, winRate: 0,
-             holesWon: 0, holesPlayed: 0, holePct: 0 }
+// Reine Auswertung, getrennt von den Abfragen (testbar).
+//  playerIds:          Set der players.id, die per profile_id mit dem Profil verknüpft sind
+//  matches:            beendete Matches mit Slot-Spalten und tournament_id
+//  holes:              hole_results ({ match_id, winner }) dieser Matches
+//  legacyTournamentIds Set der eigenen Cups, in denen das Profil mit keinem Spieler
+//                      verknüpft ist (Altbestand vor profile_id). Nur dort gilt die
+//                      alte Konvention „Ersteller spielt Team A“.
+export function computeStats({ playerIds = new Set(), matches = [], holes = [], legacyTournamentIds = new Set() }) {
+  const sideByMatch = new Map()
+  for (const m of matches) {
+    let side = sideInMatch(m, playerIds)
+    if (!side && legacyTournamentIds.has(m.tournament_id)) side = 'A'
+    if (side) sideByMatch.set(m.id, { side, winner: m.winner })
   }
 
-  const { data: matches } = await supabase
-    .from('matches')
-    .select('id, status, winner, tournament_id')
-    .in('tournament_id', Array.from(tournamentIds))
-    .eq('status', 'finished')
+  let wins = 0, losses = 0, halved = 0
+  for (const { side, winner } of sideByMatch.values()) {
+    if (winner === 'halved') halved++
+    else if (winner === side) wins++
+    else if (winner === 'A' || winner === 'B') losses++
+  }
+  const matchesPlayed = sideByMatch.size
 
-  const matchesPlayed = matches?.length ?? 0
-  const wins   = matches?.filter(m => m.winner === 'A').length ?? 0   // owner is conventionally team A
-  const losses = matches?.filter(m => m.winner === 'B').length ?? 0
-  const halved = matches?.filter(m => m.winner === 'halved').length ?? 0
-
-  const matchIds = (matches ?? []).map(m => m.id)
   let holesWon = 0, holesPlayed = 0
-  if (matchIds.length) {
-    const { data: holes } = await supabase
-      .from('hole_results')
-      .select('winner')
-      .in('match_id', matchIds)
-    holesPlayed = holes?.length ?? 0
-    holesWon    = holes?.filter(h => h.winner === 'A').length ?? 0
+  for (const h of holes) {
+    const entry = sideByMatch.get(h.match_id)
+    if (!entry) continue
+    holesPlayed++
+    if (h.winner === entry.side) holesWon++
   }
 
   return {
@@ -57,4 +54,41 @@ export async function fetchPlayerStats(profileId) {
     holesWon, holesPlayed,
     holePct: holesPlayed ? holesWon / holesPlayed : 0,
   }
+}
+
+const MATCH_COLUMNS = 'id, status, winner, tournament_id, team_a_player1_id, team_a_player2_id, team_b_player1_id, team_b_player2_id, team_a_player_ids, team_b_player_ids'
+
+// Profil-Statistik über die tatsächliche Team-Zugehörigkeit (players.profile_id).
+export async function fetchPlayerStats(profileId) {
+  const [{ data: players }, { data: owned }] = await Promise.all([
+    supabase.from('players').select('id, tournament_id').eq('profile_id', profileId),
+    supabase.from('tournaments').select('id').eq('owner_id', profileId),
+  ])
+
+  const playerIds = new Set((players ?? []).map(p => p.id))
+  const linkedTournaments = new Set((players ?? []).map(p => p.tournament_id))
+  const legacyTournamentIds = new Set(
+    (owned ?? []).map(t => t.id).filter(id => !linkedTournaments.has(id))
+  )
+
+  const tournamentIds = [...new Set([...linkedTournaments, ...legacyTournamentIds])]
+  if (tournamentIds.length === 0) return { ...EMPTY }
+
+  const { data: matches } = await supabase
+    .from('matches')
+    .select(MATCH_COLUMNS)
+    .in('tournament_id', tournamentIds)
+    .eq('status', 'finished')
+
+  const matchIds = (matches ?? []).map(m => m.id)
+  let holes = []
+  if (matchIds.length) {
+    const { data } = await supabase
+      .from('hole_results')
+      .select('match_id, winner')
+      .in('match_id', matchIds)
+    holes = data ?? []
+  }
+
+  return computeStats({ playerIds, matches: matches ?? [], holes, legacyTournamentIds })
 }
