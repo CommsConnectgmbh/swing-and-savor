@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import { fileExt } from '../lib/format'
 import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
+import { notifySaveFailed } from '../lib/saveErrors'
 
 // Echte Scorekarte: pro Spieler eigene 18-Loch-Karte, Zähler-Zuweisung,
 // Shuffle, Score-Eintrag, Foto-OCR und Digital-Unterschrift.
@@ -76,14 +77,24 @@ export default function ScorecardSheet({ match, players, holes, onClose }) {
     }))
     const playerLocked = !!signatures[playerId]?.player && !!signatures[playerId]?.marker
     if (playerLocked) return
-    if (n == null) {
-      await supabase.from('player_hole_scores')
-        .delete().eq('match_id', match.id).eq('player_id', playerId).eq('hole_number', holeNum)
-    } else {
-      await supabase.from('player_hole_scores').upsert({
-        match_id: match.id, player_id: playerId, hole_number: holeNum,
-        strokes: n, entered_by_user_id: user?.id || null, source: 'manual',
-      }, { onConflict: 'match_id,player_id,hole_number' })
+    let error = null
+    try {
+      if (n == null) {
+        ({ error } = await supabase.from('player_hole_scores')
+          .delete().eq('match_id', match.id).eq('player_id', playerId).eq('hole_number', holeNum))
+      } else {
+        ({ error } = await supabase.from('player_hole_scores').upsert({
+          match_id: match.id, player_id: playerId, hole_number: holeNum,
+          strokes: n, entered_by_user_id: user?.id || null, source: 'manual',
+        }, { onConflict: 'match_id,player_id,hole_number' }))
+      }
+    } catch (e) {
+      error = e
+    }
+    if (error) {
+      console.error('[scorecard] save stroke', error)
+      notifySaveFailed(error)
+      await loadAll()
     }
   }
 

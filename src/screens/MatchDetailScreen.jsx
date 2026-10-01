@@ -17,6 +17,7 @@ import HoleByHoleTable from '../components/HoleByHoleTable'
 import { fmtPts, formatCupDate } from '../lib/format'
 import { isUnlocked } from '../lib/tournamentGate'
 import { pushToast } from '../lib/toast'
+import { notifySaveFailed } from '../lib/saveErrors'
 import { useAuth } from '../lib/auth'
 import WinnerCardSheet from '../components/WinnerCardSheet'
 import ScorecardSheet from '../components/ScorecardSheet'
@@ -155,7 +156,7 @@ export default function MatchDetailScreen() {
       return next
     })
     try {
-      await supabase.from('hole_results').upsert(
+      const { error } = await supabase.from('hole_results').upsert(
         [{
           match_id: matchId, hole_number: holeNum,
           strokes_a: sa, strokes_b: sb,
@@ -164,14 +165,15 @@ export default function MatchDetailScreen() {
         }],
         { onConflict: 'match_id,hole_number' }
       )
-      if (matchRef.current?.status === 'pending') {
-        await supabase.from('matches').update({ status: 'active' }).eq('id', matchId)
-        const upd = { ...matchRef.current, status: 'active' }
-        matchRef.current = upd
-        setMatch(upd)
+      if (error) {
+        console.warn('[watch] apply failed', error)
+        notifySaveFailed(error)
+        return
       }
+      await markMatchActive()
     } catch (e) {
       console.warn('[watch] apply failed', e)
+      notifySaveFailed(e)
     }
   }
 
@@ -424,7 +426,23 @@ export default function MatchDetailScreen() {
     })
   }
 
+  // pending → active, sobald das erste Loch gespeichert ist. Ohne Recht liefert
+  // UPDATE keinen Fehler, sondern 0 Zeilen; deshalb die Zeile zurücklesen.
+  async function markMatchActive() {
+    if (matchRef.current?.status !== 'pending') return
+    const { data, error } = await supabase.from('matches')
+      .update({ status: 'active' }).eq('id', matchId).select('id')
+    if (error || !data?.length) {
+      console.warn('[match] status active failed', error)
+      return
+    }
+    const upd = { ...matchRef.current, status: 'active' }
+    matchRef.current = upd
+    setMatch(upd)
+  }
+
   async function handleStroke(holeNum, field, value) {
+    const before = holes.find(h => h.hole_number === holeNum)
     const next = holes.map(h => {
       if (h.hole_number !== holeNum) return h
       const updated = { ...h, [field]: value }
@@ -437,20 +455,27 @@ export default function MatchDetailScreen() {
     const sa = parseInt(hole.strokes_a)
     const sb = parseInt(hole.strokes_b)
     if (sa >= 1 && sb >= 1) {
-      await supabase.from('hole_results').upsert(
-        [{
-          match_id: matchId, hole_number: holeNum,
-          strokes_a: sa, strokes_b: sb,
-          winner: hole.winner, stroke_advantage: 'none',
-        }],
-        { onConflict: 'match_id,hole_number' }
-      )
-      if (matchRef.current?.status === 'pending') {
-        await supabase.from('matches').update({ status: 'active' }).eq('id', matchId)
-        const upd = { ...matchRef.current, status: 'active' }
-        matchRef.current = upd
-        setMatch(upd)
+      let error = null
+      try {
+        ({ error } = await supabase.from('hole_results').upsert(
+          [{
+            match_id: matchId, hole_number: holeNum,
+            strokes_a: sa, strokes_b: sb,
+            winner: hole.winner, stroke_advantage: 'none',
+          }],
+          { onConflict: 'match_id,hole_number' }
+        ))
+      } catch (e) {
+        error = e
       }
+      if (error) {
+        console.error('[match] save hole', error)
+        // Nicht gespeicherten Wert nicht als gespeichert stehen lassen.
+        setHoles(cur => cur.map(h => h.hole_number === holeNum ? before : h))
+        notifySaveFailed(error)
+        return
+      }
+      await markMatchActive()
     }
   }
 
@@ -470,11 +495,18 @@ export default function MatchDetailScreen() {
       })
       winner = a > b ? 'A' : b > a ? 'B' : 'halved'
     }
-    await supabase.from('matches').update({ status: 'finished', winner }).eq('id', matchId)
+    const { data: saved, error } = await supabase.from('matches')
+      .update({ status: 'finished', winner }).eq('id', matchId).select('id')
+    if (error || !saved?.length) {
+      console.error('[match] finish', error)
+      setConfirmFinish(false)
+      notifySaveFailed(error, { noRows: !error })
+      return
+    }
     // Autoritativen, serverseitig korrigierten winner zurücklesen.
     const { data: fresh } = await supabase.from('matches')
       .select('status, winner').eq('id', matchId).single()
-    const upd = { ...matchRef.current, status: 'finished', winner: fresh?.winner ?? winner }
+    const upd = { ...matchRef.current, status: 'finished', winner: fresh ? fresh.winner : winner }
     matchRef.current = upd
     setMatch(upd)
     setConfirmFinish(false)
