@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { functionUrl, authFunctionHeaders } from '../lib/functions'
 import { useAuth } from '../lib/auth'
 import { useProAccess } from '../lib/proAccess'
 import {
@@ -56,13 +57,9 @@ export default function RangeScreen() {
       const { data: sess } = await supabase.auth.getSession()
       const jwt = sess?.session?.access_token
       if (!jwt) throw new Error('no_session')
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pro-checkout`, {
+      const res = await fetch(functionUrl('create-pro-checkout'), {
         method: 'POST',
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan_key: 'launch_monitor_lifetime', instant_execution_consent: true }),
       })
       const j = await res.json().catch(() => ({}))

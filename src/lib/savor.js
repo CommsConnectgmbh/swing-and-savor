@@ -6,10 +6,11 @@
 // endpoint must stay identical across screens), so they live here now.
 
 import { useEffect, useState } from 'react'
+import { functionUrl, publicFunctionHeaders } from './functions'
 
 // Base URL of the public-savor Supabase edge function. Append a query string
 // such as `?mode=home`, `?mode=category&category=…` or `?mode=offer&slug=…`.
-export const SAVOR_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-savor`
+export const SAVOR_FUNCTIONS_URL = functionUrl('public-savor')
 
 // Display label for an offer's price.
 // Priority: an explicit price_label, then a formatted EUR amount, then a
@@ -45,7 +46,7 @@ let _savorPromise = null
 function resolveSavor() {
   if (_savorPromise) return _savorPromise
   _savorPromise = fetch(`${SAVOR_FUNCTIONS_URL}?mode=home`, {
-    headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY },
+    headers: publicFunctionHeaders(),
   })
     .then((r) => (r.ok ? r.json() : { counts: {} }))
     .then((j) => {
