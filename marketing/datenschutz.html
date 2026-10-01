@@ -30,7 +30,7 @@
     <main class="legal-page">
       <a class="back" href="/">← Zurück zur Startseite</a>
       <h1>Datenschutzerklärung</h1>
-      <p class="muted small">Stand: Mai 2026</p>
+      <p class="muted small">Stand: Oktober 2026</p>
 
       <section>
         <h2>1. Verantwortliche Stelle</h2>
@@ -84,6 +84,84 @@
       </section>
 
       <section>
+        <h2>2a. Weitere Dienste in der App</h2>
+        <p>
+          Die folgenden Dienste setzen wir nur für die jeweils genannte Funktion ein. Wo Daten in die
+          USA übermittelt werden, stützen wir uns auf die EU-Standardvertragsklauseln (SCC) des
+          jeweiligen Anbieters (Art. 46 Abs. 2 lit. c DSGVO), soweit der Anbieter nicht unter dem
+          EU-US Data Privacy Framework zertifiziert ist (Art. 45 DSGVO).
+        </p>
+        <h3>Scorecard-Fotoerkennung: OpenAI</h3>
+        <p>
+          OpenAI, L.L.C., 3180 18th Street, San Francisco, CA 94110, USA (für Kunden im EWR ggf.
+          OpenAI Ireland Ltd., Dublin, Irland). Nur wenn Sie in einem Match ein Foto einer Scorecard
+          hochladen und auslesen lassen, übermitteln wir dieses Foto über einen zeitlich begrenzten
+          Link (5 Minuten gültig) an die OpenAI-Schnittstelle, um die Schläge pro Loch automatisch
+          zu erkennen. Übermittelt wird nur das Bild selbst; es kann alles enthalten, was auf der
+          Scorecard steht (z.&nbsp;B. Namen, Handicaps, Ergebnisse, Unterschriften). Das Foto selbst
+          speichern wir in unserer Supabase-Instanz in Frankfurt. Nach Angaben von OpenAI werden
+          über die Schnittstelle übermittelte Daten nicht zum Training verwendet und höchstens
+          30 Tage zur Missbrauchserkennung aufbewahrt. Die Verarbeitung findet in den USA statt
+          (Drittlandübermittlung). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (von Ihnen
+          angeforderte Funktion). Auftragsverarbeitung über
+          <a href="https://openai.com/policies/data-processing-addendum" target="_blank" rel="noopener">openai.com/policies/data-processing-addendum</a> + SCC.
+          Ohne Foto-Upload findet keine Übermittlung an OpenAI statt; Ergebnisse lassen sich
+          jederzeit auch von Hand eintragen.
+        </p>
+        <h3>Fehlerdiagnose: Sentry</h3>
+        <p>
+          Functional Software, Inc. (Sentry), 45 Fremont Street, San Francisco, CA 94105, USA.
+          Tritt in der App ein technischer Fehler auf, senden wir einen Fehlerbericht (Fehlermeldung,
+          betroffene Seite, Browser- und Gerätetyp, ungefähre Ladezeiten) an Sentry. Die Daten liegen
+          in der EU-Datenregion (Frankfurt am Main). Wir übermitteln dabei keine Namen,
+          E-Mail-Adressen oder IP-Adressen als Nutzerkennung und werten nur Stichproben der
+          Ladezeiten aus. Ein Zugriff aus den USA ist nicht ausgeschlossen. Rechtsgrundlage:
+          Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer stabilen, fehlerfreien App).
+          Auftragsverarbeitung über
+          <a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener">sentry.io/legal/dpa</a> + SCC.
+        </p>
+        <h3>Support-Anfragen: Slack</h3>
+        <p>
+          Slack Technologies, LLC, San Francisco, USA (für Kunden im EWR Slack Technologies Limited,
+          Dublin, Irland). Wenn Sie über das Hilfe-Center in der App eine Anfrage stellen, leiten
+          wir Ihre Nachricht zusammen mit Ihrer E-Mail-Adresse in einen internen Slack-Kanal weiter,
+          damit unser Team schnell antworten kann. Eine Übermittlung in die USA ist möglich.
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Bearbeitung Ihrer Anfrage). Auftragsverarbeitung
+          über die Datenverarbeitungsvereinbarung von Slack + SCC.
+        </p>
+        <h3>Push-Benachrichtigungen</h3>
+        <p>
+          Wenn Sie Benachrichtigungen erlauben, speichern wir die von Ihrem Browser bzw. Gerät
+          erzeugte Push-Adresse. Die Zustellung läuft über den Push-Dienst des jeweiligen Anbieters
+          (z.&nbsp;B. Apple, Google oder Mozilla); der Inhalt wird dabei verschlüsselt übertragen.
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Ihre Einwilligung über die Systemabfrage).
+          Sie können Benachrichtigungen jederzeit in den Einstellungen Ihres Browsers oder Geräts
+          abschalten.
+        </p>
+        <h3>Community-Server: Discord</h3>
+        <p>
+          Discord Inc., 444 De Haro Street, Suite 200, San Francisco, CA 94107, USA. Cups mit der
+          Sichtbarkeit „Öffentlich“ kündigen wir automatisch in unserem Discord-Server an (Cup-Name,
+          Datum, Teamnamen, Endstand und Link zur öffentlichen Cup-Seite). Private Cups und Cups
+          nur für Freunde werden nicht veröffentlicht. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO
+          (berechtigtes Interesse an einer lebendigen Community); Sie können dem jederzeit
+          widersprechen oder Ihren Cup auf „Freunde“ oder „Privat“ stellen. Für die Nutzung von
+          Discord selbst gilt die
+          <a href="https://discord.com/privacy" target="_blank" rel="noopener">Datenschutzerklärung von Discord</a>.
+        </p>
+        <h3>Tour-Videos: YouTube</h3>
+        <p>
+          Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Im Bereich „Tour“
+          binden wir Videos der offiziellen Tour-Kanäle von YouTube ein. Der Player wird erst
+          geladen, wenn Sie auf „Videos laden“ tippen; erst dann werden Daten wie Ihre IP-Adresse
+          an YouTube bzw. Google (auch in die USA) übertragen. Wir nutzen dafür den erweiterten
+          Datenschutzmodus (youtube-nocookie.com). Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO und
+          § 25 Abs. 1 TDDDG (Ihre Einwilligung durch den Klick). Weitere Informationen:
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>.
+        </p>
+      </section>
+
+      <section>
         <h2>3. Welche Daten wir verarbeiten</h2>
         <h3>Bei Registrierung &amp; Nutzung</h3>
         <ul>
@@ -91,16 +169,19 @@
           <li><strong>Benutzername (Handle), Anzeigename</strong> — sichtbar für andere Nutzer.</li>
           <li><strong>Optional:</strong> Handicap, Heimatclub, Profilbild — frei wählbar.</li>
           <li><strong>Match- und Turnierdaten</strong> — Scores, Paarungen, Teilnahmen.</li>
+          <li><strong>Optional:</strong> Scorecard-Fotos, wenn Sie Ergebnisse per Foto erfassen (siehe Ziffer 2a).</li>
+          <li><strong>Support-Anfragen</strong>: Ihre Nachricht und E-Mail-Adresse (siehe Ziffer 2a).</li>
           <li><strong>Freundschaftsbeziehungen</strong> — Sichtbarkeit gemäß Freundschaftsstatus.</li>
         </ul>
         <h3>Technische Daten</h3>
         <ul>
           <li>IP-Adresse (von Vercel/Supabase nur für Sicherheit + Rate-Limiting verarbeitet).</li>
           <li>Session-Token im localStorage Ihres Browsers (Schlüssel: <code>sas-auth</code>).</li>
-          <li>User-Agent (Browser/Gerät) für Fehlerdiagnose.</li>
+          <li>User-Agent (Browser/Gerät) und Fehlerberichte für die Fehlerdiagnose (Sentry, siehe Ziffer 2a).</li>
         </ul>
         <p>
           Wir setzen <strong>keine</strong> Tracking-Cookies, kein Analytics, kein Drittanbieter-Werbe-Pixel.
+          Schriften liefern wir von unseren eigenen Servern aus, ohne Verbindung zu Google.
         </p>
       </section>
 
@@ -109,14 +190,14 @@
         <ul>
           <li><strong>Art. 6 Abs. 1 lit. b DSGVO</strong> (Vertragserfüllung) — Bereitstellung der App-Funktionen, Login, Match-Tracking.</li>
           <li><strong>Art. 6 Abs. 1 lit. f DSGVO</strong> (berechtigtes Interesse) — Sicherheit, Missbrauchsprävention, Stabilität.</li>
-          <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> (Einwilligung) — z. B. Setzen optionaler Profildaten.</li>
+          <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> (Einwilligung) — z. B. Setzen optionaler Profildaten, Push-Benachrichtigungen, Laden der YouTube-Videos.</li>
         </ul>
       </section>
 
       <section>
         <h2>5. Empfänger &amp; Weitergabe</h2>
         <p>
-          Daten werden ausschließlich an die unter Ziffer 2 genannten Auftragsverarbeiter weitergegeben.
+          Daten werden ausschließlich an die unter Ziffer 2 und 2a genannten Dienste weitergegeben.
           Eine Weitergabe an Dritte zu Werbezwecken erfolgt nicht. Bei Klick auf den DealBuddy-Crosslink
           verlassen Sie unsere App; ab dort gilt die Datenschutzerklärung von DealBuddy.
         </p>
@@ -197,7 +278,9 @@
           Wir verwenden ausschließlich technisch notwendige Session-Daten im
           <code>localStorage</code> des Browsers zur Aufrechterhaltung Ihrer Anmeldung. Es werden
           <strong>keine</strong> einwilligungsbedürftigen Cookies, Tracker, Analyse- oder Werbe-Pixel
-          eingesetzt. Ein Cookie-Banner ist deshalb nicht erforderlich (§ 25 TTDSG).
+          eingesetzt. Ein Cookie-Banner ist deshalb nicht erforderlich (§ 25 TDDDG). Einzige Ausnahme
+          sind die YouTube-Videos im Bereich „Tour“: Sie werden erst nach Ihrem Klick auf
+          „Videos laden“ geladen (siehe Ziffer 2a).
         </p>
       </section>
 

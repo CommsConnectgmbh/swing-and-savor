@@ -31,6 +31,8 @@ const TABS = [
 export default function TourScreen() {
   const [tab, setTab]       = useState('videos')
   const [active, setActive] = useState(CHANNELS[0])
+  // YouTube erst nach Klick laden: vorher keine Verbindung zu Google/YouTube.
+  const [ytAllowed, setYtAllowed] = useState(false)
 
   return (
     <div className="max-w-lg mx-auto animate-fade-up">
@@ -72,13 +74,28 @@ export default function TourScreen() {
           {/* YouTube-Channel-Embed (Live + neueste Uploads) */}
           <div className="mx-3 mb-4 rounded-card overflow-hidden bg-bg border border-line"
             style={{ aspectRatio: '16/9' }}>
-            <iframe key={active.id}
-              src={`https://www.youtube.com/embed/videoseries?list=UU${active.id.slice(2)}`}
-              title={active.label}
-              loading="lazy"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full" />
+            {ytAllowed ? (
+              <iframe key={active.id}
+                src={`https://www.youtube-nocookie.com/embed/videoseries?list=UU${active.id.slice(2)}`}
+                title={active.label}
+                loading="lazy"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <p className="text-[11px] text-inkMuted leading-snug">
+                  Die Videos kommen von YouTube. Beim Laden werden Daten wie deine IP-Adresse an
+                  Google übertragen. Mehr in der{' '}
+                  <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener noreferrer"
+                    className="underline">Datenschutzerklärung</a>.
+                </p>
+                <button type="button" onClick={() => setYtAllowed(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-accent text-brandDark active:scale-95 transition-transform">
+                  Videos laden
+                </button>
+              </div>
+            )}
           </div>
 
           <p className="px-4 text-[11px] text-inkDim text-center mb-6">
