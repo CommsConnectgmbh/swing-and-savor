@@ -19,6 +19,7 @@ const emptyForm = {
   team_a_name: 'Team A', team_b_name: 'Team B',
   edit_password: '',
   visibility: 'friends',
+  discord_announce: true,
   location_name: '',
   format: '',
   description: '',
@@ -187,6 +188,7 @@ export default function CupScreen() {
         edit_password: '',
         had_password: !!t.has_edit_password,
         visibility: t.visibility || 'friends',
+        discord_announce: t.discord_announce !== false,
         location_name: t.location_name || '',
         format: t.format || '',
         description: t.description || '',
@@ -224,6 +226,7 @@ export default function CupScreen() {
       name: form.name, date: form.date,
       team_a_name: form.team_a_name, team_b_name: form.team_b_name,
       visibility: form.visibility,
+      discord_announce: !!form.discord_announce,
       location_name: form.location_name.trim() || null,
       format: form.format.trim() || null,
       description: form.description.trim() || null,
@@ -457,6 +460,17 @@ export default function CupScreen() {
                 </button>
               ))}
             </div>
+            {form.visibility === 'public' && (
+              <label className="mt-2 flex items-start gap-2.5 px-1 cursor-pointer">
+                <input type="checkbox" checked={!!form.discord_announce}
+                  onChange={e => setForm(f => ({ ...f, discord_announce: e.target.checked }))}
+                  className="mt-0.5 accent-accent" />
+                <span>
+                  <span className="block text-xs font-semibold text-ink">{t('cup.discordAnnounce')}</span>
+                  <span className="block text-[10px] text-inkDim leading-snug mt-0.5">{t('cup.discordAnnounceHint')}</span>
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Cover-Foto (nur im Edit-Modus — Turnier muss eine ID haben) */}

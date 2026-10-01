@@ -99,6 +99,8 @@ export default function ChallengesScreen() {
         team_a_name: challengerName,
         team_b_name: opponentName,
         visibility: c.visibility,
+        // Duelle sind persönliche Herausforderungen: nie im Discord ankündigen.
+        discord_announce: false,
         owner_id: user.id,
         description: c.description,
       }).select('id').single()
