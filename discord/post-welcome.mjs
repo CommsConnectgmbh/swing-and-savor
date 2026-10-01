@@ -12,6 +12,15 @@ const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 const c = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+// --edit:    eigene, bereits gepostete Bot-Nachrichten auf den aktuellen Text
+//            bringen (PATCH), statt neu zu posten. Fremde Nachrichten bleiben
+//            unberührt; bearbeitet wird nur eine Bot-Nachricht, deren erste
+//            Zeile zum jeweiligen Text passt.
+// --dry-run: mit --edit nur anzeigen, was geändert würde.
+const EDIT = process.argv.includes("--edit");
+const DRY = process.argv.includes("--dry-run");
+const firstLine = (t) => (t || "").split("\n")[0].trim();
+
 const RULES = `**Swing & Savor — Community-Regeln**
 
 1. **Respekt zuerst.** Keine Beleidigungen, kein Rassismus, keine Diskriminierung.
@@ -121,9 +130,26 @@ c.once("clientReady", async () => {
       console.log("skip (no channel):", name);
       continue;
     }
+    const recent = await ch.messages.fetch({ limit: 50 }).catch(() => null);
+    const own = recent?.filter((m) => m.author.id === c.user.id);
+
+    if (EDIT) {
+      const target = own?.find((m) => firstLine(m.content) === firstLine(content));
+      if (!target) {
+        console.log("edit skip (no own message with matching heading):", name);
+      } else if (target.content === content.trim() || target.content === content) {
+        console.log("edit skip (already current):", name);
+      } else if (DRY) {
+        console.log("would edit:", name, target.id);
+      } else {
+        await target.edit({ content });
+        console.log("edited:", name, target.id);
+      }
+      continue;
+    }
+
     // skip if bot already posted in this channel (idempotent)
-    const recent = await ch.messages.fetch({ limit: 20 }).catch(() => null);
-    const already = recent?.find((m) => m.author.id === c.user.id);
+    const already = own?.first();
     if (already) {
       console.log("skip (already posted):", name);
       continue;
