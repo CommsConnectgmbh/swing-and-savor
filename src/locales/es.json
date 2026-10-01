@@ -163,8 +163,8 @@
     "winnerLabel": "Ganador",
     "tieLabel": "Empate",
     "playMatchPlay": "Match Play",
-    "sideBetOnDealBuddy": "Apuesta para la próxima ronda →",
-    "sideBetSub": "Pon una apuesta para la revancha en DealBuddy"
+    "sideBetOnDealBuddy": "Revancha en DealBuddy →",
+    "sideBetSub": "Reto de revancha sin dinero: quien pierde cumple una prenda"
   },
   "profile": {
     "title": "Perfil",
@@ -231,8 +231,8 @@
     "yourLink": "Tu enlace de invitación"
   },
   "dealbuddy": {
-    "title": "¿Apostar?",
-    "subtitle": "Pon una apuesta para la próxima ronda en DealBuddy",
+    "title": "¿Revancha?",
+    "subtitle": "Pide la revancha en DealBuddy. Sin dinero: quien pierde cumple una prenda.",
     "cta": "Abrir DealBuddy"
   },
   "lang": {

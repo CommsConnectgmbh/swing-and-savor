@@ -261,8 +261,8 @@
     "winnerLabel": "Champion",
     "tieLabel": "Tied",
     "playMatchPlay": "Match Play",
-    "sideBetOnDealBuddy": "Bet on the next round →",
-    "sideBetSub": "Set a side-bet for the rematch on DealBuddy",
+    "sideBetOnDealBuddy": "Rematch on DealBuddy →",
+    "sideBetSub": "Rematch challenge without money: the loser does a forfeit",
     "rulesTitle": "Rules",
     "entryConditionsTitle": "Entry conditions",
     "maxParticipantsLabel": "Up to {{count}} participants",
@@ -367,8 +367,8 @@
     "yourLink": "Your invite link"
   },
   "dealbuddy": {
-    "title": "Up the stakes",
-    "subtitle": "Set a side-bet for the next round on DealBuddy",
+    "title": "Rematch?",
+    "subtitle": "Call the rematch on DealBuddy. No money involved: the loser does a forfeit.",
     "cta": "Open DealBuddy"
   },
   "lang": {

@@ -163,8 +163,8 @@
     "winnerLabel": "勝者",
     "tieLabel": "引き分け",
     "playMatchPlay": "マッチプレー",
-    "sideBetOnDealBuddy": "次のラウンドに賭ける →",
-    "sideBetSub": "DealBuddy でリベンジマッチに賭ける"
+    "sideBetOnDealBuddy": "DealBuddy でリベンジ →",
+    "sideBetSub": "お金を賭けないリベンジ勝負。負けた人が罰ゲーム"
   },
   "profile": {
     "title": "プロフィール",
@@ -231,8 +231,8 @@
     "yourLink": "あなたの招待リンク"
   },
   "dealbuddy": {
-    "title": "賭けますか?",
-    "subtitle": "DealBuddy で次のラウンドに賭けよう",
+    "title": "リベンジする?",
+    "subtitle": "DealBuddy でリベンジを挑もう。お金は賭けず、負けた人が罰ゲームをします。",
     "cta": "DealBuddy を開く"
   },
   "lang": {

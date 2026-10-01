@@ -147,7 +147,7 @@ export default function FriendsScreen() {
                 <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); challengeFriendOnDealBuddy(p) }}
                   title="Auf DealBuddy herausfordern"
                   className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md bg-surface text-inkMuted border border-line active:scale-95 transition-transform">
-                  💰
+                  🤝
                 </button>
               </>
             } />

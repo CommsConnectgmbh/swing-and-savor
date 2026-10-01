@@ -261,8 +261,8 @@
     "winnerLabel": "Champion",
     "tieLabel": "Unentschieden",
     "playMatchPlay": "Match Play",
-    "sideBetOnDealBuddy": "Wetten auf das nächste Match →",
-    "sideBetSub": "Side-Bet für die Revanche auf DealBuddy",
+    "sideBetOnDealBuddy": "Revanche auf DealBuddy →",
+    "sideBetSub": "Revanche-Challenge ohne Geld: Wer verliert, erfüllt eine Aufgabe",
     "rulesTitle": "Regeln",
     "entryConditionsTitle": "Teilnahmebedingungen",
     "maxParticipantsLabel": "Max. {{count}} Teilnehmer",
@@ -367,8 +367,8 @@
     "yourLink": "Dein Einladungslink"
   },
   "dealbuddy": {
-    "title": "Side-Bet?",
-    "subtitle": "Setz einen Wetteinsatz für die nächste Runde auf DealBuddy",
+    "title": "Revanche?",
+    "subtitle": "Fordere die Revanche auf DealBuddy. Ohne Geld: Wer verliert, erfüllt eine Aufgabe.",
     "cta": "DealBuddy öffnen"
   },
   "lang": {

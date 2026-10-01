@@ -163,8 +163,8 @@
     "winnerLabel": "Vainqueur",
     "tieLabel": "Égalité",
     "playMatchPlay": "Match Play",
-    "sideBetOnDealBuddy": "Parier sur la prochaine partie →",
-    "sideBetSub": "Pari sur la revanche via DealBuddy"
+    "sideBetOnDealBuddy": "Revanche sur DealBuddy →",
+    "sideBetSub": "Défi revanche sans argent : le perdant accomplit un gage"
   },
   "profile": {
     "title": "Profil",
@@ -231,8 +231,8 @@
     "yourLink": "Ton lien d'invitation"
   },
   "dealbuddy": {
-    "title": "Pari ?",
-    "subtitle": "Pose un pari pour la revanche sur DealBuddy",
+    "title": "Revanche ?",
+    "subtitle": "Lance la revanche sur DealBuddy. Sans argent : le perdant accomplit un gage.",
     "cta": "Ouvrir DealBuddy"
   },
   "lang": {

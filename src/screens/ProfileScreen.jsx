@@ -351,7 +351,7 @@ export default function ProfileScreen() {
                 </button>
                 <button onClick={() => challengeFriendOnDealBuddy(target)}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-surface text-inkMuted border border-line active:scale-95 transition-transform">
-                  💰 DealBuddy
+                  🤝 DealBuddy
                 </button>
                 <button onClick={removeFriend} disabled={busy}
                   className="px-3 py-2 rounded-xl text-[11px] font-semibold bg-surface text-inkDim border border-line active:scale-95 transition-transform">
@@ -510,13 +510,17 @@ export default function ProfileScreen() {
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent/12 border border-accent/30 text-accent">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 2v20" />
-                  <path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 010 7H6" />
+                  <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                  <path d="M18 2H6v7a6 6 0 0012 0V2z" />
                 </svg>
               </div>
               <div>
                 <p className="text-sm font-bold text-ink leading-tight">DealBuddy</p>
-                <p className="text-[11px] text-inkDim leading-tight mt-0.5">Wetten auf das nächste Match, Side-Bets mit der Crew.</p>
+                <p className="text-[11px] text-inkDim leading-tight mt-0.5">Revanche-Challenges mit der Crew, ohne Geld.</p>
               </div>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
