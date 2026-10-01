@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth'
 import { fetchPlayerStats } from '../lib/stats'
 import { challengeFriendOnDealBuddy, DEALBUDDY_WEB, dealBuddyStoreUrl } from '../lib/dealbuddy'
 import { buildReferralLink } from '../lib/referral'
-import { profileInitial } from '../lib/names'
+import { profileInitial, nameInitial } from '../lib/names'
 import { SUPPORTED_LANGUAGES } from '../lib/i18n'
 import { THEMES, getCurrentTheme, applyTheme } from '../lib/theme'
 import AvatarPicker from '../components/AvatarPicker'
@@ -295,7 +295,7 @@ export default function ProfileScreen() {
               <img src={target.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="font-condensed font-black text-3xl text-accent">
-                {target.display_name?.[0]?.toUpperCase() ?? '?'}
+                {nameInitial(target.display_name)}
               </span>
             )}
           </div>

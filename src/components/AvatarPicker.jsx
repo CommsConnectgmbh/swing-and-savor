@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { uploadAvatar } from '../lib/avatar'
+import { nameInitial } from '../lib/names'
 
 export default function AvatarPicker({ userId, value, fallback = '?', onChange, size = 96 }) {
   const inputRef = useRef(null)
@@ -38,7 +39,7 @@ export default function AvatarPicker({ userId, value, fallback = '?', onChange, 
           <img src={value} alt="" className="w-full h-full object-cover" />
         ) : (
           <span className="font-condensed font-black text-3xl text-accent">
-            {fallback?.[0]?.toUpperCase() ?? '?'}
+            {nameInitial(fallback)}
           </span>
         )}
         <span className="absolute inset-x-0 bottom-0 bg-brandDark/85 text-[9px] font-bold tracking-[0.18em] uppercase text-accent py-1 text-center">

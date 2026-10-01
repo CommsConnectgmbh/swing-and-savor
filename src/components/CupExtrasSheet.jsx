@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { nameInitial } from '../lib/names'
 import { fileExt } from '../lib/format'
 import { stripFileMetadataForUpload } from '../lib/stripImageMetadata'
 import QrCodeSheet from './QrCodeSheet'
@@ -482,7 +483,7 @@ function TeamsTab({ cup, busy, setBusy, onChanged }) {
                   {form[logoKey]
                     ? <img src={form[logoKey]} alt="" className="w-full h-full object-contain" />
                     : <span className="text-[10px] uppercase tracking-[0.22em]" style={{ color: form[colorKey] }}>
-                        {(form[nameKey] || '?')[0]?.toUpperCase()}
+                        {nameInitial(form[nameKey])}
                       </span>}
                 </div>
                 <div className="flex-1 flex flex-col gap-1.5">

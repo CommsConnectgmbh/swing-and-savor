@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { initials, profileInitial } from './names'
+import { initials, nameInitial, profileInitial } from './names'
 
 describe('initials', () => {
   it('takes the first letter of up to two words', () => {
@@ -31,6 +31,41 @@ describe('initials', () => {
 
   it('falls back to a middle dot for whitespace-only names', () => {
     expect(initials('   ')).toBe('·')
+  })
+})
+
+describe('nameInitial', () => {
+  it('takes the upper-cased first letter of a name', () => {
+    expect(nameInitial('Ada')).toBe('A')
+    expect(nameInitial('ada lovelace')).toBe('A')
+  })
+
+  it('falls back to ? for empty / missing input', () => {
+    expect(nameInitial('')).toBe('?')
+    expect(nameInitial(null)).toBe('?')
+    expect(nameInitial(undefined)).toBe('?')
+  })
+
+  // The five migrated call sites used two interchangeable spellings — the new
+  // `?? '?'` form and the older `|| '?'` form — plus the guard-before-index
+  // shape in CupExtrasSheet. For real name strings all three collapse to the
+  // same character, which is what makes the migration behaviour-preserving.
+  it('matches the `?? "?"` spelling it replaces', () => {
+    for (const s of ['Ada', 'x', '', null, undefined]) {
+      expect(nameInitial(s)).toBe(s?.[0]?.toUpperCase() ?? '?')
+    }
+  })
+
+  it('matches the `|| "?"` spelling it replaces', () => {
+    for (const s of ['Ada', 'x', '', null, undefined]) {
+      expect(nameInitial(s)).toBe(s?.[0]?.toUpperCase() || '?')
+    }
+  })
+
+  it('matches the `(x || "?")[0]` guard-first spelling it replaces', () => {
+    for (const s of ['Ada', 'x', '', null, undefined]) {
+      expect(nameInitial(s)).toBe((s || '?')[0]?.toUpperCase())
+    }
   })
 })
 
