@@ -22,7 +22,7 @@
 -- │  * Ersteller-Rechte (owner_id = auth.uid()) bleiben unverändert;          │
 -- │    tournaments-/players-Schreibrechte bleiben owner-only.                 │
 -- │                                                                           │
--- │ Idempotent. NICHT ohne Review auf Produktion anwenden.                    │
+-- │ Idempotent. Review: Fable, freigegeben 2026-10-01 (Auflage 0-Loch-Finish).│
 -- ╰─────────────────────────────────────────────────────────────────────────╯
 
 -- ── 1. Helper: ist der eingeloggte Account Teilnehmer dieses Matches? ───────
@@ -117,6 +117,14 @@ begin
 
   if old.status = 'active' and new.status = 'pending' then
     raise exception 'invalid status transition'
+      using errcode = '42501';
+  end if;
+
+  -- Ohne ein einziges gespeichertes Loch darf ein Teilnehmer nicht beenden
+  -- (sonst entstünde ein Ergebnis ohne Grundlage).
+  if new.status = 'finished' and old.status is distinct from 'finished'
+     and not exists (select 1 from hole_results h where h.match_id = new.id) then
+    raise exception 'participants cannot finish a match without hole results'
       using errcode = '42501';
   end if;
 
