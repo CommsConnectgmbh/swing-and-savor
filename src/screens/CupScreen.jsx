@@ -13,6 +13,7 @@ import BoostSheet from '../components/BoostSheet'
 import JoinRequestsSheet from '../components/JoinRequestsSheet'
 import { isUnlocked } from '../lib/tournamentGate'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { pushToast } from '../lib/toast'
 
 const emptyForm = {
   name: '', date: '',
@@ -239,12 +240,26 @@ export default function CupScreen() {
     const newPw = form.edit_password.trim()
     if (mode === 'create') {
       if (user) payload.owner_id = user.id
-      const { data: inserted } = await supabase.from('tournaments').insert([payload]).select('id').single()
-      if (inserted?.id && newPw) {
-        await supabase.rpc('set_tournament_password', { t_id: inserted.id, pw: newPw })
+      // ID clientseitig vergeben und ohne RETURNING einfügen: Die SELECT-Policy
+      // (can_view_tournament) sieht die gerade eingefügte Zeile im selben
+      // Statement noch nicht, ein insert().select() scheitert deshalb an RLS.
+      payload.id = crypto.randomUUID()
+      const { error } = await supabase.from('tournaments').insert([payload])
+      if (error) {
+        console.error('[cup] create', error)
+        pushToast({ icon: '⚠️', title: 'Cup nicht angelegt', body: 'Bitte erneut versuchen.' })
+        return
+      }
+      if (newPw) {
+        await supabase.rpc('set_tournament_password', { t_id: payload.id, pw: newPw })
       }
     } else {
-      await supabase.from('tournaments').update(payload).eq('id', editId)
+      const { error } = await supabase.from('tournaments').update(payload).eq('id', editId)
+      if (error) {
+        console.error('[cup] update', error)
+        pushToast({ icon: '⚠️', title: 'Cup nicht gespeichert', body: 'Bitte erneut versuchen.' })
+        return
+      }
       // Leeres Feld bei bestehendem Passwort = beibehalten (kein versehentliches Löschen).
       if (newPw) {
         await supabase.rpc('set_tournament_password', { t_id: editId, pw: newPw })

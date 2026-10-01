@@ -93,7 +93,11 @@ export default function ChallengesScreen() {
         ? (profilesById[c.opponent_id]?.display_name || 'Opponent')
         : 'Opponent'
 
-      const { data: t, error: e1 } = await supabase.from('tournaments').insert({
+      // ID clientseitig vergeben, Insert ohne RETURNING (siehe CupScreen):
+      // die SELECT-Policy sieht die neue Zeile im selben Statement noch nicht.
+      const t = { id: crypto.randomUUID() }
+      const { error: e1 } = await supabase.from('tournaments').insert({
+        id: t.id,
         name: c.title,
         date: new Date().toISOString().slice(0,10),
         team_a_name: challengerName,
@@ -103,8 +107,8 @@ export default function ChallengesScreen() {
         discord_announce: false,
         owner_id: user.id,
         description: c.description,
-      }).select('id').single()
-      if (e1 || !t) {
+      })
+      if (e1) {
         console.error('[challenge] create tournament', e1)
         alert('Konnte das Duell nicht anlegen. Bitte erneut versuchen.')
         return
