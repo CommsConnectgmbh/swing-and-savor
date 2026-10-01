@@ -18,6 +18,7 @@ export default function ChallengesScreen() {
   const [loading, setLoading]   = useState(true)
   const [items, setItems]       = useState([])
   const [profilesById, setProfilesById] = useState({})
+  const [accepting, setAccepting] = useState(false)
 
   useEffect(() => { if (user) load() }, [user, tab])
 
@@ -77,51 +78,85 @@ export default function ChallengesScreen() {
   }
 
   async function accept(c) {
-    // Accept: create a tournament + match scaffold linked to the challenge,
-    // then mark accepted. Live tracking is just /matches/:id.
-    const challengerName = profilesById[c.challenger_id]?.display_name || 'Challenger'
-    const opponentName   = c.opponent_id
-      ? (profilesById[c.opponent_id]?.display_name || 'Opponent')
-      : 'Opponent'
+    // Annehmen legt Cup + Match für das Duell an und markiert die Challenge als
+    // angenommen. RLS (Migration 029) erlaubt Cups nur mit owner_id = eigener
+    // Account, deshalb gehört der Duell-Cup dem Annehmenden. Die Seiten bleiben
+    // fest: Team A = Herausforderer, Team B = Gegner (darauf bauen
+    // Challenge-Auswertung und ELO auf). Beide Spieler werden per profile_id
+    // verknüpft, der Herausforderer wird eingeladen, damit er auch private
+    // Duelle sieht.
+    if (accepting) return
+    setAccepting(true)
+    try {
+      const challengerName = profilesById[c.challenger_id]?.display_name || 'Challenger'
+      const opponentName   = c.opponent_id
+        ? (profilesById[c.opponent_id]?.display_name || 'Opponent')
+        : 'Opponent'
 
-    const { data: t, error: e1 } = await supabase.from('tournaments').insert({
-      name: c.title,
-      date: new Date().toISOString().slice(0,10),
-      team_a_name: challengerName,
-      team_b_name: opponentName,
-      visibility: c.visibility,
-      owner_id: c.challenger_id,
-      description: c.description,
-    }).select('id').single()
-    if (e1 || !t) { alert('Konnte Turnier nicht anlegen: ' + (e1?.message || '')); return }
+      const { data: t, error: e1 } = await supabase.from('tournaments').insert({
+        name: c.title,
+        date: new Date().toISOString().slice(0,10),
+        team_a_name: challengerName,
+        team_b_name: opponentName,
+        visibility: c.visibility,
+        owner_id: user.id,
+        description: c.description,
+      }).select('id').single()
+      if (e1 || !t) {
+        console.error('[challenge] create tournament', e1)
+        alert('Konnte das Duell nicht anlegen. Bitte erneut versuchen.')
+        return
+      }
 
-    // For singles/doubles types we create players + a match. For team type we leave it open.
-    let matchId = null
-    if (c.type === 'singles') {
-      const { data: pa } = await supabase.from('players').insert({
-        tournament_id: t.id, name: challengerName, team: 'A',
-        handicap: profilesById[c.challenger_id]?.hcp ?? 0,
-      }).select('id').single()
-      const { data: pb } = await supabase.from('players').insert({
-        tournament_id: t.id, name: opponentName, team: 'B',
-        handicap: profilesById[c.opponent_id]?.hcp ?? 0,
-      }).select('id').single()
-      const { data: m } = await supabase.from('matches').insert({
-        tournament_id: t.id, type: 'singles',
-        team_a_player1_id: pa?.id, team_b_player1_id: pb?.id,
-      }).select('id').single()
-      matchId = m?.id
+      const rollback = async (reason) => {
+        console.error('[challenge] accept failed', reason)
+        await supabase.from('tournaments').delete().eq('id', t.id)
+        alert('Konnte das Duell nicht anlegen. Bitte erneut versuchen.')
+      }
+
+      if (c.challenger_id !== user.id) {
+        const { error: eInv } = await supabase.from('tournament_invites').insert({
+          tournament_id: t.id, profile_id: c.challenger_id, invited_by: user.id,
+        })
+        if (eInv) { await rollback(eInv); return }
+      }
+
+      // For singles we create players + a match. For doubles/team we leave it open.
+      let matchId = null
+      if (c.type === 'singles') {
+        const { data: pa, error: ePa } = await supabase.from('players').insert({
+          tournament_id: t.id, name: challengerName, team: 'A',
+          handicap: profilesById[c.challenger_id]?.hcp ?? 0,
+          profile_id: c.challenger_id,
+        }).select('id').single()
+        if (ePa || !pa) { await rollback(ePa); return }
+        const { data: pb, error: ePb } = await supabase.from('players').insert({
+          tournament_id: t.id, name: opponentName, team: 'B',
+          handicap: profilesById[c.opponent_id]?.hcp ?? 0,
+          profile_id: c.opponent_id || null,
+        }).select('id').single()
+        if (ePb || !pb) { await rollback(ePb); return }
+        const { data: m, error: eM } = await supabase.from('matches').insert({
+          tournament_id: t.id, type: 'singles',
+          team_a_player1_id: pa.id, team_b_player1_id: pb.id,
+        }).select('id').single()
+        if (eM || !m) { await rollback(eM); return }
+        matchId = m.id
+      }
+
+      const { data: updated, error: eC } = await supabase.from('challenges').update({
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
+        tournament_id: t.id,
+        match_id: matchId,
+      }).eq('id', c.id).eq('status', 'pending').select('id')
+      if (eC || !updated?.length) { await rollback(eC || 'challenge not pending'); return }
+
+      if (matchId) navigate(`/matches/${matchId}`)
+      else navigate('/board')
+    } finally {
+      setAccepting(false)
     }
-
-    await supabase.from('challenges').update({
-      status: 'accepted',
-      accepted_at: new Date().toISOString(),
-      tournament_id: t.id,
-      match_id: matchId,
-    }).eq('id', c.id)
-
-    if (matchId) navigate(`/matches/${matchId}`)
-    else navigate('/board')
   }
 
   async function decline(c) {
@@ -335,7 +370,7 @@ function CreateForm({ onCreated, onClose, presetOpponent }) {
       </div>
 
       <input
-        type="text" placeholder="Einsatz (optional) — z.B. „Verlierer zahlt das Bier"
+        type="text" placeholder="Aufgabe für den Verlierer (optional), z. B. trägt das Bag am 18."
         className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-ink placeholder:text-inkDim text-sm focus:border-accent/60"
         value={stake} onChange={e => setStake(e.target.value)}
       />
@@ -368,7 +403,7 @@ function CreateForm({ onCreated, onClose, presetOpponent }) {
         </button>
         <button type="button" onClick={sendToDealBuddy} disabled={busy}
           className="py-2.5 rounded-xl text-xs font-bold tracking-wide bg-bg text-inkMuted border border-line hover:border-accent/40 active:scale-[0.98] transition-all">
-          💰 Direkt auf DealBuddy herausfordern →
+          🤝 Direkt auf DealBuddy herausfordern →
         </button>
       </div>
     </form>
