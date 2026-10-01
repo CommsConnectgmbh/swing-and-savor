@@ -66,7 +66,7 @@ const ROADMAP = `**Swing & Savor — Roadmap**
 :crystal_ball: **Next Up**
 - Spieler-Profile mit Statistik
 - Multi-Course-Support
-- Side-Bets pro Loch
+- Revanche-Challenges ohne Geld: Wer verliert, erfüllt eine Aufgabe
 
 Updates landen hier sobald sie live sind.
 `;
@@ -77,7 +77,7 @@ const FAQ = `**FAQ — Swing & Savor**
 Eine Golf-Turnier-Plattform: anmelden, spielen, scoren, geniessen. Web + iOS + Android.
 
 **Wo finde ich die App?**
-https://swingandsavor.at (PWA — installierbar auf dem Homescreen). Native-Apps folgen in den Stores.
+https://swingandsavor.at (PWA, installierbar auf dem Homescreen) sowie im App Store und bei Google Play.
 
 **Wie melde ich mich für einen Cup an?**
 In der App → Cups → Cup auswählen → Anmelden. Updates landen hier in :trophy: **#cups**.
