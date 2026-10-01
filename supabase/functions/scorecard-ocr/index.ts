@@ -97,8 +97,15 @@ Deno.serve(async (req) => {
   const { data: upload, error: upErr } = await svc.from('scorecard_uploads')
     .select('id, match_id, storage_path, ocr_status, uploaded_by_user_id').eq('id', uploadId).maybeSingle()
   if (upErr || !upload) return j({ error: 'upload_not_found' }, { status: 404 })
-  // Nur wer das Foto hochgeladen hat, darf es auswerten lassen.
+  // Nur wer das Foto hochgeladen hat, darf es auswerten lassen. Maßgeblich ist
+  // der Besitzer des Storage-Objekts (nicht die vom Nutzer angelegte Zeile),
+  // und der Pfad muss zum Match der Zeile passen.
   if (upload.uploaded_by_user_id !== userData.user.id) return j({ error: 'forbidden' }, { status: 403 })
+  if (typeof upload.storage_path !== 'string' || !upload.storage_path.startsWith(`${upload.match_id}/`)) {
+    return j({ error: 'forbidden' }, { status: 403 })
+  }
+  const { data: photoOwner, error: ownErr } = await svc.rpc('scorecard_photo_owner', { p_path: upload.storage_path })
+  if (ownErr || photoOwner !== userData.user.id) return j({ error: 'forbidden' }, { status: 403 })
   if (upload.ocr_status === 'done') {
     const { data: full } = await svc.from('scorecard_uploads')
       .select('ocr_result').eq('id', uploadId).maybeSingle()
