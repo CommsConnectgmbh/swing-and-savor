@@ -375,7 +375,7 @@ export default function MatchDetailScreen() {
 
   // When user picks/changes the course for this match
   async function pickCourse(c) {
-    if (!c) return
+    if (!c || matchRef.current?.tournament?.owner_id !== user?.id) return
     setCourse(c)
     // Update match record (snapshot pars + handicaps)
     const { error } = await supabase.from('matches').update({
@@ -400,7 +400,7 @@ export default function MatchDetailScreen() {
 
   // Save the on-screen pars back to the course (community share)
   async function shareScorecardToCourse() {
-    if (!course) return
+    if (!course || matchRef.current?.tournament?.owner_id !== user?.id) return
     const pars = holes.map(h => h.par)
     try {
       const updated = await applyCourseEdit(course.id, pars, course.hole_handicaps || [], matchId)
@@ -548,6 +548,9 @@ export default function MatchDetailScreen() {
   const hasFactor = !isStableford && (factorA !== 1 || factorB !== 1)
   const done   = match.status === 'finished'
   const locked = !isUnlocked(match.tournament)
+  // Platz, Pars am Match und Match-Foto darf nur der Cup-Ersteller ändern
+  // (RLS matches_write); Teilnehmer tragen nur Löcher ein.
+  const isOwner = !!user?.id && match.tournament?.owner_id === user.id
 
   let ptsA, ptsB
   if (isStableford) {
@@ -617,7 +620,7 @@ export default function MatchDetailScreen() {
         <div className="relative mx-3 mt-3 rounded-card overflow-hidden bg-bg" style={{ aspectRatio: '16/9' }}>
           <img src={match.photo_url} alt="" loading="lazy"
             className="w-full h-full object-cover" />
-          {!done && !locked && (
+          {isOwner && !done && !locked && (
             <button onClick={handlePhotoClear}
               className="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/55 text-white text-[10px] font-bold tracking-wide active:scale-95 transition-transform">
               Foto entfernen
@@ -791,7 +794,7 @@ export default function MatchDetailScreen() {
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {!locked && !done && (
+          {isOwner && !locked && !done && (
             <button onClick={() => setShowCoursePicker(true)}
               className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-bg text-inkMuted border border-line active:scale-95 transition-transform">
               {course ? 'Platz' : 'Wählen'}
@@ -809,7 +812,7 @@ export default function MatchDetailScreen() {
               Karten
             </button>
           )}
-          {!locked && !done && !match.photo_url && (
+          {isOwner && !locked && !done && !match.photo_url && (
             <button onClick={() => photoInputRef.current?.click()} disabled={photoBusy}
               className="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded bg-bg text-inkMuted border border-line active:scale-95 transition-transform disabled:opacity-50">
               {photoBusy ? '…' : '+ Foto'}
