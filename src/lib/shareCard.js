@@ -138,7 +138,7 @@ export async function renderMatchShareCard({
  * rows = [{ name, total, sub, winner }]. Gleiche Bildsprache wie die Match-Card,
  * 1080×1080, WhatsApp-/Instagram-tauglich.
  */
-export async function renderCasualShareCard({ title, statusLabel, rows, dateLabel, matchResult }) {
+export async function renderCasualShareCard({ title, courseName, statusLabel, rows, dateLabel, matchResult }) {
   const SIZE = 1080
   const canvas = document.createElement('canvas')
   canvas.width = SIZE; canvas.height = SIZE
@@ -241,7 +241,7 @@ export async function renderCasualShareCard({ title, statusLabel, rows, dateLabe
   ctx.textAlign = 'center'
   ctx.fillStyle = MUTED
   ctx.font = '600 24px -apple-system, "Helvetica Neue", Arial'
-  const footMeta = [String(statusLabel || '').toUpperCase(), dateLabel].filter(Boolean).join('  ·  ')
+  const footMeta = [String(statusLabel || '').toUpperCase(), courseName, dateLabel].filter(Boolean).join('  ·  ')
   ctx.fillText(trunc(ctx, footMeta, SIZE - 160), SIZE / 2, cursorY + 30)
 
   // Footer URL
