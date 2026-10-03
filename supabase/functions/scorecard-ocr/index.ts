@@ -4,9 +4,12 @@
 //
 // Datensparsamkeit: Das Foto wird nur für die Auswertung gebraucht. Es wird
 // direkt danach aus dem Bucket gelöscht, auch wenn die Auswertung scheitert.
-// Fotos, deren Auswertung nie gestartet wurde (Abbruch zwischen Upload und
-// Aufruf), entfernt jeder Aufruf, sobald sie älter als 24 Stunden sind.
+// Erst ein bestätigtes Löschen setzt scorecard_uploads.photo_deleted_at;
+// schlägt es fehl, wird das laut geloggt und in photo_delete_error vermerkt.
+// Liegengebliebene Fotos (Abbruch zwischen Upload und Aufruf, gescheitertes
+// Löschen) räumt die geplante Edge-Function scorecard-photo-sweep ab.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { deleteScorecardPhotos } from '../_shared/scorecardPhotos.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -42,25 +45,6 @@ Regeln:
 - Antworten OHNE Markdown-Codefences, reines JSON.`
 
 const BUCKET = 'scorecard-photos'
-const ORPHAN_MAX_AGE_MS = 24 * 60 * 60 * 1000
-
-// deno-lint-ignore no-explicit-any
-async function sweepOrphans(svc: any) {
-  try {
-    const { data: folders } = await svc.storage.from(BUCKET).list('', { limit: 100 })
-    const cutoff = Date.now() - ORPHAN_MAX_AGE_MS
-    for (const f of folders || []) {
-      if (f.id) continue // Datei auf oberster Ebene gibt es nicht; nur Ordner (match_id)
-      const { data: files } = await svc.storage.from(BUCKET).list(f.name, { limit: 100 })
-      const old = (files || [])
-        .filter((o: { created_at?: string }) => o.created_at && Date.parse(o.created_at) < cutoff)
-        .map((o: { name: string }) => `${f.name}/${o.name}`)
-      if (old.length) await svc.storage.from(BUCKET).remove(old)
-    }
-  } catch (e) {
-    console.error('[scorecard-ocr] sweep failed', e)
-  }
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
@@ -92,8 +76,6 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   )
 
-  await sweepOrphans(svc)
-
   const { data: upload, error: upErr } = await svc.from('scorecard_uploads')
     .select('id, match_id, storage_path, ocr_status, uploaded_by_user_id').eq('id', uploadId).maybeSingle()
   if (upErr || !upload) return j({ error: 'upload_not_found' }, { status: 404 })
@@ -101,20 +83,24 @@ Deno.serve(async (req) => {
   // der Besitzer des Storage-Objekts (nicht die vom Nutzer angelegte Zeile),
   // und der Pfad muss zum Match der Zeile passen.
   if (upload.uploaded_by_user_id !== userData.user.id) return j({ error: 'forbidden' }, { status: 403 })
+  // Bereits ausgewertet: Ergebnis zurückgeben. Das Foto ist zu diesem Zeitpunkt
+  // gelöscht, die Besitzerprüfung über storage.objects ginge daher ins Leere.
+  if (upload.ocr_status === 'done') {
+    const { data: full, error: fullErr } = await svc.from('scorecard_uploads')
+      .select('ocr_result').eq('id', uploadId).maybeSingle()
+    if (fullErr) return j({ error: 'result_unavailable' }, { status: 500 })
+    return j({ ok: true, cached: true, result: full?.ocr_result })
+  }
   if (typeof upload.storage_path !== 'string' || !upload.storage_path.startsWith(`${upload.match_id}/`)) {
     return j({ error: 'forbidden' }, { status: 403 })
   }
   const { data: photoOwner, error: ownErr } = await svc.rpc('scorecard_photo_owner', { p_path: upload.storage_path })
   if (ownErr || photoOwner !== userData.user.id) return j({ error: 'forbidden' }, { status: 403 })
-  if (upload.ocr_status === 'done') {
-    const { data: full } = await svc.from('scorecard_uploads')
-      .select('ocr_result').eq('id', uploadId).maybeSingle()
-    return j({ ok: true, cached: true, result: full?.ocr_result })
-  }
 
   await svc.from('scorecard_uploads').update({ ocr_status: 'processing' }).eq('id', uploadId)
-  const deletePhoto = () => svc.storage.from(BUCKET).remove([upload.storage_path])
-    .catch((e: unknown) => console.error('[scorecard-ocr] photo delete failed', e))
+  // Wirft nie; prüft jedes Storage-Ergebnis, loggt Fehlschläge und hält sie in
+  // scorecard_uploads fest (photo_deleted_at nur bei bestätigtem Löschen).
+  const deletePhoto = () => deleteScorecardPhotos(svc, [upload.storage_path])
 
   // signierte URL für das Bild
   const { data: signed, error: sErr } = await svc.storage
