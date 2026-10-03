@@ -111,7 +111,9 @@ export async function deleteScorecardPhotos(
 
 export interface SweepOptions {
   batchSize?: number
-  deadline?: number // Date.now()-Zeitpunkt, ab dem keine neue Seite mehr begonnen wird
+  deadline?: number // Zeitpunkt (ms), ab dem keine neue Seite mehr begonnen wird
+  startAfter?: string | null // gespeicherter Keyset-Cursor des letzten Laufs
+  now?: () => number
   log?: Log
 }
 
@@ -121,7 +123,8 @@ export interface SweepResult {
   failed: number
   batches: number
   reconciled: number
-  complete: boolean
+  complete: boolean // Ende der Kandidatenliste erreicht
+  cursor: string | null // wo der nächste Lauf weitermacht (null = vorne)
   error: string | null
 }
 
@@ -131,13 +134,15 @@ export interface SweepResult {
 export async function sweepScorecardPhotos(svc: Svc, opts: SweepOptions = {}): Promise<SweepResult> {
   const batchSize = opts.batchSize ?? 500
   const log = opts.log ?? console.error
+  const now = opts.now ?? Date.now
   const res: SweepResult = {
-    scanned: 0, deleted: 0, failed: 0, batches: 0, reconciled: 0, complete: false, error: null,
+    scanned: 0, deleted: 0, failed: 0, batches: 0, reconciled: 0,
+    complete: false, cursor: null, error: null,
   }
 
-  let after: string | null = null
+  let after: string | null = opts.startAfter || null
   for (;;) {
-    if (opts.deadline && Date.now() > opts.deadline) {
+    if (opts.deadline && now() > opts.deadline) {
       log('[scorecard-photos] sweep stopped at time budget, continues next run', { after })
       break
     }
@@ -177,8 +182,48 @@ export async function sweepScorecardPhotos(svc: Svc, opts: SweepOptions = {}): P
     log('[scorecard-photos] reconcile failed', errText(e))
   }
 
-  if (res.failed) res.complete = false
+  // Fertig: nächster Lauf beginnt vorne (und versucht Fehlschläge erneut).
+  // Sonst dort weitermachen, wo dieser Lauf aufgehört hat, damit vordere
+  // Dauerfehler die hinteren Kandidaten nicht für immer verdrängen.
+  res.cursor = res.complete ? null : after
   return res
+}
+
+export interface ScheduledSweepResult extends SweepResult {
+  skipped: boolean // ein anderer Lauf hält die Lease
+}
+
+// Ein geplanter Lauf: Lease + gespeicherten Cursor holen, sweepen, Cursor
+// speichern und Lease freigeben (scorecard_photo_sweep_begin/_save).
+export async function runScheduledSweep(
+  svc: Svc,
+  opts: Omit<SweepOptions, 'startAfter'> & { leaseSeconds?: number } = {},
+): Promise<ScheduledSweepResult> {
+  const log = opts.log ?? console.error
+  const { data, error }: { data: unknown; error: unknown } =
+    await svc.rpc('scorecard_photo_sweep_begin', { p_lease_seconds: opts.leaseSeconds ?? 120 })
+  const empty: ScheduledSweepResult = {
+    scanned: 0, deleted: 0, failed: 0, batches: 0, reconciled: 0,
+    complete: false, cursor: null, error: null, skipped: false,
+  }
+  if (error) {
+    log('[scorecard-photos] sweep could not acquire lease', errText(error))
+    return { ...empty, error: `lease:${errText(error)}` }
+  }
+  const rows = Array.isArray(data) ? data : (data ? [data] : [])
+  if (!rows.length) return { ...empty, skipped: true }
+  const startAfter = (rows[0] as { cursor_name?: string | null })?.cursor_name ?? null
+
+  const res = await sweepScorecardPhotos(svc, { ...opts, startAfter })
+  // Bei Listenfehler den alten Cursor behalten statt vorne neu zu beginnen.
+  const saveCursor = res.error && !res.batches ? startAfter : res.cursor
+  const { error: saveErr }: { error: unknown } =
+    await svc.rpc('scorecard_photo_sweep_save', { p_cursor: saveCursor })
+  if (saveErr) {
+    log('[scorecard-photos] sweep could not save cursor', errText(saveErr))
+    res.error = res.error || `save:${errText(saveErr)}`
+  }
+  return { ...res, cursor: saveCursor, skipped: false }
 }
 
 // Vergleich in konstanter Zeit für das Shared Secret des Cron-Aufrufs.

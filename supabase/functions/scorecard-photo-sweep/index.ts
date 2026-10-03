@@ -11,10 +11,11 @@
 // Header x-sweep-secret; Gegenstück ist private_config.scorecard_sweep_secret.
 // Secrets: SCORECARD_SWEEP_SECRET, SUPABASE_SERVICE_ROLE_KEY
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { safeEqual, sweepScorecardPhotos } from '../_shared/scorecardPhotos.ts'
+import { runScheduledSweep, safeEqual } from '../_shared/scorecardPhotos.ts'
 
 // Edge-Functions haben ein begrenztes Laufzeitfenster; was nicht fertig wird,
-// erledigt der nächste Lauf.
+// erledigt der nächste Lauf ab dem gespeicherten Cursor
+// (scorecard_photo_sweep_state, mit Lease gegen überlappende Läufe).
 const TIME_BUDGET_MS = 45_000
 
 function j(payload: unknown, status = 200) {
@@ -41,9 +42,17 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false, autoRefreshToken: false } },
   )
 
-  const result = await sweepScorecardPhotos(svc, { deadline: Date.now() + TIME_BUDGET_MS })
+  const result = await runScheduledSweep(svc, {
+    deadline: Date.now() + TIME_BUDGET_MS,
+    leaseSeconds: 120,
+  })
+  if (result.skipped) {
+    console.log('[scorecard-photo-sweep] another run holds the lease, skipped')
+    return j({ ok: true, skipped: true })
+  }
   const line = `[scorecard-photo-sweep] scanned=${result.scanned} deleted=${result.deleted} ` +
-    `failed=${result.failed} reconciled=${result.reconciled} complete=${result.complete}`
+    `failed=${result.failed} reconciled=${result.reconciled} complete=${result.complete} ` +
+    `resume_after=${result.cursor ?? '-'}`
   if (result.failed || result.error) console.error(line, result.error || '')
   else console.log(line)
 

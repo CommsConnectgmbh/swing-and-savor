@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { deleteScorecardPhotos, sweepScorecardPhotos, safeEqual } from './scorecardPhotos.ts'
+import { deleteScorecardPhotos, sweepScorecardPhotos, runScheduledSweep, safeEqual } from './scorecardPhotos.ts'
 
 // Minimaler Fake des supabase-js-Clients: Storage-Objekte als Set,
 // scorecard_uploads-Updates werden protokolliert.
@@ -11,8 +11,10 @@ function fakeSvc({
   existingError = null,
   candidatesError = null,
   ages = {},
+  onRemove = () => {},
 } = {}) {
   const store = new Set(objects)
+  const state = { cursor: null, lease: false }
   const updates = []
   const removeCalls = []
   const candidateCalls = []
@@ -21,6 +23,7 @@ function fakeSvc({
       from: () => ({
         remove: async (paths) => {
           removeCalls.push(paths)
+          onRemove(paths)
           if (removeThrows) throw new Error('network down')
           for (const p of paths) if (!removeKeeps.includes(p)) store.delete(p)
           return { data: null, error: removeError }
@@ -43,6 +46,16 @@ function fakeSvc({
         return { data: names, error: null }
       }
       if (fn === 'scorecard_photo_reconcile') return { data: 2, error: null }
+      if (fn === 'scorecard_photo_sweep_begin') {
+        if (state.lease) return { data: [], error: null }
+        state.lease = true
+        return { data: [{ cursor_name: state.cursor }], error: null }
+      }
+      if (fn === 'scorecard_photo_sweep_save') {
+        state.cursor = args.p_cursor
+        state.lease = false
+        return { data: null, error: null }
+      }
       throw new Error('unexpected rpc ' + fn)
     },
     from: (table) => {
@@ -59,7 +72,7 @@ function fakeSvc({
       return chain
     },
   }
-  return { svc, store, updates, removeCalls, candidateCalls }
+  return { svc, store, state, updates, removeCalls, candidateCalls }
 }
 
 describe('deleteScorecardPhotos', () => {
@@ -142,7 +155,8 @@ describe('sweepScorecardPhotos', () => {
     const res = await sweepScorecardPhotos(f.svc, { batchSize: 2, log: vi.fn() })
     expect(res.deleted).toBe(2)
     expect(res.failed).toBe(2)
-    expect(res.complete).toBe(false)
+    expect(res.complete).toBe(true)
+    expect(res.cursor).toBeNull()
     expect(f.candidateCalls.map((c) => c.p_after)).toEqual([null, 'a/2.jpg', 'a/4.jpg'])
   })
 
@@ -159,6 +173,51 @@ describe('sweepScorecardPhotos', () => {
     const res = await sweepScorecardPhotos(f.svc, { deadline: Date.now() - 1, log: vi.fn() })
     expect(res.batches).toBe(0)
     expect(res.complete).toBe(false)
+  })
+})
+
+describe('runScheduledSweep', () => {
+  it('resumes after a time-budget abort so failing early items cannot starve later ones', async () => {
+    // a/fails.jpg scheitert jedes Mal und verbraucht das ganze Zeitbudget.
+    let clock = 0
+    const f = fakeSvc({
+      objects: ['a/fails.jpg', 'z/old.jpg'],
+      removeKeeps: ['a/fails.jpg'],
+      onRemove: (paths) => { if (paths.includes('a/fails.jpg')) clock += 60_000 },
+    })
+    const run = () => {
+      const start = clock
+      return runScheduledSweep(f.svc, { batchSize: 1, deadline: start + 45_000, now: () => clock, log: vi.fn() })
+    }
+
+    const r1 = await run()
+    expect(r1.failed).toBe(1)
+    expect(r1.cursor).toBe('a/fails.jpg')
+    expect(f.store.has('z/old.jpg')).toBe(true)
+    expect(f.state).toEqual({ cursor: 'a/fails.jpg', lease: false })
+
+    const r2 = await run()
+    expect(r2.deleted).toBe(1)
+    expect(f.store.has('z/old.jpg')).toBe(false)
+    // Ende erreicht: Cursor zurückgesetzt, Fehlschlag wird nächstes Mal erneut versucht
+    expect(r2.complete).toBe(true)
+    expect(f.state.cursor).toBeNull()
+  })
+
+  it('skips when another run holds the lease', async () => {
+    const f = fakeSvc({ objects: ['a/1.jpg'] })
+    f.state.lease = true
+    const res = await runScheduledSweep(f.svc, { log: vi.fn() })
+    expect(res.skipped).toBe(true)
+    expect(f.removeCalls).toHaveLength(0)
+  })
+
+  it('keeps the stored cursor when candidates cannot be listed', async () => {
+    const f = fakeSvc({ objects: ['a/1.jpg'], candidatesError: { message: 'boom' } })
+    f.state.cursor = 'm/5.jpg'
+    const res = await runScheduledSweep(f.svc, { log: vi.fn() })
+    expect(res.error).toBe('candidates:boom')
+    expect(f.state).toEqual({ cursor: 'm/5.jpg', lease: false })
   })
 })
 
