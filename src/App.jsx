@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BottomNav from './components/BottomNav'
 import BrandHeader from './components/BrandHeader'
+import LegalFooter from './components/LegalFooter'
 import LoadingSpinner from './components/LoadingSpinner'
 import Toaster from './components/Toaster'
 import { useAuth } from './lib/auth'
@@ -162,6 +163,12 @@ export default function App() {
             <Route path="*"                  element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>
+        {/* Diskreter, dauerhafter Impressum-Zugang auf dem Home (/). Nur hier, um
+            andere Screens nicht zu stören; die schwebende BottomNav blendet beim
+            Scrollen ans Ende aus, der Footer bleibt erreichbar. */}
+        {pathname === '/home' && (
+          <LegalFooter className="pb-[max(env(safe-area-inset-bottom),6rem)] pt-4" />
+        )}
       </main>
       <BottomNav />
     </div>

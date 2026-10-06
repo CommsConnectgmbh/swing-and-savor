@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import LanguageQuickSwitch from '../components/LanguageQuickSwitch'
+import LegalFooter from '../components/LegalFooter'
 import { functionUrl, publicFunctionHeaders } from '../lib/functions'
 
 export default function SignInScreen() {
@@ -148,7 +149,12 @@ export default function SignInScreen() {
             </button>
 
             <p className="text-[11px] text-inkDim text-center mt-3 leading-relaxed">
-              {t('signIn.legalPrefix')} <span className="underline-offset-2">{t('signIn.legalTerms')}</span> {t('signIn.legalAnd')} <span className="underline-offset-2">{t('signIn.legalPrivacy')}</span>.
+              {t('signIn.legalPrefix')}{' '}
+              <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener"
+                 className="underline underline-offset-2 hover:text-inkMuted transition-colors">{t('signIn.legalTerms')}</a>{' '}
+              {t('signIn.legalAnd')}{' '}
+              <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener"
+                 className="underline underline-offset-2 hover:text-inkMuted transition-colors">{t('signIn.legalPrivacy')}</a>.
             </p>
           </form>
         ) : (
@@ -174,6 +180,8 @@ export default function SignInScreen() {
           </form>
         )}
       </div>
+
+      <LegalFooter className="relative z-10 px-7 pb-[max(env(safe-area-inset-bottom),1.5rem)]" />
     </div>
   )
 }
