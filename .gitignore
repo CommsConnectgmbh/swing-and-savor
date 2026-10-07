@@ -37,3 +37,8 @@ native/www/
 scripts/_st.mjs
 .env.*
 !.env.example
+
+# Tool-/IDE-Artefakte (nicht versioniert)
+.codex/
+xcuserdata/
+**/project.xcworkspace/xcuserdata/
