@@ -11,6 +11,7 @@
 // `pro_entitlements` rows are activated — the gate (isPro) stays the same.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
+import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -79,31 +80,21 @@ Deno.serve(async (req) => {
   const baseUrl = req.headers.get('Origin') || 'https://app.swingandsavor.at'
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2024-09-30.acacia' })
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    locale: 'de',
-    submit_type: 'pay',
-    payment_method_types: ['card'],
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: pkg.label,
-          description: 'One-time unlock. AR launch monitor (carry/spin/launch metrics) + green reader. Requires a LiDAR iPhone.',
-        },
-        unit_amount: pkg.amount,
-      },
-      quantity: 1,
-    }],
+  const session = await stripe.checkout.sessions.create(zahlungsCheckoutParams({
+    posten: {
+      name: pkg.label,
+      description: 'One-time unlock. AR launch monitor (carry/spin/launch metrics) + green reader. Requires a LiDAR iPhone.',
+      unitAmount: pkg.amount,
+    },
     metadata: {
       buyer_profile_id: userId,
       product: 'launch_monitor',
       plan: pkg.plan,
       app: 'swing-and-savor',
     },
-    success_url: `${baseUrl}/range?pro=success`,
-    cancel_url:  `${baseUrl}/range?pro=cancel`,
-  })
+    successUrl: `${baseUrl}/range?pro=success`,
+    cancelUrl:  `${baseUrl}/range?pro=cancel`,
+  }))
 
   // Write pending ledger row. A payment reconciler (Stripe webhook or the same
   // mechanism used for premium_purchases) must flip status -> 'active' AND set
