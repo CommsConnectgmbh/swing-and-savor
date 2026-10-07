@@ -2,6 +2,7 @@
 // Tiers: top (3 Tage 4,99€ · 7 Tage 9,99€), highlight (3 Tage 2,99€ · 7 Tage 4,99€), both (3 Tage 6,99€ · 7 Tage 12,99€)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
+import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -84,22 +85,12 @@ Deno.serve(async (req) => {
   const baseUrl = req.headers.get('Origin') || 'https://app.swingandsavor.at'
   const stripe = new Stripe(stripeKey, { apiVersion: '2024-09-30.acacia' })
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    locale: 'de',
-    submit_type: 'pay',
-    payment_method_types: ['card'],
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: `${def.label} (${duration} Tage) — ${cup.name}`,
-          description: def.desc,
-        },
-        unit_amount: amount,
-      },
-      quantity: 1,
-    }],
+  const session = await stripe.checkout.sessions.create(zahlungsCheckoutParams({
+    posten: {
+      name: `${def.label} (${duration} Tage) — ${cup.name}`,
+      description: def.desc,
+      unitAmount: amount,
+    },
     metadata: {
       app: 'swing-and-savor',
       purpose: 'boost',
@@ -108,9 +99,9 @@ Deno.serve(async (req) => {
       duration_days: String(duration),
       buyer_profile_id: userId,
     },
-    success_url: `${baseUrl}/cup?boost=success&cup=${encodeURIComponent(cup.invite_code)}`,
-    cancel_url:  `${baseUrl}/cup?boost=cancel`,
-  })
+    successUrl: `${baseUrl}/cup?boost=success&cup=${encodeURIComponent(cup.invite_code)}`,
+    cancelUrl:  `${baseUrl}/cup?boost=cancel`,
+  }))
 
   await supabase.from('tournament_promotions').insert({
     tournament_id: cup.id,

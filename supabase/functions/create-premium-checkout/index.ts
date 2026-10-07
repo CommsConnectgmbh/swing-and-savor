@@ -2,6 +2,7 @@
 // Auth-required: only the cup OWNER may upgrade.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
+import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -72,31 +73,21 @@ Deno.serve(async (req) => {
   const baseUrl = req.headers.get('Origin') || 'https://app.swingandsavor.at'
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2024-09-30.acacia' })
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    locale: 'de',
-    submit_type: 'pay',
-    payment_method_types: ['card'],
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: `${pkg.label} — ${cup.name}`,
-          description: 'One-time upgrade. Premium Eventpage, Winner Cards, Recap, Branding light.',
-        },
-        unit_amount: pkg.amount,
-      },
-      quantity: 1,
-    }],
+  const session = await stripe.checkout.sessions.create(zahlungsCheckoutParams({
+    posten: {
+      name: `${pkg.label} — ${cup.name}`,
+      description: 'One-time upgrade. Premium Eventpage, Winner Cards, Recap, Branding light.',
+      unitAmount: pkg.amount,
+    },
     metadata: {
       tournament_id: cup.id,
       package_type:  packageType,
       buyer_profile_id: userId,
       app: 'swing-and-savor',
     },
-    success_url: `${baseUrl}/cup?upgrade=success&cup=${encodeURIComponent(cup.invite_code)}`,
-    cancel_url:  `${baseUrl}/cup?upgrade=cancel`,
-  })
+    successUrl: `${baseUrl}/cup?upgrade=success&cup=${encodeURIComponent(cup.invite_code)}`,
+    cancelUrl:  `${baseUrl}/cup?upgrade=cancel`,
+  }))
 
   // Write pending ledger row
   await supabase.from('premium_purchases').insert({
