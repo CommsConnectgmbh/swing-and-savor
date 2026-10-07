@@ -13,7 +13,7 @@
     "assets": "capacitor-assets generate --iconBackgroundColor \"#1f3f2c\" --iconBackgroundColorDark \"#0d271e\" --splashBackgroundColor \"#0d271e\" --splashBackgroundColorDark \"#0d271e\""
   },
   "dependencies": {
-    "@capacitor/android": "^7.0.1",
+    "@capacitor/android": "^7.6.9",
     "@capacitor/app": "^7.0.1",
     "@capacitor/browser": "^7.0.1",
     "@capacitor/core": "^7.0.1",
