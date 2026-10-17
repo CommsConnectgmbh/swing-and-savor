@@ -139,10 +139,10 @@
         <p>
           Functional Software, Inc. (Sentry), 45 Fremont Street, San Francisco, CA 94105, USA.
           Tritt in der App ein technischer Fehler auf, senden wir einen Fehlerbericht (Fehlermeldung,
-          betroffene Seite, Browser- und Gerätetyp, ungefähre Ladezeiten) an Sentry. Die Daten liegen
+          betroffene Seite, Browser- und Gerätetyp) an Sentry. Die Daten liegen
           in der EU-Datenregion (Frankfurt am Main). Wir übermitteln keine Namen oder E-Mail-Adressen;
-          IP-Adressen werden bei Sentry nicht gespeichert. Ladezeiten werten wir nur stichprobenartig
-          aus. <strong>Speicherdauer:</strong> Fehlerberichte werden nach 30 Tagen automatisch gelöscht.
+          IP-Adressen werden bei Sentry nicht gespeichert. Ohne Fehler wird nichts an Sentry
+          gesendet; Ladezeiten oder Nutzungssitzungen erfassen wir nicht. <strong>Speicherdauer:</strong> Fehlerberichte werden nach 30 Tagen automatisch gelöscht.
           Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer stabilen,
           fehlerfreien App). Auftragsverarbeitung über
           <a href="https://sentry.io/legal/dpa/" target="_blank" rel="noopener">sentry.io/legal/dpa</a>.
@@ -198,6 +198,19 @@
           zertifiziert unter dem EU-US Data Privacy Framework (Angemessenheitsbeschluss, Art. 45 DSGVO; Status laut <a href="https://www.dataprivacyframework.gov/list" target="_blank" rel="noopener">dataprivacyframework.gov</a>, geprüft im Oktober 2026). Weitere Informationen:
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>.
         </p>
+        <h3 id="newsletter">Newsletter</h3>
+        <p>
+          Auf swingandsavor.at können Sie unseren Newsletter abonnieren (neue Cups, Native-App-Releases,
+          gelegentliche Tipps). Wir speichern dafür Ihre E-Mail-Adresse, die gewählte Sprache, die
+          Anmeldeseite sowie den Zeitpunkt von Anmeldung und Bestätigung in unserer Datenbank bei
+          Supabase (Frankfurt am Main). Die Anmeldung erfolgt im Double-Opt-In-Verfahren: Sie erhalten
+          eine Bestätigungs-Mail (Versand über Resend, siehe Ziffer 2); erst nach Klick auf den
+          Bestätigungslink ist die Anmeldung aktiv. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO
+          (Ihre Einwilligung). Sie können die Einwilligung jederzeit mit Wirkung für die Zukunft
+          widerrufen, formlos per E-Mail an
+          <a href="mailto:hi@swingandsavor.at?subject=Newsletter%20abmelden">hi@swingandsavor.at</a>.
+          <strong>Speicherdauer:</strong> bis zu Ihrer Abmeldung.
+        </p>
       </section>
 
       <section>
@@ -216,6 +229,7 @@
         <ul>
           <li>IP-Adresse (von Vercel/Supabase nur für Sicherheit + Rate-Limiting verarbeitet).</li>
           <li>Session-Token im localStorage Ihres Browsers (Schlüssel: <code>sas-auth</code>).</li>
+          <li>Ihre Sprach- und Darstellungswahl im localStorage (Schlüssel: <code>sns_lang</code>, <code>sw_theme</code>, auf der Website <code>sns_marketing_lang</code>).</li>
           <li>User-Agent (Browser/Gerät) und Fehlerberichte für die Fehlerdiagnose (Sentry, siehe Ziffer 2a).</li>
         </ul>
         <p>
@@ -229,7 +243,7 @@
         <ul>
           <li><strong>Art. 6 Abs. 1 lit. b DSGVO</strong> (Vertragserfüllung) — Bereitstellung der App-Funktionen, Login, Match-Tracking.</li>
           <li><strong>Art. 6 Abs. 1 lit. f DSGVO</strong> (berechtigtes Interesse) — Sicherheit, Missbrauchsprävention, Stabilität.</li>
-          <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> (Einwilligung) — z. B. Setzen optionaler Profildaten, Push-Benachrichtigungen, Laden der YouTube-Videos.</li>
+          <li><strong>Art. 6 Abs. 1 lit. a DSGVO</strong> (Einwilligung) — z. B. Setzen optionaler Profildaten, Push-Benachrichtigungen, Laden der YouTube-Videos, Newsletter.</li>
         </ul>
       </section>
 
@@ -326,8 +340,9 @@
       <section>
         <h2>9. Cookies</h2>
         <p>
-          Wir verwenden ausschließlich technisch notwendige Session-Daten im
-          <code>localStorage</code> des Browsers zur Aufrechterhaltung Ihrer Anmeldung. Es werden
+          Wir verwenden ausschließlich technisch notwendige Daten im
+          <code>localStorage</code> des Browsers: zur Aufrechterhaltung Ihrer Anmeldung, für Ihre
+          Sprach- und Darstellungswahl und für Zwischenstände bei der Ergebniseingabe. Es werden
           <strong>keine</strong> einwilligungsbedürftigen Cookies, Tracker, Analyse- oder Werbe-Pixel
           eingesetzt. Ein Cookie-Banner ist deshalb nicht erforderlich (§ 25 TDDDG). Einzige Ausnahme
           sind die YouTube-Videos im Bereich „Tour“: Sie werden erst nach Ihrem Klick auf
