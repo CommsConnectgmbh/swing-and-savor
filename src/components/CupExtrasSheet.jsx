@@ -256,7 +256,7 @@ export default function CupExtrasSheet({ cup, onClose, onChanged }) {
                        value={awardForm.title}
                        onChange={(e) => setAwardForm({...awardForm, title: e.target.value})} />
                 <input className="bg-bg hairline px-3 py-2.5 text-ink text-sm"
-                       placeholder="Empfänger-Name · z.B. Tiger W."
+                       placeholder="Empfänger-Name · z.B. Max K."
                        value={awardForm.recipient_name}
                        onChange={(e) => setAwardForm({...awardForm, recipient_name: e.target.value})} />
                 <textarea className="bg-bg hairline px-3 py-2.5 text-ink text-sm" rows={2}

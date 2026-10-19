@@ -16,6 +16,8 @@ export interface ZahlungsPosten {
 export interface ZahlungsCheckout {
   posten: ZahlungsPosten
   metadata: Record<string, string>
+  /** ISO-Zeitpunkt der serverseitig gepruefen Volljaehrigkeits-Bestaetigung (Pflicht). */
+  volljaehrigBestaetigtAm: string
   successUrl: string
   cancelUrl: string
 }
@@ -27,6 +29,9 @@ export interface ZahlungsCheckout {
  * die Positionsdaten, Metadaten und Weiterleitungen gibt der jeweilige Aufruf.
  */
 export function zahlungsCheckoutParams(c: ZahlungsCheckout): Stripe.Checkout.SessionCreateParams {
+  if (!c.volljaehrigBestaetigtAm || Number.isNaN(Date.parse(c.volljaehrigBestaetigtAm))) {
+    throw new Error('volljaehrigkeit_nicht_bestaetigt')
+  }
   return {
     mode: 'payment',
     locale: 'de',
@@ -40,8 +45,28 @@ export function zahlungsCheckoutParams(c: ZahlungsCheckout): Stripe.Checkout.Ses
       },
       quantity: 1,
     }],
-    metadata: c.metadata,
+    metadata: {
+      ...c.metadata,
+      adult_confirmed: 'true',
+      adult_confirmed_at: c.volljaehrigBestaetigtAm,
+    },
     success_url: c.successUrl,
     cancel_url: c.cancelUrl,
   }
+}
+
+export type VolljaehrigkeitsPruefung =
+  | { ok: true; bestaetigtAm: string }
+  | { ok: false; error: 'adult_confirmation_required' }
+
+/**
+ * Kaeufe nur durch Volljaehrige: Der Client muss `adult_confirmed: true`
+ * (Pflicht-Checkbox "Ich bin volljaehrig") mitsenden. Alles andere (fehlend,
+ * "true" als String, 1 ...) wird abgelehnt. Der Zeitpunkt wird serverseitig
+ * gesetzt und als Nachweis in Stripe-Metadaten und Kaufbeleg gespeichert.
+ */
+export function pruefeVolljaehrigkeit(body: unknown, jetzt: Date = new Date()): VolljaehrigkeitsPruefung {
+  const b = (body && typeof body === 'object') ? body as Record<string, unknown> : {}
+  if (b.adult_confirmed !== true) return { ok: false, error: 'adult_confirmation_required' }
+  return { ok: true, bestaetigtAm: jetzt.toISOString() }
 }

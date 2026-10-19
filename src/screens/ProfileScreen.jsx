@@ -16,6 +16,7 @@ import ShareSheet from '../components/ShareSheet'
 import { webPushAvailable, ensureWebPush, disableWebPush } from '../lib/webPush'
 import { hasWiderrufbareKaeufe } from '../lib/widerruf'
 import { functionUrl, authFunctionHeaders } from '../lib/functions'
+import { resetErrorReportChoice } from '../lib/errorReports'
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation()
@@ -664,7 +665,7 @@ export default function ProfileScreen() {
             {t('widerruf.permanentLink')}
           </button>
 
-          <div className="flex gap-2 text-[11px] text-inkDim justify-center pt-1">
+          <div className="flex flex-wrap gap-2 text-[11px] text-inkDim justify-center pt-1">
             <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.impressum')}</a>
             <span>·</span>
             <a href="https://swingandsavor.at/datenschutz" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.datenschutz')}</a>
@@ -672,6 +673,8 @@ export default function ProfileScreen() {
             <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className="hover:text-inkMuted">{t('profile.agb')}</a>
             <span>·</span>
             <a href="mailto:hi@swingandsavor.at" className="hover:text-inkMuted">{t('profile.support')}</a>
+            <span>·</span>
+            <button type="button" onClick={resetErrorReportChoice} className="hover:text-inkMuted">{t('errorReports.settings')}</button>
           </div>
 
           {!showDeleteConfirm ? (

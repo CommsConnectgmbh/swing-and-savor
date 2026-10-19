@@ -58,7 +58,7 @@ Alles im einheitlichen Design, ohne Werbung, ohne Tracking jenseits dessen, was 
 DEMO ACCOUNT
 The reviewer account auto-seeds a rich, pre-populated environment on first login. After signing in you'll find:
 
-• A public tournament "🍃 Apple Review Demo Cup" with 4 players, a finished 18-hole singles match (full scorecard), an active 9-hole doubles match, comments and reactions across both matches.
+• A private tournament "🍃 Apple Review Demo Cup" (visible to the demo account) with 4 players, a finished 18-hole singles match (full scorecard), an active 9-hole doubles match, comments and reactions across both matches.
 • 3 accepted friendships with demo users (Lena Eagle, Sam Birdie, Tom Putter).
 • 2 active DM conversations (Reviewer ↔ Lena, Reviewer ↔ Sam) with 5 messages each — both sides have sent messages, so the chat clearly shows multiple users in the conversation.
 

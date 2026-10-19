@@ -72,7 +72,7 @@ function statBlock(ctx, x, y, label, value, opts = {}) {
  * stay free for the user's golf photo on Instagram.
  */
 export async function renderStoryOverlay({
-  playerName,        // e.g. "Tiger W."
+  playerName,        // e.g. "Max K."
   score,             // e.g. "-3" or "75"
   scoreLabel,        // e.g. "Score", "Net"
   birdies,           // number

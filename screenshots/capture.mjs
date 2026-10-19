@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Capture real app screenshots from a logged-in Tiger W. session.
+// Capture real app screenshots from a logged-in demo session (Max K.).
 // Usage: node screenshots/capture.mjs [--app-url=https://app.swingandsavor.at]
 //
 // Flow:

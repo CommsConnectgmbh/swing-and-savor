@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Newsletter abbestellen | Swing &amp; Savor</title>
+    <meta name="description" content="Swing &amp; Savor Newsletter abbestellen." />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0d271e" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="/fonts/fonts.css" as="style" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <link rel="stylesheet" href="/legal.css" />
+  </head>
+  <body class="legal">
+    <nav class="nav">
+      <a class="brand" href="/">
+        <img src="/logo.png" alt="" />
+        <span>Swing &amp; Savor</span>
+      </a>
+      <a class="cta" href="https://app.swingandsavor.at/">Zur App</a>
+    </nav>
+
+    <main class="legal-page">
+      <a class="back" href="/">← Zurück zur Startseite</a>
+      <h1>Newsletter abbestellen</h1>
+      <div id="state-form">
+        <p>Mit einem Klick meldest du dich vom Swing &amp; Savor Newsletter ab. Danach bekommst du keine Newsletter mehr von uns.</p>
+        <p><button id="btn" type="button" class="cta-button">Newsletter abbestellen</button></p>
+        <p class="muted" lang="en">Unsubscribe from the Swing &amp; Savor newsletter with one click.</p>
+      </div>
+      <p id="state-ok" hidden>Erledigt: Du bist abgemeldet und bekommst keine Newsletter mehr. <span class="muted" lang="en">Done, you are unsubscribed.</span></p>
+      <p id="state-err" hidden>Das hat leider nicht geklappt. Bitte schreib uns kurz an <a href="mailto:hi@swingandsavor.at?subject=Newsletter%20abbestellen">hi@swingandsavor.at</a>, wir tragen dich sofort aus.</p>
+      <p id="state-bad" hidden>Dieser Abmeldelink ist unvollständig. Bitte nutze den Link aus der E-Mail oder schreib an <a href="mailto:hi@swingandsavor.at?subject=Newsletter%20abbestellen">hi@swingandsavor.at</a>.</p>
+    </main>
+    <script>
+      (function () {
+        var SUPABASE_URL = 'https://rcqichlyllhwougopfkg.supabase.co';
+        var t = new URLSearchParams(location.search).get('t') || '';
+        var show = function (id) {
+          ['state-form', 'state-ok', 'state-err', 'state-bad'].forEach(function (x) {
+            document.getElementById(x).hidden = x !== id;
+          });
+        };
+        if (!/^[0-9a-f]{48}$/.test(t)) { show('state-bad'); return; }
+        var btn = document.getElementById('btn');
+        btn.addEventListener('click', function () {
+          btn.disabled = true;
+          fetch(SUPABASE_URL + '/functions/v1/subscribe-newsletter?unsubscribe=' + t, { method: 'POST' })
+            .then(function (r) { show(r.ok ? 'state-ok' : 'state-err'); })
+            .catch(function () { show('state-err'); });
+        });
+      })();
+    </script>
+
+    <footer class="legal-footer">
+      <div class="row">
+        <a href="/">Start</a>
+        <a href="/impressum">Impressum</a>
+        <a href="/datenschutz">Datenschutz</a>
+        <a href="/agb">AGB</a>
+        <a href="/widerruf">Widerruf</a>
+        <a href="/widerrufsbelehrung">Widerrufsbelehrung</a>
+        <a href="mailto:hi@swingandsavor.at">Support</a>
+      </div>
+      <div>&copy; <span id="y"></span> Comms Connect GmbH</div>
+      <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+    </footer>
+  </body>
+</html>

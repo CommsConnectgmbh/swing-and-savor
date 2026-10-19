@@ -11,7 +11,7 @@
 // `pro_entitlements` rows are activated — the gate (isPro) stays the same.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
-import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
+import { zahlungsCheckoutParams, pruefeVolljaehrigkeit } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -49,6 +49,9 @@ Deno.serve(async (req) => {
   const instantConsent = body.instant_execution_consent === true
   if (!PLANS[planKey]) return j({ error: 'unknown_plan' }, { status: 400 })
   if (!instantConsent) return j({ error: 'consent_required' }, { status: 400 })
+  // Kaeufe nur durch Volljaehrige (Pflicht-Checkbox, serverseitig erzwungen).
+  const volljaehrig = pruefeVolljaehrigkeit(body)
+  if (!volljaehrig.ok) return j({ error: volljaehrig.error }, { status: 400 })
 
   // Auth client (validates user via JWT)
   const supabaseUser = createClient(
@@ -94,6 +97,7 @@ Deno.serve(async (req) => {
     },
     successUrl: `${baseUrl}/range?pro=success`,
     cancelUrl:  `${baseUrl}/range?pro=cancel`,
+    volljaehrigBestaetigtAm: volljaehrig.bestaetigtAm,
   }))
 
   // Write pending ledger row. A payment reconciler (Stripe webhook or the same

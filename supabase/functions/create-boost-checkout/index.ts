@@ -2,7 +2,7 @@
 // Tiers: top (3 Tage 4,99€ · 7 Tage 9,99€), highlight (3 Tage 2,99€ · 7 Tage 4,99€), both (3 Tage 6,99€ · 7 Tage 12,99€)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
-import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
+import { zahlungsCheckoutParams, pruefeVolljaehrigkeit } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -56,6 +56,9 @@ Deno.serve(async (req) => {
   const instantConsent = body.instant_execution_consent === true
   if (!tournamentId)            return j({ error: 'tournament_required' }, { status: 400 })
   if (!instantConsent)         return j({ error: 'consent_required' }, { status: 400 })
+  // Kaeufe nur durch Volljaehrige (Pflicht-Checkbox, serverseitig erzwungen).
+  const volljaehrig = pruefeVolljaehrigkeit(body)
+  if (!volljaehrig.ok) return j({ error: volljaehrig.error }, { status: 400 })
   if (!TIERS[tier as keyof typeof TIERS]) return j({ error: 'unknown_tier' }, { status: 400 })
   const def = TIERS[tier as keyof typeof TIERS]
   if (!(duration in def.prices)) return j({ error: 'unknown_duration' }, { status: 400 })
@@ -101,6 +104,7 @@ Deno.serve(async (req) => {
     },
     successUrl: `${baseUrl}/cup?boost=success&cup=${encodeURIComponent(cup.invite_code)}`,
     cancelUrl:  `${baseUrl}/cup?boost=cancel`,
+    volljaehrigBestaetigtAm: volljaehrig.bestaetigtAm,
   }))
 
   await supabase.from('tournament_promotions').insert({

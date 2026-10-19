@@ -2,7 +2,7 @@
 // Auth-required: only the cup OWNER may upgrade.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
-import { zahlungsCheckoutParams } from '../_shared/checkout.ts'
+import { zahlungsCheckoutParams, pruefeVolljaehrigkeit } from '../_shared/checkout.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -43,6 +43,9 @@ Deno.serve(async (req) => {
   const instantConsent = body.instant_execution_consent === true
   if (!tournamentId)                  return j({ error: 'tournament_required' }, { status: 400 })
   if (!instantConsent)                return j({ error: 'consent_required' }, { status: 400 })
+  // Kaeufe nur durch Volljaehrige (Pflicht-Checkbox, serverseitig erzwungen).
+  const volljaehrig = pruefeVolljaehrigkeit(body)
+  if (!volljaehrig.ok) return j({ error: volljaehrig.error }, { status: 400 })
   if (!PACKAGES[packageType as keyof typeof PACKAGES]) return j({ error: 'unknown_package' }, { status: 400 })
 
   // Auth client (validates user via JWT)
@@ -87,6 +90,7 @@ Deno.serve(async (req) => {
     },
     successUrl: `${baseUrl}/cup?upgrade=success&cup=${encodeURIComponent(cup.invite_code)}`,
     cancelUrl:  `${baseUrl}/cup?upgrade=cancel`,
+    volljaehrigBestaetigtAm: volljaehrig.bestaetigtAm,
   }))
 
   // Write pending ledger row

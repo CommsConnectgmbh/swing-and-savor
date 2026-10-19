@@ -27,6 +27,7 @@ export default function RangeScreen() {
   const [probe, setProbe] = useState({ supported: false, reason: 'pending' })
   const [busy, setBusy] = useState(false)
   const [consent, setConsent] = useState(false)
+  const [adult, setAdult] = useState(false)
   const [err, setErr] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -51,6 +52,7 @@ export default function RangeScreen() {
   async function startCheckout() {
     if (!user?.id) { setErr(t('range.mustLogin', 'Please sign in first.')); return }
     if (!consent) { setErr(t('range.consentRequired', 'Please confirm to continue.')); return }
+    if (!adult) { setErr(t('purchase.adultRequired')); return }
     setErr(null); setBusy(true)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -63,11 +65,11 @@ export default function RangeScreen() {
           'Authorization': `Bearer ${jwt}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ plan_key: 'launch_monitor_lifetime', instant_execution_consent: true }),
+        body: JSON.stringify({ plan_key: 'launch_monitor_lifetime', instant_execution_consent: true, adult_confirmed: true }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
-        setErr(j.error || t('range.checkoutFailed', 'Checkout failed. Please try again later.'))
+        setErr(j.error === 'adult_confirmation_required' ? t('purchase.adultRequired') : (j.error || t('range.checkoutFailed', 'Checkout failed. Please try again later.')))
         return
       }
       window.location.href = j.checkout_url
@@ -127,9 +129,13 @@ export default function RangeScreen() {
               {t('range.consent', 'I expressly request immediate access and acknowledge that my right of withdrawal lapses once the feature is unlocked.')}
             </span>
           </label>
+          <label className="flex items-start gap-2 text-xs opacity-80 mb-4">
+            <input type="checkbox" checked={adult} onChange={e => setAdult(e.target.checked)} className="mt-0.5" />
+            <span>{t('purchase.adultConfirm')}</span>
+          </label>
           <button
             onClick={startCheckout}
-            disabled={busy || !consent}
+            disabled={busy || !consent || !adult}
             className="w-full rounded-xl bg-emerald-500 disabled:opacity-50 text-emerald-950 font-semibold py-3"
           >
             {busy ? t('range.opening', 'Opening…') : t('range.unlock', { price: PRICE_LABEL, defaultValue: 'Unlock — {{price}}' })}

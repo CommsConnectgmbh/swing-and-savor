@@ -20,6 +20,8 @@ export default function BoostSheet({ cup, onClose }) {
   // §356 Abs. 5 BGB: ausdrückliche Zustimmung zur sofortigen Ausführung +
   // Kenntnis vom Erlöschen des Widerrufsrechts. Pflicht vor Zahlung.
   const [instantConsent, setInstantConsent] = useState(false)
+  // Kaeufe nur durch Volljaehrige (serverseitig erneut geprueft).
+  const [adultConfirmed, setAdultConfirmed] = useState(false)
   const tierLabel = (id) => t(`sheets.boost.tier.${id}Label`)
   const tierDesc  = (id) => t(`sheets.boost.tier.${id}Desc`)
   const lang = i18n.resolvedLanguage || 'de'
@@ -31,6 +33,7 @@ export default function BoostSheet({ cup, onClose }) {
 
   async function startCheckout() {
     if (!instantConsent) { setErr(t('sheets.boost.consentRequired')); return }
+    if (!adultConfirmed) { setErr(t('purchase.adultRequired')); return }
     setBusy(true); setErr(null)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -39,11 +42,11 @@ export default function BoostSheet({ cup, onClose }) {
       const res = await fetch(functionUrl('create-boost-checkout'), {
         method: 'POST',
         headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true }),
+        body: JSON.stringify({ tournament_id: cup.id, tier, duration_days: duration, instant_execution_consent: true, adult_confirmed: true }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
-        setErr(j.error || 'checkout_failed'); return
+        setErr(j.error === 'adult_confirmation_required' ? t('purchase.adultRequired') : (j.error || 'checkout_failed')); return
       }
       window.location.href = j.checkout_url
     } catch (e) {
@@ -130,11 +133,23 @@ export default function BoostSheet({ cup, onClose }) {
             </span>
           </label>
 
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={adultConfirmed}
+              onChange={(e) => { setAdultConfirmed(e.target.checked); if (e.target.checked) setErr(null) }}
+              className="mt-0.5 w-4 h-4 shrink-0 accent-accent"
+            />
+            <span className="text-[11px] leading-relaxed text-inkMuted">
+              {t('purchase.adultConfirm')}
+            </span>
+          </label>
+
           {err && <p className="text-xs text-danger">{err}</p>}
 
           <button
             onClick={startCheckout}
-            disabled={busy || !amount || !instantConsent}
+            disabled={busy || !amount || !instantConsent || !adultConfirmed}
             className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40"
           >
             {busy

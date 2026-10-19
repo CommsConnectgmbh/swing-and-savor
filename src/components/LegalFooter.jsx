@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { resetErrorReportChoice } from '../lib/errorReports'
 
 // Diskreter, dauerhafter Zugang zu Impressum/Datenschutz/AGB.
 // Die Rechtstexte liegen auf der Marketing-Site (swingandsavor.at),
@@ -8,7 +9,7 @@ export default function LegalFooter({ className = '' }) {
   const { t } = useTranslation()
   const link = 'text-[11px] text-inkDim hover:text-inkMuted underline underline-offset-2 transition-colors'
   return (
-    <footer className={`flex items-center justify-center gap-2 text-inkDim ${className}`}>
+    <footer className={`flex flex-wrap items-center justify-center gap-2 text-inkDim ${className}`}>
       <a href="https://swingandsavor.at/impressum" target="_blank" rel="noopener" className={link}>
         {t('profile.impressum')}
       </a>
@@ -20,6 +21,10 @@ export default function LegalFooter({ className = '' }) {
       <a href="https://swingandsavor.at/agb" target="_blank" rel="noopener" className={link}>
         {t('profile.agb')}
       </a>
+      <span aria-hidden="true">·</span>
+      <button type="button" onClick={resetErrorReportChoice} className={link}>
+        {t('errorReports.settings')}
+      </button>
     </footer>
   )
 }

@@ -1,8 +1,10 @@
-// Unveraenderte Kopie der live deployten Funktion (Supabase, Version 9, Stand 2026-10-18),
-// nur zur Versionierung ins Repo geholt. verify_jwt=false. Offen: Abmelde-Endpoint und
-// Abmeldelink fehlen noch, bevor der erste Newsletter verschickt wird.
+// Newsletter-Anmeldung mit Double-Opt-In und Abmeldung. verify_jwt=false.
+// Basis: live deployte Version 9 (Stand 2026-10-18); ergaenzt um die Abmeldung
+// (?unsubscribe=TOKEN: GET -> Abmeldeseite, POST -> abmelden, One-Click nach RFC 8058).
+// Newsletter-Mails nur ueber _shared/newsletter.ts newsletterNachricht() bauen.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { abmeldeAktion } from "../_shared/newsletter.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -15,7 +17,7 @@ const SITE = "https://swingandsavor.at";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 function randToken() {
@@ -51,6 +53,25 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   const url = new URL(req.url);
+
+  // Abmeldung: ohne Login, neutrale Antwort (keine Auskunft, ob ein Abo existierte).
+  const abmeldung = abmeldeAktion(req.method, url);
+  if (abmeldung) {
+    if (abmeldung.art === "seite") return Response.redirect(abmeldung.ziel, 302);
+    if (abmeldung.art === "abmelden") {
+      const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { error } = await admin
+        .from("newsletter_subscribers")
+        .update({ status: "unsubscribed", unsubscribed_at: new Date().toISOString() })
+        .eq("confirm_token", abmeldung.token)
+        .neq("status", "unsubscribed");
+      if (error) {
+        console.error("[subscribe-newsletter] unsubscribe failed", error.message);
+        return new Response(JSON.stringify({ error: "unsubscribe_failed" }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+    }
+    return new Response(JSON.stringify({ ok: true }), { headers: { ...cors, "Content-Type": "application/json" } });
+  }
 
   // Confirm endpoint: GET /subscribe-newsletter?confirm=TOKEN
   if (req.method === "GET" && url.searchParams.get("confirm")) {

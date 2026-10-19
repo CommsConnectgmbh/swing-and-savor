@@ -157,7 +157,7 @@
     "welcome": "Willkommen im Clubhouse",
     "subtitle": "Richte dein Golf-Profil ein und tritt deinem ersten Invitational bei.",
     "displayName": "Dein Name",
-    "displayNamePlaceholder": "Tiger W.",
+    "displayNamePlaceholder": "Max K.",
     "handle": "Handle",
     "handlePlaceholder": "tiger",
     "handleHint": "Buchstaben, Zahlen, Unterstrich. 3–20 Zeichen.",
@@ -436,5 +436,17 @@
     "consent": "Die Videos kommen von YouTube. Mit „Videos laden“ willigst du ein, dass dabei Daten wie deine IP-Adresse an Google/YouTube übertragen werden, auch in die USA.",
     "privacyLink": "Datenschutzerklärung",
     "loadVideos": "Videos laden"
+  },
+  "errorReports": {
+    "title": "Fehlerberichte",
+    "text": "Dürfen wir bei Abstürzen einen technischen Fehlerbericht (Fehlermeldung, Seite, Browser- und Gerätetyp, ohne Namen oder E-Mail) an unseren Dienstleister Sentry (Server in der EU) senden? Du kannst das jederzeit unten unter „Fehlerberichte“ ändern.",
+    "more": "Mehr dazu",
+    "accept": "Erlauben",
+    "decline": "Ablehnen",
+    "settings": "Fehlerberichte"
+  },
+  "purchase": {
+    "adultConfirm": "Ich bin volljährig (mindestens 18 Jahre alt).",
+    "adultRequired": "Käufe sind nur für Volljährige möglich. Bitte bestätige dein Alter."
   }
 }

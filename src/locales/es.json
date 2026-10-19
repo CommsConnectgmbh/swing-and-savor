@@ -59,7 +59,7 @@
     "welcome": "Bienvenido a Swing & Savor",
     "subtitle": "Configura tu perfil para empezar a jugar.",
     "displayName": "Tu nombre",
-    "displayNamePlaceholder": "Tiger W.",
+    "displayNamePlaceholder": "Max K.",
     "handle": "Usuario",
     "handlePlaceholder": "tiger",
     "handleHint": "Letras, números, guion bajo. 3–20 caracteres.",
@@ -310,5 +310,17 @@
     "consent": "Los vídeos vienen de YouTube. Al pulsar «Cargar vídeos» aceptas que se envíen datos como tu dirección IP a Google/YouTube, también a EE. UU.",
     "privacyLink": "Política de privacidad",
     "loadVideos": "Cargar vídeos"
+  },
+  "errorReports": {
+    "title": "Informes de errores",
+    "text": "¿Podemos enviar un informe técnico de errores (mensaje de error, página, tipo de navegador y dispositivo, sin nombre ni email) a nuestro proveedor Sentry (servidores en la UE) cuando algo falle? Puedes cambiarlo en cualquier momento en «Informes de errores» abajo.",
+    "more": "Más información",
+    "accept": "Permitir",
+    "decline": "Rechazar",
+    "settings": "Informes de errores"
+  },
+  "purchase": {
+    "adultConfirm": "Soy mayor de edad (tengo al menos 18 años).",
+    "adultRequired": "Las compras solo están disponibles para mayores de edad. Confirma tu edad."
   }
 }

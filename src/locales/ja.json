@@ -59,7 +59,7 @@
     "welcome": "Swing & Savor へようこそ",
     "subtitle": "プレーを始めるにはプロフィールを設定してください。",
     "displayName": "あなたの名前",
-    "displayNamePlaceholder": "Tiger W.",
+    "displayNamePlaceholder": "Max K.",
     "handle": "ハンドル",
     "handlePlaceholder": "tiger",
     "handleHint": "英数字とアンダースコア。3〜20文字。",
@@ -310,5 +310,17 @@
     "consent": "動画は YouTube から配信されます。「動画を読み込む」をタップすると、IP アドレスなどのデータが Google/YouTube（米国を含む）に送信されることに同意したものとみなされます。",
     "privacyLink": "プライバシーポリシー",
     "loadVideos": "動画を読み込む"
+  },
+  "errorReports": {
+    "title": "エラーレポート",
+    "text": "不具合が起きたとき、技術的なエラーレポート（エラーメッセージ、ページ、ブラウザ・端末の種類。氏名やメールは含みません）を委託先 Sentry（EU 内サーバー）に送信してもよろしいですか？下の「エラーレポート」からいつでも変更できます。",
+    "more": "詳細",
+    "accept": "許可する",
+    "decline": "拒否する",
+    "settings": "エラーレポート"
+  },
+  "purchase": {
+    "adultConfirm": "私は成年（18歳以上）です。",
+    "adultRequired": "購入は成年の方のみ可能です。年齢を確認してください。"
   }
 }

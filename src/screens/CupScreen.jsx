@@ -133,7 +133,7 @@ export default function CupScreen() {
       const res = await fetch(functionUrl('create-premium-checkout'), {
         method: 'POST',
         headers: { ...authFunctionHeaders(jwt), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium', instant_execution_consent: true }),
+        body: JSON.stringify({ tournament_id: cup.id, package_type: 'premium', instant_execution_consent: true, adult_confirmed: true }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok || !j.checkout_url) {
@@ -747,6 +747,7 @@ export default function CupScreen() {
 function PremiumConsentModal({ cup, onCancel, onConfirm }) {
   const { t } = useTranslation()
   const [checked, setChecked] = useState(false)
+  const [adult, setAdult] = useState(false)
   return (
     <div className="fixed inset-0 z-50 bg-black/65 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
@@ -760,12 +761,17 @@ function PremiumConsentModal({ cup, onCancel, onConfirm }) {
             className="mt-0.5 w-4 h-4 shrink-0 accent-accent" />
           <span className="text-[11px] leading-relaxed text-inkMuted">{t('sheets.boost.instantConsent')}</span>
         </label>
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)}
+            className="mt-0.5 w-4 h-4 shrink-0 accent-accent" />
+          <span className="text-[11px] leading-relaxed text-inkMuted">{t('purchase.adultConfirm')}</span>
+        </label>
         <div className="flex gap-2">
           <button type="button" onClick={onCancel}
             className="flex-1 py-3 rounded-xl text-sm font-bold bg-bg text-inkMuted border border-line active:scale-[0.98] transition-transform">
             {t('common.cancel', 'Abbrechen')}
           </button>
-          <button type="button" onClick={onConfirm} disabled={!checked}
+          <button type="button" onClick={onConfirm} disabled={!checked || !adult}
             className="flex-1 py-3 rounded-xl text-sm font-bold bg-accent text-brandDark active:scale-[0.98] transition-transform disabled:opacity-40">
             {t('sheets.premium.cta', 'Premium · 49 €')}
           </button>

@@ -157,7 +157,7 @@
     "welcome": "Welcome to the Clubhouse",
     "subtitle": "Set up your golf identity and join your first Invitational.",
     "displayName": "Your name",
-    "displayNamePlaceholder": "Tiger W.",
+    "displayNamePlaceholder": "Max K.",
     "handle": "Handle",
     "handlePlaceholder": "tiger",
     "handleHint": "Letters, numbers, underscore. 3–20 characters.",
@@ -436,5 +436,17 @@
     "consent": "These videos come from YouTube. By tapping “Load videos” you agree that data such as your IP address is sent to Google/YouTube, including to the USA.",
     "privacyLink": "Privacy policy",
     "loadVideos": "Load videos"
+  },
+  "errorReports": {
+    "title": "Error reports",
+    "text": "May we send a technical error report (error message, page, browser and device type, no name or email) to our provider Sentry (servers in the EU) when something crashes? You can change this at any time via “Error reports” below.",
+    "more": "Learn more",
+    "accept": "Allow",
+    "decline": "Decline",
+    "settings": "Error reports"
+  },
+  "purchase": {
+    "adultConfirm": "I am of legal age (at least 18 years old).",
+    "adultRequired": "Purchases are only available to adults. Please confirm your age."
   }
 }
