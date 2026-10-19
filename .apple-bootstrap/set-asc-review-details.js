@@ -1,6 +1,6 @@
 // Setzt App Review Details (Demo-Account, Notes, Contact) für Swing & Savor.
 // Nutzt den Reviewer-Bypass aus supabase/functions/reviewer-bypass:
-//   - apple-review@swingandsavor.at + Code 87654321
+//   - apple-review@swingandsavor.at + Code aus dem Tresor (REVIEWER_BYPASS_CODE_SWINGSAVOR)
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -41,7 +41,8 @@ function http(method, p, body) {
 }
 
 const DEMO_EMAIL    = 'apple-review@swingandsavor.at';
-const DEMO_PASSWORD = '87654321';
+const DEMO_PASSWORD = process.env.REVIEWER_BYPASS_CODE;
+if (!/^[0-9]{8}$/.test(DEMO_PASSWORD || '')) throw new Error('REVIEWER_BYPASS_CODE not set (Tresor: REVIEWER_BYPASS_CODE_SWINGSAVOR)');
 
 const NOTES = `Swing & Savor ist ein nativer Capacitor-Container für die unter https://app.swingandsavor.at gehostete Progressive Web App.
 

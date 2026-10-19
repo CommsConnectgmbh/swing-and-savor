@@ -152,7 +152,7 @@ Thanks for the detailed review. Both issues have been addressed in build 1.0 (2)
 
 Reviewer credentials are unchanged:
   Email: apple-review@swingandsavor.at
-  Code:  87654321
+  Code:  unchanged, see App Review Information
 
 Thank you for the time spent re-reviewing.
 Best,

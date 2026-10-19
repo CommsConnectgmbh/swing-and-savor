@@ -25,9 +25,9 @@ Nach Save: **oben rechts auf „Veröffentlichen" klicken** — wenn das vergess
 App-Information → App Review Information:
 - Sign-in required: **Yes**
 - User name: `apple-review@swingandsavor.at`
-- Password: `87654321`
+- Password: Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`)
 - Notes:
-  > Tap "Anmelden", gib die obige E-Mail ein, dann den 8-stelligen Code 87654321 als OTP. Das ist ein Bypass-Account ohne echte E-Mail (Edge Function `reviewer-bypass`). Anschließend siehst du Home-Feed, Matches, Cup-Anlegen, Friends, Messaging und Rangliste.
+  > Tap "Anmelden", gib die obige E-Mail ein, dann den 8-stelligen Code <Code im Tresor: REVIEWER_BYPASS_CODE_SWINGSAVOR> als OTP. Das ist ein Bypass-Account ohne echte E-Mail (Edge Function `reviewer-bypass`). Anschließend siehst du Home-Feed, Matches, Cup-Anlegen, Friends, Messaging und Rangliste.
 
 Der Bypass akzeptiert genau diese E-Mail-Adresse + diesen Code, hardcodiert in der Edge Function `reviewer-bypass` (Supabase Project `rcqichlyllhwougopfkg`).
 
@@ -93,4 +93,4 @@ Die GH-Actions-Pipeline `android-release.yml` ist live, lädt automatisch zu Pla
 4. Ersten AAB manuell hochladen (CI braucht den App-Record als Voraussetzung).
 5. Sobald App-Record existiert: CI deployed bei jedem `android-vX.Y.Z`-Tag auto.
 
-Reviewer-Bypass funktioniert identisch über `play-review@swingandsavor.at` + Code `87654321` (Reference: `reference_obacht_play_reviewer` für das Pattern).
+Reviewer-Bypass funktioniert identisch über `play-review@swingandsavor.at` + Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`) (Reference: `reference_obacht_play_reviewer` für das Pattern).

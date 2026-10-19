@@ -1,156 +1,67 @@
-// reviewer-bypass — Apple + Google Reviewer Login ohne Mailbox-Zugriff.
+// reviewer-bypass — Apple + Google reviewer login without mailbox access.
 //
-// Sicherheit basiert auf zwei Faktoren:
-//   1. Zugelassene Email — nur apple-review@swingandsavor.at oder
-//      play-review@swingandsavor.at wird akzeptiert.
-//   2. Ein 8-stelliger Code aus dem Env-Secret REVIEWER_BYPASS_CODE.
-//      Der Code steht NICHT im Code. Ist das Secret nicht gesetzt, ist der
-//      Reviewer-Login komplett deaktiviert (503, fail-closed) — es passiert
-//      dann weder Service-Role-Init, generateLink noch Seeding.
-// Jeder andere Zugriffsversuch endet in 403.
+// The request handling (fail-closed secret check, durable rate limit, email
+// allowlist, constant-time code comparison, generic errors) lives in
+// ../_shared/reviewerBypass.ts and is covered by reviewerBypass.test.ts.
 //
-// Zusätzlich: pro Email ein simples In-Memory-Rate-Limit gegen Brute-Force.
+// The 8-digit code exists only in the REVIEWER_BYPASS_CODE function secret
+// (the operator copy is kept in the password vault). It is never stored in
+// the repository. Without the secret the function rejects every request.
 //
-// Nach erfolgreicher Auth wird der Reviewer-Account idempotent mit Demo-
-// Content geseedet (Profile + Friends + Turnier + Matches + DM-Konversationen
-// mit anderen Demo-Usern), damit Apple alle Features inkl. Safety-Mechanismen
-// (Block + Report) testen kann. Guideline 1.2 / 2.1(a) Re-Submit 2026-05-27.
+// After a successful login the reviewer account is idempotently seeded with
+// demo content (profile, friends, tournament, matches, DM conversations with
+// other demo users) so App Review can exercise all features including the
+// safety mechanisms (block + report). Guideline 1.2 / 2.1(a).
 //
-// verify_jwt:false damit Reviewer ohne JWT zugreifen können.
+// verify_jwt is off because reviewers call it before they have a session.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.4"
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-}
-
-// Nur diese Email-Adressen dürfen den Reviewer-Login überhaupt versuchen.
-// Der zugehörige Code kommt ausschließlich aus dem Env-Secret.
-const ALLOWED_REVIEWER_EMAILS = new Set<string>([
-  "apple-review@swingandsavor.at",
-  "play-review@swingandsavor.at",
-])
-
-// ── Rate-Limit (best-effort) ──────────────────────────────────────────
-// In-Memory pro Instanz: Bei mehreren/rezyklierten Function-Instanzen ist das
-// nicht global konsistent, bremst aber ungebremsten Brute-Force pro Instanz
-// wirksam. Für die zwei bekannten Reviewer-Accounts völlig ausreichend.
-const RATE_LIMIT_MAX_ATTEMPTS = 5
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000 // 5 Minuten
-const attempts = new Map<string, { count: number; resetAt: number }>()
-
-// Registriert einen Versuch und meldet, ob das Limit überschritten ist.
-function rateLimited(key: string): boolean {
-  const now = Date.now()
-  const entry = attempts.get(key)
-  if (!entry || now >= entry.resetAt) {
-    attempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
-    return false
-  }
-  entry.count += 1
-  return entry.count > RATE_LIMIT_MAX_ATTEMPTS
-}
-
-// Konstante-Zeit-Vergleich zweier Strings, um Timing-Leaks beim Code-Vergleich
-// zu vermeiden. Länge fließt bewusst ein, aber ohne Early-Return im Loop.
-function timingSafeEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder()
-  const ba = enc.encode(a)
-  const bb = enc.encode(b)
-  let diff = ba.length ^ bb.length
-  const len = Math.max(ba.length, bb.length)
-  for (let i = 0; i < len; i++) {
-    diff |= (ba[i] ?? 0) ^ (bb[i] ?? 0)
-  }
-  return diff === 0
-}
+import { handleReviewerBypass } from "../_shared/reviewerBypass.ts"
 
 const DEMO_TOURNAMENT_NAME = "🍃 Apple Review Demo Cup"
 
-// Demo-User die Chat-Partner werden (echte auth.users + profiles)
+// Demo users who become chat partners (real auth.users + profiles)
 const CHAT_PARTNERS = [
   { email: "lena.eagle@demo.swingandsavor.at",   handle: "lena_eagle",  display: "Lena Eagle",  hcp: 11.8, club: "GC München-Riedhof" },
   { email: "sam.birdie@demo.swingandsavor.at",   handle: "sam_birdie",  display: "Sam Birdie",  hcp: 16.2, club: "Royal Demo GC"      },
   { email: "tom.putter@demo.swingandsavor.at",   handle: "tom_putter",  display: "Tom Putter",  hcp: 19.0, club: "Beuerberg"          },
 ]
 
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
-      status: 405, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
-
-  // Fail-closed: ohne konfiguriertes Secret ist der Reviewer-Login komplett aus.
-  // Wird VOR jeglicher Service-Role-/generateLink-/Seeding-Logik geprüft.
-  const expectedCode = Deno.env.get("REVIEWER_BYPASS_CODE")
-  if (!expectedCode) {
-    return new Response(JSON.stringify({ error: "reviewer_login_disabled" }), {
-      status: 503, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
-
-  let body: { email?: string; code?: string } | null = null
-  try { body = await req.json() } catch { /* noop */ }
-  const email = (body?.email ?? "").toLowerCase().trim()
-  const code  = (body?.code  ?? "").trim()
-
-  // Rate-Limit pro Email, bevor der Code überhaupt geprüft wird.
-  if (email && rateLimited(email)) {
-    return new Response(JSON.stringify({ error: "too_many_attempts" }), {
-      status: 429, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
-
-  const emailAllowed = ALLOWED_REVIEWER_EMAILS.has(email)
-  const codeOk = timingSafeEqual(code, expectedCode)
-  if (!email || !code || !emailAllowed || !codeOk) {
-    return new Response(JSON.stringify({ error: "invalid_credentials" }), {
-      status: 403, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!
-  const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  if (!supabaseUrl || !serviceKey) {
-    return new Response(JSON.stringify({ error: "server_misconfigured" }), {
-      status: 500, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
-
-  const admin = createClient(supabaseUrl, serviceKey, {
+function adminClient(): SupabaseClient {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")
+  const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+  if (!supabaseUrl || !serviceKey) throw new Error("server_misconfigured")
+  return createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
+}
 
-  const { data, error } = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-  })
-  if (error || !data?.properties?.hashed_token || !data?.user?.id) {
-    return new Response(JSON.stringify({ error: error?.message ?? "no_link" }), {
-      status: 500, headers: { ...CORS, "Content-Type": "application/json" },
-    })
-  }
+Deno.serve((req: Request) => handleReviewerBypass(req, {
+  getExpectedCode: () => Deno.env.get("REVIEWER_BYPASS_CODE"),
 
-  let seeded = false
-  try {
-    seeded = await ensureDemoContent(admin, data.user.id, email)
-  } catch (e) {
-    console.error("[reviewer-bypass] seed failed", e)
-  }
+  // Durable rate limit in Postgres (migration 041). Throws on any error so the
+  // handler fails closed.
+  async registerAttempt(keys: string[]): Promise<boolean> {
+    const { data, error } = await adminClient().rpc("reviewer_bypass_register_attempt", { p_keys: keys })
+    if (error || typeof data !== "boolean") throw new Error("rate_limit_unavailable")
+    return data
+  },
 
-  return new Response(JSON.stringify({
-    email,
-    token_hash: data.properties.hashed_token,
-    seeded,
-  }), {
-    status: 200, headers: { ...CORS, "Content-Type": "application/json" },
-  })
-})
+  async issueLogin(email: string) {
+    const admin = adminClient()
+    const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email })
+    if (error || !data?.properties?.hashed_token || !data?.user?.id) throw new Error("no_link")
+
+    let seeded = false
+    try {
+      seeded = await ensureDemoContent(admin, data.user.id, email)
+    } catch (e) {
+      console.error("[reviewer-bypass] seed failed", e instanceof Error ? e.message : "unknown")
+    }
+    return { token_hash: data.properties.hashed_token, seeded }
+  },
+}))
 
 // Idempotenter Seed.
 async function ensureDemoContent(
