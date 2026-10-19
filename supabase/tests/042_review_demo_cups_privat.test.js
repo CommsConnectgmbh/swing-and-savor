@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Spielt Migration 041 gegen ein echtes Postgres (PGlite) mit minimalen Tabellen ein:
+// Spielt Migration 042 gegen ein echtes Postgres (PGlite) mit minimalen Tabellen ein:
 // Demo-Turniere der Review-Konten werden privat, Profigolfer-Namen fiktiv, fremde Daten
 // bleiben unberuehrt, bei unerwartetem Zustand bricht die Migration ohne Aenderung ab.
 import { describe, it, expect } from 'vitest'
@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
 
 const dir = dirname(fileURLToPath(import.meta.url))
-const MIG = readFileSync(join(dir, '..', 'migrations', '041_review_demo_cups_privat.sql'), 'utf8')
+const MIG = readFileSync(join(dir, '..', 'migrations', '042_review_demo_cups_privat.sql'), 'utf8')
 
 const APPLE = '3db4c0fd-28bf-4c60-b680-7c9056e49e4b'
 const PLAY = 'c93c2b02-95f0-4cb3-9b76-4d9df0a6bd46'
@@ -50,7 +50,7 @@ async function db() {
 }
 const rows = async (pg, q) => (await pg.query(q)).rows
 
-describe('Migration 041: Review-Demo-Cups privat, fiktive Namen', { timeout: 30000 }, () => {
+describe('Migration 042: Review-Demo-Cups privat, fiktive Namen', { timeout: 30000 }, () => {
   it('stellt genau die drei Demo-Turniere privat und laesst fremde unberuehrt', async () => {
     const pg = await db()
     await pg.exec(MIG)
