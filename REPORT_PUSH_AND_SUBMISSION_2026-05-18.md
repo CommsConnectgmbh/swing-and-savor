@@ -37,7 +37,7 @@ Ehrliche Aufteilung: zwei der drei Sachen autonom durchgezogen, der dritte ist a
 | Promotional Text (DE) | leer/alt | „Cups mit Freunden, Live-Scoring auf jedem Loch, Flight-Matches mit Faktoren, DMs und globale Rangliste. Schnell, intuitiv, ohne Schnickschnack." |
 | Support-URL | – | `https://swingandsavor.at/impressum` |
 | Marketing-URL | – | `https://swingandsavor.at` |
-| Reviewer Demo-Account | – | `apple-review@swingandsavor.at` / `87654321` |
+| Reviewer Demo-Account | – | `apple-review@swingandsavor.at` / Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`) |
 | Reviewer Notes | – | Bypass-Erklärung mit Edge-Function-Hinweis |
 | Reviewer Contact | – | rainer.roloff@comms-connect.de / +498945221556 |
 

@@ -51,8 +51,10 @@ async function generateOtp(serviceKey) {
 }
 
 // Use the reviewer-bypass flow that the live App supports natively.
-// Email + code are hardcoded in supabase/functions/reviewer-bypass/index.ts.
-const REVIEWER_CODE = '87654321'
+// The code is not in the repo: pass it via REVIEWER_BYPASS_CODE, e.g.
+// roloff-secrets run --map REVIEWER_BYPASS_CODE=REVIEWER_BYPASS_CODE_SWINGSAVOR -- node screenshots/capture.mjs
+const REVIEWER_CODE = process.env.REVIEWER_BYPASS_CODE
+if (!/^[0-9]{8}$/.test(REVIEWER_CODE ?? '')) throw new Error('REVIEWER_BYPASS_CODE not set')
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true })

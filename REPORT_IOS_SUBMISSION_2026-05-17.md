@@ -54,7 +54,7 @@
 
 ### Reviewer-Bypass
 - Supabase Edge Function `reviewer-bypass` live (verify_jwt=false)
-- Credentials: `apple-review@swingandsavor.at` + Code `87654321`
+- Credentials: `apple-review@swingandsavor.at` + Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`)
 - Smoke-Test: `curl POST` → 200 mit Redirect-Link OK
 - Frontend-Hook in `src/screens/SignInScreen.jsx` schon implementiert
 - App Store Review Details mit Demo-Account gesetzt + ausführliche Notes für Reviewer
