@@ -69,7 +69,7 @@ Rainer hatte zwar manuell ein "Spring Cup 2026"-Turnier angelegt — aber das wa
 ### Smoke-Test Resultat
 
 ```bash
-$ curl -X POST .../reviewer-bypass -d '{"email":"apple-review@swingandsavor.at","code":"87654321"}'
+$ curl -X POST .../reviewer-bypass -d '{"email":"apple-review@swingandsavor.at","code":"<Code im Tresor>"}'
 {"email":"apple-review@swingandsavor.at","token_hash":"03f2ea77…","seeded":true}
 
 $ # Re-run → idempotent
@@ -91,8 +91,8 @@ In *App Store Connect → Swing & Savor → 1.0 → App Review Information*:
 | Feld | Wert |
 |---|---|
 | **Demo Account Username** | `apple-review@swingandsavor.at` |
-| **Demo Account Password** | `87654321` |
-| **Notes** | "Login via Code: tap 'Senden' on the email screen, then enter the 8-digit code '87654321' on the next screen. The account has a pre-populated public tournament ('🍃 Apple Review Demo Cup') with finished and active matches, scorecards, hole-by-hole scoring, comments and reactions. Camera/photo access prompts appear when tapping 'Foto scannen' on the scorecard or '+ Foto' on a match — both are now safely permission-gated (NSCameraUsageDescription added in build 1.0(3))." |
+| **Demo Account Password** | Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`) |
+| **Notes** | "Login via Code: tap 'Senden' on the email screen, then enter the 8-digit code <Code im Tresor: REVIEWER_BYPASS_CODE_SWINGSAVOR> on the next screen. The account has a pre-populated public tournament ('🍃 Apple Review Demo Cup') with finished and active matches, scorecards, hole-by-hole scoring, comments and reactions. Camera/photo access prompts appear when tapping 'Foto scannen' on the scorecard or '+ Foto' on a match — both are now safely permission-gated (NSCameraUsageDescription added in build 1.0(3))." |
 
 ---
 
@@ -181,7 +181,7 @@ Sobald Build 1.0 (3) in ASC durch's Processing ist (~10–15 min):
 
 1. ASC → Swing & Savor → 1.0 → Submission `fdb3b1cd` öffnen
 2. Im "iOS-App"-Element den abgelehnten Build (1.0/2) entfernen und Build **1.0 (3)** auswählen
-3. App Review Information aktualisieren (siehe oben: `apple-review@swingandsavor.at` / `87654321` + Notes)
+3. App Review Information aktualisieren (siehe oben: `apple-review@swingandsavor.at` / Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`) + Notes)
 4. **Zur Prüfung übermitteln**
 
 Optional vorher noch: TestFlight selbst installieren und testen, dass das Tappen auf "Foto scannen" / "+ Foto" jetzt sauber den iOS-Permission-Dialog zeigt statt zu crashen.

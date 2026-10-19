@@ -71,7 +71,7 @@ Ehrlich im Footer dass eigene Live-Daten Datenlizenz brauchen — Tour bleibt ei
 `docs/iOS_SUBMISSION_CHECKLIST.md` — konkrete Click-Through-Schritte was Rainer in ASC manuell tun muss:
 
 1. App Privacy ausfüllen + **„Veröffentlichen"** klicken (oben rechts, sonst APP_DATA_USAGES_REQUIRED)
-2. Reviewer-Credentials hinterlegen (`apple-review@swingandsavor.at` + Code `87654321`, Bypass-Function deployed)
+2. Reviewer-Credentials hinterlegen (`apple-review@swingandsavor.at` + Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`), Bypass-Function deployed)
 3. Promotional Text + Description + Keywords (alles DE-Copy fertig formuliert)
 4. Screenshots (Liste der 6 Screens, iPhone 6.7" 1290×2796)
 5. Build 1.0/1 aus TestFlight wählen

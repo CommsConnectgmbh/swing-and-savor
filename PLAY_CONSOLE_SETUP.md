@@ -6,7 +6,7 @@ Vorbedingung erledigt:
 - ✅ Bundle `de.commsconnect.swingandsavor` in `native/android/app/build.gradle:applicationId`
 - ✅ `SWINGSAVOR_KEYSTORE_*` Secrets im Repo (siehe `project_swing_and_savor.md` Status 2026-05-17)
 - ✅ `SWINGSAVOR_PLAY_SERVICE_ACCOUNT_JSON` Secret im Repo
-- ✅ Reviewer-Bypass live (`play-review@swingandsavor.at` + Code `87654321`)
+- ✅ Reviewer-Bypass live (`play-review@swingandsavor.at` + Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`))
 
 ## Was zu tun ist
 
@@ -33,7 +33,7 @@ Play Console → **Alle Apps → App erstellen**:
 
 ### 3. Pflicht-Formulare ausfüllen
 - **App-Inhalt → Datenschutzerklärung:** `https://swingandsavor.at/datenschutz`
-- **App-Zugriff:** „Manche Funktionen erfordern Login — Test-Account: `play-review@swingandsavor.at` + Code `87654321` (8-stelliger OTP-Bypass)"
+- **App-Zugriff:** „Manche Funktionen erfordern Login — Test-Account: `play-review@swingandsavor.at` + Code im Tresor (`REVIEWER_BYPASS_CODE_SWINGSAVOR`) (8-stelliger OTP-Bypass)"
 - **Werbeanzeigen:** Nein
 - **Inhalts-Rating:** Sport/Lifestyle, keine Glücksspiel-Elemente (DealBuddy-Crosslink ist nur Deep-Link, kein In-App-Gambling)
 - **Zielgruppe:** Ab 18

@@ -29,7 +29,7 @@ Origin (`app.swingandsavor.at`) passt. iOS öffnet dann Safari.
 Smoke-Test:
 ```
 $ curl -X POST .../functions/v1/reviewer-bypass \
-    -d '{"email":"apple-review@swingandsavor.at","code":"87654321"}'
+    -d '{"email":"apple-review@swingandsavor.at","code":"<Code im Tresor>"}'
 → {"email":"...","token_hash":"…"}
 
 $ curl -X POST .../auth/v1/verify -d '{"type":"magiclink","token_hash":"…"}'
@@ -96,7 +96,7 @@ Thanks for the detailed review. Both issues have been addressed in build 1.0 (2)
 
 Reviewer credentials are unchanged:
   Email: apple-review@swingandsavor.at
-  Code:  87654321
+  Code:  <Code im Tresor: REVIEWER_BYPASS_CODE_SWINGSAVOR>
 
 Thank you for the time spent re-reviewing.
 Best,

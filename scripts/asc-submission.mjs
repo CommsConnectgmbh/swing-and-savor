@@ -22,6 +22,10 @@ const ENV = (await import((await import('node:os')).homedir() + '/.local/lib/rol
 const KEY_ID    = ENV.ASC_KEY_ID_SWINGSAVOR
 const ISSUER_ID = ENV.ASC_ISSUER_ID_SWINGSAVOR
 const KEY_PATH  = ENV.ASC_API_KEY_PATH_SWINGSAVOR
+// Reviewer code lives only in the vault (REVIEWER_BYPASS_CODE_SWINGSAVOR) and the
+// reviewer-bypass function secret. Fail closed when it is not available.
+const REVIEWER_CODE = ENV.REVIEWER_BYPASS_CODE_SWINGSAVOR
+if (!/^[0-9]{8}$/.test(REVIEWER_CODE ?? '')) throw new Error('REVIEWER_BYPASS_CODE_SWINGSAVOR missing from vault')
 const APP_ID    = '6770264388' // Swing & Savor in ASC
 const LOCALE    = 'de-DE'
 const APP_BUNDLE = 'de.commsconnect.swingandsavor'
@@ -52,7 +56,7 @@ Alles im einheitlichen Design, ohne Werbung, ohne Tracking jenseits dessen, was 
     emailAddress: 'rainer.roloff@comms-connect.de',
     demoAccountRequired: true,
     demoAccountName:     'apple-review@swingandsavor.at',
-    demoAccountPassword: '87654321',
+    demoAccountPassword: REVIEWER_CODE,
     notes: `Resubmit for build 1.0(4) — addresses the 2026-05-26 review feedback on Submission b5f707ba (Guideline 2.1(a) Information Needed: "pre-populated content … multiple users in chat in order to review safety mechanisms").
 
 DEMO ACCOUNT
@@ -66,7 +70,7 @@ LOGIN STEPS
 1. Open the app, tap "Anmelden".
 2. Enter email: apple-review@swingandsavor.at
 3. Tap "Code senden".
-4. Enter the 8-digit code: 87654321
+4. Enter the 8-digit code: ${REVIEWER_CODE}
 5. You're in — Home, Cup, Matches, Messages, Profile all have visible content immediately.
 
 SAFETY MECHANISMS (UGC moderation)
