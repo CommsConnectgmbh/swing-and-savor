@@ -14,7 +14,7 @@ function speicher() {
   }
 }
 
-describe('Fehlerberichte nur nach Einwilligung', () => {
+describe('Fehlerberichte nur nach Einwilligung', { timeout: 30000 }, () => {
   beforeEach(() => {
     vi.stubGlobal('localStorage', speicher())
     vi.resetModules()

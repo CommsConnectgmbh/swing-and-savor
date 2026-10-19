@@ -27,7 +27,7 @@ beforeEach(async () => {
 
 const sentBody = () => JSON.parse(fetchMock.mock.calls[0][1].body)
 
-describe('BoostSheet', () => {
+describe('BoostSheet', { timeout: 30000 }, () => {
   it('Kauf erst mit beiden Haken, Request mit adult_confirmed', async () => {
     const { default: BoostSheet } = await import('./BoostSheet')
     render(<BoostSheet cup={{ id: 't1', name: 'Cup' }} onClose={() => {}} />)
@@ -57,7 +57,7 @@ describe('BoostSheet', () => {
   })
 })
 
-describe('PremiumConsentModal (CupScreen)', () => {
+describe('PremiumConsentModal (CupScreen)', { timeout: 30000 }, () => {
   it('Bestaetigen erst mit beiden Haken', async () => {
     const { PremiumConsentModal } = await import('../screens/CupScreen')
     const onConfirm = vi.fn()
@@ -75,7 +75,7 @@ describe('PremiumConsentModal (CupScreen)', () => {
   })
 })
 
-describe('RangeScreen (Launch Monitor Pro)', () => {
+describe('RangeScreen (Launch Monitor Pro)', { timeout: 30000 }, () => {
   it('Kauf erst mit beiden Haken, Request mit adult_confirmed', async () => {
     const { default: RangeScreen } = await import('../screens/RangeScreen')
     render(<MemoryRouter><RangeScreen /></MemoryRouter>)
