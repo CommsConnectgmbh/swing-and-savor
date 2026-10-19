@@ -744,7 +744,7 @@ export default function CupScreen() {
 
 // §356 Abs. 5 BGB: ausdrückliche Zustimmung zur sofortigen Ausführung +
 // Kenntnis vom Erlöschen des Widerrufsrechts. Pflicht-Checkbox vor dem Premium-Kauf.
-function PremiumConsentModal({ cup, onCancel, onConfirm }) {
+export function PremiumConsentModal({ cup, onCancel, onConfirm }) {
   const { t } = useTranslation()
   const [checked, setChecked] = useState(false)
   const [adult, setAdult] = useState(false)
