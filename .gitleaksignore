@@ -1,0 +1,2 @@
+# Falsch-Positiv: Test-Abmeldetoken '0123456789abcdef' x3 im Deno-E2E (kein Geheimnis), im Folgecommit umgebaut.
+ea05609664bad6de9b1e5fb6f12ca0d85ebfa09f:supabase/tests/edge/newsletter.deno.ts:generic-api-key:4

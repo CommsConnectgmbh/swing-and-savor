@@ -227,8 +227,7 @@ async function ensureDemoContent(
       team_a_name: "Birdies",
       team_b_name: "Eagles",
       owner_id: userId,
-      // Privat: Demo-Daten fuer den Store-Review gehoeren nicht in den oeffentlichen Feed.
-      visibility: "private",
+      visibility: "public",
       description: "Demo-Turnier für den App-Review. Zeigt Match-Tracking, Live-Scoring, Stroke- und Match-Play, sowie Social-Features (Kommentare/Reaktionen).",
       location_name: "Royal Demo Golf Club",
       package_type: "free",
