@@ -371,6 +371,8 @@ function ParCell({ value, onChange, disabled }) {
 function LiveStanding({ round, playersList, scores }) {
   const pars = round.hole_pars?.length === 18 ? round.hole_pars : null
   const hcps = round.hole_handicaps?.length === 18 ? round.hole_handicaps : null
+  // Brutto/Netto-Aufteilung nur zeigen, wenn auch mit Vorgabe gespielt wird.
+  const usesHcp = !!hcps && playersList.some(p => Number(p.handicap) > 0)
   const totalPar = pars ? pars.reduce((s, p) => s + (Number.isFinite(p) ? p : 0), 0) : 0
 
   const rows = playersList.map(p => {
@@ -430,9 +432,9 @@ function LiveStanding({ round, playersList, scores }) {
               {r.played > 0 && r.grossDiff != null && (
                 <p className="text-[11px] text-inkMuted mt-0.5">
                   <span className={r.grossDiff > 0 ? 'text-danger' : r.grossDiff < 0 ? 'text-course' : 'text-inkMuted'}>
-                    Brutto {r.grossDiff === 0 ? 'E' : r.grossDiff > 0 ? `+${r.grossDiff}` : r.grossDiff}
+                    {usesHcp ? 'Brutto ' : ''}{r.grossDiff === 0 ? 'E' : r.grossDiff > 0 ? `+${r.grossDiff}` : r.grossDiff}
                   </span>
-                  {r.hasHcp && r.netDiff != null && (
+                  {usesHcp && r.hasHcp && r.netDiff != null && (
                     <>
                       {' · '}
                       <span className={r.netDiff > 0 ? 'text-danger' : r.netDiff < 0 ? 'text-course' : 'text-inkMuted'}>
@@ -459,7 +461,7 @@ function LiveStanding({ round, playersList, scores }) {
                   {label}
                 </span>
                 <span className="text-sm font-semibold text-ink truncate">
-                  {winnerName ? `${winnerName} ${isFinished ? 'gewinnt' : 'führt'}` : 'All Square'}
+                  {winnerName ? `${winnerName} ${isFinished ? 'gewinnt' : 'führt'}` : 'Ausgeglichen'}
                 </span>
                 {s.leader !== 'AS' && (
                   <span className="px-2 py-0.5 rounded-md bg-accent/20 text-accent text-[11px] font-bold tracking-wider flex-shrink-0">
@@ -855,6 +857,10 @@ export default function CasualScreen() {
     const pars = active.hole_pars?.length === 18 ? active.hole_pars : null
     const hcps = active.hole_handicaps?.length === 18 ? active.hole_handicaps : null
     const fmt = d => d === 0 ? 'E' : d > 0 ? `+${d}` : `${d}`
+    // Brutto/Netto nur, wenn auch wirklich mit Vorgabe gespielt wird.
+    const usesHcp = !!hcps && players.some(p => Number(p.handicap) > 0)
+    // Eigener Runden-Name geht vor Platz-Name.
+    const roundTitle = active.name || active.course_name || 'Casual-Runde'
 
     const rows = players.map(p => {
       const own = scores.filter(s => s.player_idx === p.idx)
@@ -888,22 +894,20 @@ export default function CasualScreen() {
       const gross = calcCasualMatchStanding(byHole, zero, zero)
       if (gross.played > 0) {
         const first = n => (n || '').split(' ')[0]
-        const winner = gross.leader === 'A' ? a : gross.leader === 'B' ? b : null
-        const showNet = hcps && (Number(a.handicap) > 0 || Number(b.handicap) > 0)
-        const net = showNet
+        const isAS = gross.leader === 'AS'
+        const winner = isAS ? null : (gross.leader === 'A' ? a : b)
+        const up = st => `${Math.abs(st.upA - st.upB)} Up`
+        const net = usesHcp
           ? calcCasualMatchStanding(byHole, strokesPerHole(a.handicap, hcps), strokesPerHole(b.handicap, hcps))
           : null
-        // Lead als Löcher-Vorsprung ("N Up") — wie im Live-Banner, statt der
-        // "3&2"-Schreibweise.
-        const upLabel = st => st.leader === 'AS' ? 'AS' : `${Math.abs(st.upA - st.upB)} Up`
         let sub = `${first(a.display_name)} ${gross.upA} · ${first(b.display_name)} ${gross.upB} · ½ ${gross.halved}`
-        if (net && (net.leader !== gross.leader || upLabel(net) !== upLabel(gross))) {
-          const netName = net.leader === 'A' ? first(a.display_name) : net.leader === 'B' ? first(b.display_name) : 'All Square'
-          sub += `   ·   Netto: ${net.leader === 'AS' ? 'All Square' : `${netName} ${upLabel(net)}`}`
+        if (net && (net.leader !== gross.leader || up(net) !== up(gross))) {
+          const netName = net.leader === 'A' ? first(a.display_name) : net.leader === 'B' ? first(b.display_name) : null
+          sub += `   ·   Netto: ${net.leader === 'AS' ? 'Ausgeglichen' : `${netName} ${up(net)}`}`
         }
         matchResult = {
-          text: winner ? `${first(winner.display_name)} ${finished ? 'gewinnt' : 'führt'}` : 'All Square',
-          label: upLabel(gross),
+          text: winner ? `${first(winner.display_name)} ${finished ? 'gewinnt' : 'führt'}` : 'Ausgeglichen',
+          label: isAS ? '' : up(gross),
           sub,
         }
       }
@@ -913,7 +917,9 @@ export default function CasualScreen() {
       name: r.name,
       total: r.total,
       sub: r.grossDiff != null
-        ? `Brutto ${fmt(r.grossDiff)}${r.hasHcp && r.netDiff != null ? ` · Netto ${fmt(r.netDiff)}` : ''}`
+        ? (usesHcp
+            ? `Brutto ${fmt(r.grossDiff)}${r.hasHcp && r.netDiff != null ? ` · Netto ${fmt(r.netDiff)}` : ''}`
+            : fmt(r.grossDiff))
         : `${r.played}/18`,
       winner: i === 0 && (finished || rows.length >= 2),
     }))
@@ -921,17 +927,18 @@ export default function CasualScreen() {
     setSharing(true)
     try {
       const { blob } = await renderCasualShareCard({
-        title: active.course_name || 'Casual-Runde',
+        title: roundTitle,
+        courseName: active.name ? active.course_name : null,
         statusLabel: finished ? 'Endstand' : `Live · ${maxPlayed}/18`,
         rows: cardRows,
         matchResult,
         dateLabel: new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }),
       })
       const shareText = matchResult
-        ? `${matchResult.text}${matchResult.label && matchResult.label !== 'AS' ? ` ${matchResult.label}` : ''} — ${active.course_name || 'Casual-Runde'}`
+        ? `${matchResult.text}${matchResult.label ? ` ${matchResult.label}` : ''} — ${roundTitle}`
         : finished
-          ? `${rows[0].name} gewinnt — ${active.course_name || 'Casual-Runde'}`
-          : `Live: ${active.course_name || 'Casual-Runde'}`
+          ? `${rows[0].name} gewinnt — ${roundTitle}`
+          : `Live: ${roundTitle}`
       await shareOrDownload({
         blob,
         filename: `swingandsavor-casual-${String(active.id).slice(0, 8)}.png`,
@@ -1207,7 +1214,7 @@ export default function CasualScreen() {
               <div className="text-right flex-shrink-0">
                 <p className="font-condensed font-black text-2xl leading-none tabular-nums"
                    style={{ color: leaderName ? '#D9C9A8' : '#9ca3af' }}>
-                  {leaderName ? st.label : 'AS'}
+                  {leaderName ? st.label : '–'}
                 </p>
                 <p className="text-[10px] font-semibold text-inkDim mt-0.5">
                   {st.played}/18{st.remaining > 0 ? ` · ${st.remaining} offen` : ''}

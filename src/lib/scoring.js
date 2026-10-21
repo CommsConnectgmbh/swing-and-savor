@@ -121,12 +121,11 @@ export function calcCasualMatchStanding(scoresByHole, strokesA, strokesB) {
   const diff = upA - upB
   const leader = diff > 0 ? 'A' : diff < 0 ? 'B' : 'AS'
   const remaining = 18 - played
+  // Vorsprung immer als Löcher ("N Up") — keine "3&2"-Closeout-Schreibweise,
+  // die hier verwirrt (es wird ohnehin bis Loch 18 durchgespielt).
   let label
-  if (leader === 'AS') label = played === 0 ? '—' : 'All Square'
-  else {
-    const up = Math.abs(diff)
-    label = (up > remaining && played === 18) ? `${up}&${remaining}` : `${up} Up`
-  }
+  if (leader === 'AS') label = played === 0 ? '—' : 'Ausgeglichen'
+  else label = `${Math.abs(diff)} Up`
   return { upA, upB, halved, played, leader, label, remaining }
 }
 
