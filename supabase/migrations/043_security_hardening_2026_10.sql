@@ -111,12 +111,13 @@ begin
   select * into t from tournaments where id = t_id;
   if t.id is null then raise exception 'not_found'; end if;
   if t.join_mode <> 'open' then raise exception 'not_open'; end if;
-  if not (
+  -- Only an explicit TRUE admits; NULL (e.g. a missing owner) is a denial.
+  if (
        t.visibility = 'public'
        or t.owner_id = auth.uid()
        or (t.visibility = 'friends' and t.owner_id is not null and are_friends(auth.uid(), t.owner_id))
        or exists (select 1 from tournament_invites i where i.tournament_id = t.id and i.profile_id = auth.uid())
-     ) then
+     ) is not true then
     -- Same error as a missing tournament: no existence oracle for private cups.
     raise exception 'not_found';
   end if;
