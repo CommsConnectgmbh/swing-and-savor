@@ -19,6 +19,15 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
   },
   android: {
+    // Push notifications are not used by the app (no PushNotifications calls,
+    // no Firebase config). Keep the plugin out of the Android build.
+    includePlugins: [
+      '@capacitor/app',
+      '@capacitor/browser',
+      '@capacitor/haptics',
+      '@capacitor/splash-screen',
+      '@capacitor/status-bar',
+    ],
     allowMixedContent: false,
     webContentsDebuggingEnabled: false,
   },
