@@ -1,5 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { buildOverpassQuery, parseSeedRequest } from '../_shared/osmSeed.ts'
+import { isAdmin, registerRateLimit, requireUser } from '../_shared/edgeGuard.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,24 +14,6 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ]
-
-function buildQuery(opts: { country?: string; bbox?: number[]; lat?: number; lng?: number; radius_m?: number }) {
-  const head = '[out:json][timeout:180];'
-  if (opts.country) {
-    const cc = opts.country.toUpperCase().replace(/[^A-Z0-9]/g, '')
-    // Drop admin_level filter (some countries have multiple admin levels for ISO3166-1)
-    return `${head}area["ISO3166-1"="${cc}"]->.a;(way["leisure"="golf_course"](area.a);relation["leisure"="golf_course"](area.a);node["leisure"="golf_course"](area.a););out center tags;`
-  }
-  if (opts.bbox && opts.bbox.length === 4) {
-    const [s, w, n, e] = opts.bbox
-    return `${head}(way["leisure"="golf_course"](${s},${w},${n},${e});relation["leisure"="golf_course"](${s},${w},${n},${e});node["leisure"="golf_course"](${s},${w},${n},${e}););out center tags;`
-  }
-  if (Number.isFinite(opts.lat) && Number.isFinite(opts.lng)) {
-    const r = Math.max(1000, Math.min(100000, opts.radius_m ?? 50000))
-    return `${head}(way["leisure"="golf_course"](around:${r},${opts.lat},${opts.lng});relation["leisure"="golf_course"](around:${r},${opts.lat},${opts.lng});node["leisure"="golf_course"](around:${r},${opts.lat},${opts.lng}););out center tags;`
-  }
-  return null
-}
 
 async function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
@@ -56,14 +40,34 @@ async function runOverpass(query: string) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
-  let body: any = {}
-  try { body = await req.json() } catch {}
-  const query = buildQuery(body)
-  if (!query) return json({ error: 'provide country, bbox, or lat/lng' }, 400)
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  )
+
+  // verify_jwt is satisfied by the public anon key: require a real user.
+  const user = await requireUser(req, supabase)
+  if (!user) return json({ error: 'login_required' }, 401)
+
+  let body: unknown = {}
+  try { body = await req.json() } catch { /* handled by validation */ }
+  const parsed = parseSeedRequest(body, { admin: isAdmin(user) })
+  if ('error' in parsed) return json({ error: parsed.error }, parsed.error === 'forbidden' ? 403 : 400)
+
+  // Durable per-user limit (migration 043); fail closed if unavailable.
+  let allowed = false
+  try { allowed = await registerRateLimit(supabase, ['osm-seed:' + user.id]) }
+  catch { return json({ error: 'temporarily_unavailable' }, 503) }
+  if (!allowed) return json({ error: 'too_many_requests' }, 429)
+
+  const query = buildOverpassQuery(parsed)
 
   let osm: any
   try { osm = await runOverpass(query) }
-  catch (e: any) { return json({ error: e.message }, 502) }
+  catch (e: any) { console.error('[osm-seed-courses]', e?.message); return json({ error: 'upstream_failed' }, 502) }
 
   const elements: any[] = osm?.elements ?? []
   if (elements.length === 0) return json({ count: 0, inserted: 0, updated: 0 })
@@ -91,11 +95,6 @@ Deno.serve(async (req) => {
 
   if (rows.length === 0) return json({ count: 0, inserted: 0, updated: 0, note: 'no named courses' })
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  )
-
   const sourceIds = rows.map(r => r.source_id)
   const existing = new Map<string, string>()
   for (let i = 0; i < sourceIds.length; i += 1000) {
@@ -112,7 +111,7 @@ Deno.serve(async (req) => {
   for (let i = 0; i < toInsert.length; i += 500) {
     const slice = toInsert.slice(i, i + 500)
     const { data, error } = await supabase.from('courses').insert(slice).select('id')
-    if (error) return json({ error: `insert: ${error.message}`, partial: { inserted } }, 500)
+    if (error) { console.error('[osm-seed-courses] insert', error.message); return json({ error: 'insert_failed', partial: { inserted } }, 500) }
     inserted += data?.length ?? 0
   }
 

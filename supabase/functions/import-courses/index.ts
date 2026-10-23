@@ -1,6 +1,7 @@
 // Edge Function: import courses from golfcourseapi.com into our courses table.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { registerRateLimit, requireUser } from '../_shared/edgeGuard.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -11,21 +12,41 @@ const CORS = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
+
   const KEY = Deno.env.get('GOLFCOURSEAPI_KEY')
   if (!KEY) return json({ error: 'GOLFCOURSEAPI_KEY not configured', courses: [] }, 503)
 
-  let body: { q?: string } = {}
-  try { body = await req.json() } catch {}
-  const q = (body.q ?? '').trim()
-  if (!q || q.length < 2) return json({ error: 'q required (min 2 chars)' }, 400)
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  )
+
+  // verify_jwt is satisfied by the public anon key: the paid upstream API and
+  // the shared courses table are only for signed-in users.
+  const user = await requireUser(req, supabase)
+  if (!user) return json({ error: 'login_required', courses: [] }, 401)
+
+  let body: { q?: unknown } = {}
+  try { body = await req.json() } catch { /* handled below */ }
+  const q = (typeof body.q === 'string' ? body.q : '').trim()
+  if (q.length < 2 || q.length > 100) return json({ error: 'q must be 2-100 chars', courses: [] }, 400)
+
+  // Durable per-user limit (migration 043); fail closed if unavailable.
+  let allowed = false
+  try { allowed = await registerRateLimit(supabase, ['import-courses:' + user.id]) }
+  catch { return json({ error: 'temporarily_unavailable', courses: [] }, 503) }
+  if (!allowed) return json({ error: 'too_many_requests', courses: [] }, 429)
 
   const upstream = await fetch(
     `https://api.golfcourseapi.com/v1/search?search_query=${encodeURIComponent(q)}`,
     { headers: { 'Authorization': `Key ${KEY}` } },
   )
   if (!upstream.ok) {
-    const text = await upstream.text().catch(() => '')
-    return json({ error: `upstream ${upstream.status}: ${text}` }, 502)
+    await upstream.body?.cancel()
+    console.error('[import-courses] upstream', upstream.status)
+    return json({ error: 'upstream_failed', courses: [] }, 502)
   }
   const remote = await upstream.json()
   const rawCourses = remote?.courses ?? []
@@ -56,11 +77,6 @@ Deno.serve(async (req) => {
 
   if (rows.length === 0) return json({ courses: [], count: 0 })
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  )
-
   // Find-or-update per row (partial unique index can't drive ON CONFLICT)
   const sourceIds = rows.map(r => r.source_id)
   const { data: existing } = await supabase
@@ -77,7 +93,7 @@ Deno.serve(async (req) => {
   if (toInsert.length) {
     const { data, error } = await supabase
       .from('courses').insert(toInsert).select('id')
-    if (error) return json({ error: `insert: ${error.message}` }, 500)
+    if (error) { console.error('[import-courses] insert', error.message); return json({ error: 'insert_failed', courses: [] }, 500) }
     insertedIds.push(...(data ?? []).map((r: any) => r.id))
   }
   for (const r of toUpdate) {

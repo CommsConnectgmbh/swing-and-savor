@@ -1,7 +1,8 @@
 // delete-account — DSGVO Art. 17 + Apple App Store Guideline 5.1.1(v).
 //
-// Authenticated user can wipe their own account: profile + linked rows in
-// challenges/friendships/tournaments, then the auth.users row itself.
+// Authenticated user can wipe their own account: all personal rows (one
+// transaction, delete_account_data), all uploaded files, then auth.users.
+// Kept on purpose: withdrawal records (widerruf_requests, legal retention).
 //
 // verify_jwt is intentionally false so we can return a 401 JSON response
 // instead of the platform's opaque rejection. We validate the JWT ourselves
@@ -52,37 +53,45 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  // Best-effort cleanup. We swallow per-step errors so one failing table
-  // never blocks the auth deletion the user explicitly requested.
-  // - tournament_invites cascade via profile_id FK when the profile drops
-  // - players/matches/hole_results hold names, not profile_id, so they stay
-  //   attached to tournaments; deleting owned tournaments cascades to them.
-  const cleanupSteps = [
-    admin.from("challenges").delete().or(`challenger_id.eq.${uid},opponent_id.eq.${uid}`),
-    admin.from("friendships").delete().or(`user_a.eq.${uid},user_b.eq.${uid}`),
-    admin.from("tournaments").delete().eq("owner_id", uid),
-    admin.from("profiles").delete().eq("id", uid),
-  ]
-  const cleanupResults = await Promise.allSettled(cleanupSteps)
-  const cleanupErrors = cleanupResults
-    .map((r, i) => r.status === "rejected"
-      ? { step: i, error: String(r.reason) }
-      : (r.value as any)?.error
-        ? { step: i, error: (r.value as any).error.message }
-        : null)
-    .filter(Boolean)
-  if (cleanupErrors.length) {
-    console.warn("[delete-account] cleanup warnings", cleanupErrors)
-  }
-
-  const { error: delErr } = await admin.auth.admin.deleteUser(uid)
-  if (delErr) {
-    return new Response(JSON.stringify({ error: "delete_failed", detail: delErr.message }), {
+  const fail = (step: string, detail?: string) => {
+    console.error("[delete-account] failed", step, detail ?? "")
+    return new Response(JSON.stringify({ error: "delete_failed", step }), {
       status: 500, headers: { ...CORS, "Content-Type": "application/json" },
     })
   }
 
-  return new Response(JSON.stringify({ ok: true, cleanup_warnings: cleanupErrors }), {
+  // 1) All database rows in one transaction (migration 043,
+  //    delete_account_data): profile + cascades, owned cups, challenges,
+  //    friendships, scorecard uploads, debug logs, newsletter address;
+  //    display names copied into other people's cups are anonymised.
+  //    Fail-closed: any error aborts before the auth user is deleted, so the
+  //    user can simply retry. Returns every storage object the user uploaded.
+  const { data: objects, error: dataErr } = await admin.rpc("delete_account_data", {
+    p_uid: uid,
+    p_email: userData.user.email ?? null,
+  })
+  if (dataErr || !Array.isArray(objects)) return fail("data", dataErr?.message)
+
+  // 2) Uploaded files (avatars, photos, logos, scorecard photos) via the
+  //    Storage API. The objects stay owned by the user until removed, so a
+  //    retry finds them again.
+  const byBucket = new Map<string, string[]>()
+  for (const o of objects as { bucket: string; object_name: string }[]) {
+    if (!byBucket.has(o.bucket)) byBucket.set(o.bucket, [])
+    byBucket.get(o.bucket)!.push(o.object_name)
+  }
+  for (const [bucket, names] of byBucket) {
+    for (let i = 0; i < names.length; i += 100) {
+      const { error } = await admin.storage.from(bucket).remove(names.slice(i, i + 100))
+      if (error) return fail("storage", error.message)
+    }
+  }
+
+  // 3) The auth user last (support tickets cascade from auth.users).
+  const { error: delErr } = await admin.auth.admin.deleteUser(uid)
+  if (delErr) return fail("auth", delErr.message)
+
+  return new Response(JSON.stringify({ ok: true }), {
     status: 200, headers: { ...CORS, "Content-Type": "application/json" },
   })
 })

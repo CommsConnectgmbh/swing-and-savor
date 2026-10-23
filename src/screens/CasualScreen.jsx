@@ -7,6 +7,7 @@ import { renderCasualShareCard, shareOrDownload } from '../lib/shareCard'
 import HoleByHoleTable from '../components/HoleByHoleTable'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CoursePicker from '../components/CoursePicker'
+import { applyCourseEdit } from '../lib/courses'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchFriendProfiles } from '../lib/friendships'
 
@@ -973,16 +974,16 @@ export default function CasualScreen() {
         const courseHasPars = course?.hole_pars?.length === 18 && course.hole_pars.some(x => x > 0)
         const courseHasHcps = course?.hole_handicaps?.length === 18
         if (!courseHasPars || !courseHasHcps) {
-          const patch = {}
-          if (!courseHasPars && !isDefaultPars) {
-            patch.hole_pars = pars
-            patch.total_par = pars.reduce((s, p) => s + (p || 0), 0)
-          }
-          if (!courseHasHcps && !isDefaultHcps) {
-            patch.hole_handicaps = hcps
-          }
-          if (Object.keys(patch).length > 0) {
-            await supabase.from('courses').update(patch).eq('id', active.course_id)
+          // Über die auditierte RPC (course_edits, total_par wird dort
+          // berechnet); direkte Updates fremder Courses sind per RLS gesperrt.
+          const newPars = !courseHasPars && !isDefaultPars ? pars : null
+          const newHcps = !courseHasHcps && !isDefaultHcps ? hcps : null
+          if (newPars || newHcps) {
+            try {
+              await applyCourseEdit(active.course_id, newPars, newHcps)
+            } catch {
+              // Community-Sourcing ist optional; die Runde selbst ist gespeichert.
+            }
           }
         }
       }
