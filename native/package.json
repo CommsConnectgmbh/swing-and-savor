@@ -13,19 +13,19 @@
     "assets": "capacitor-assets generate --iconBackgroundColor \"#1f3f2c\" --iconBackgroundColorDark \"#0d271e\" --splashBackgroundColor \"#0d271e\" --splashBackgroundColorDark \"#0d271e\""
   },
   "dependencies": {
-    "@capacitor/android": "^7.0.1",
+    "@capacitor/android": "^7.6.9",
     "@capacitor/app": "^7.0.1",
     "@capacitor/browser": "^7.0.1",
-    "@capacitor/core": "^7.0.1",
+    "@capacitor/core": "^7.6.9",
     "@capacitor/haptics": "^7.0.1",
-    "@capacitor/ios": "^7.0.1",
+    "@capacitor/ios": "^7.6.9",
     "@capacitor/push-notifications": "^7.0.6",
     "@capacitor/splash-screen": "^7.0.1",
     "@capacitor/status-bar": "^7.0.1"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^7.0.1"
+    "@capacitor/cli": "^7.6.9"
   },
   "overrides": {
     "tar": ">=7.5.11",
