@@ -90,13 +90,13 @@ describe('iosSubmit', () => {
   })
 })
 
-function fakePlay({ bundles = ['1', '2'], internal = ['2'], prod = [{ versionCodes: ['1'], status: 'completed' }], commitFails = false } = {}) {
+function fakePlay({ bundles = ['1', '2'], internal = ['2'], internalStatus = 'completed', prod = [{ versionCodes: ['1'], status: 'completed' }], commitFails = false } = {}) {
   const st = { prod: prod.map((r) => ({ ...r })), staged: null, deleted: 0, commits: 0 }
   const play = async (m, path, data) => {
     if (m === 'POST' && path === '/edits') return { id: 'e' }
     if (m === 'DELETE') { st.deleted++; st.staged = null; return {} }
     if (path.endsWith('/bundles')) return { bundles: bundles.map((v) => ({ versionCode: Number(v) })) }
-    if (path.endsWith('/tracks/internal')) return { releases: [{ versionCodes: internal, status: 'completed' }] }
+    if (path.endsWith('/tracks/internal')) return { releases: [{ versionCodes: internal, status: internalStatus }] }
     if (m === 'GET' && path.endsWith('/tracks/production')) return { releases: st.prod }
     if (m === 'PUT' && path.endsWith('/tracks/production')) { st.staged = data.releases; return {} }
     if (path.endsWith(':commit')) { if (commitFails) throw new Error('commit 400'); st.prod = st.staged; st.commits++; return {} }
@@ -110,6 +110,8 @@ describe('play', () => {
     expect((await playCheck(fakePlay().play, '2')).ok).toBe(true)
     expect((await playCheck(fakePlay({ internal: ['1'] }).play, '2')).ok).toBe(false)
     expect((await playCheck(fakePlay({ bundles: ['1'] }).play, '2')).ok).toBe(false)
+    expect((await playCheck(fakePlay({ internalStatus: 'draft' }).play, '2')).ok).toBe(false)
+    expect((await playCheck(fakePlay({ internalStatus: 'halted' }).play, '2')).ok).toBe(false)
   })
 
   it('playProduction rolls out 100 % and verifies', async () => {

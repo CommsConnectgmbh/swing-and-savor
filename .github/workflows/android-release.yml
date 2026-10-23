@@ -1,4 +1,6 @@
 name: Android · Release AAB + Play Internal
+# release_tag makes a dispatched run uniquely identifiable (scripts wait for exactly their run).
+run-name: "Android · Release AAB + Play Internal ${{ inputs.release_tag || github.ref_name }}"
 
 on:
   workflow_dispatch:
@@ -7,6 +9,10 @@ on:
         description: "AAB nach Build zu Google Play Internal-Track hochladen"
         type: boolean
         default: true
+      release_tag:
+        description: "Optional: eindeutige Kennung fuer den Run-Namen"
+        type: string
+        default: ""
   push:
     tags:
       - 'android-v*'

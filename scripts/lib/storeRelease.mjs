@@ -118,7 +118,8 @@ export async function playCheck(play, vc) {
     const bundles = await play('GET', `/edits/${e.id}/bundles`)
     const uploaded = (bundles.bundles || []).some((b) => String(b.versionCode) === String(vc))
     const internal = await play('GET', `/edits/${e.id}/tracks/internal`)
-    const onInternal = (internal.releases || []).some((r) => (r.versionCodes || []).map(String).includes(String(vc)))
+    // only a completed (rolled-out) internal release counts, not a draft
+    const onInternal = (internal.releases || []).some((r) => r.status === 'completed' && (r.versionCodes || []).map(String).includes(String(vc)))
     return { uploaded, onInternal, ok: uploaded && onInternal }
   } finally {
     await play('DELETE', `/edits/${e.id}`).catch(() => {})
