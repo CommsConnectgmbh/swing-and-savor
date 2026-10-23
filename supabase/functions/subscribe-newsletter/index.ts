@@ -5,6 +5,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { abmeldeAktion } from "../_shared/newsletter.ts";
+import { clientIp, registerRateLimit } from "../_shared/edgeGuard.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -107,6 +108,24 @@ Deno.serve(async (req: Request) => {
   }
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const okResponse = () => new Response(JSON.stringify({ ok: true }), { headers: { ...cors, "Content-Type": "application/json" } });
+
+  // Durable rate limit (migration 043): at most 10 sign-ups per IP and hour and
+  // 3 confirmation mails per address and day. Fails closed. The per-address
+  // limit answers like a success so it reveals nothing about the address.
+  let allowedIp = false;
+  let allowedEmail = false;
+  try {
+    allowedIp = await registerRateLimit(admin, ["newsletter-ip:" + clientIp(req)]);
+    if (allowedIp) allowedEmail = await registerRateLimit(admin, ["newsletter-email:" + email]);
+  } catch {
+    return new Response(JSON.stringify({ error: "temporarily_unavailable" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+  if (!allowedIp) {
+    return new Response(JSON.stringify({ error: "too_many_requests" }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+  }
+  if (!allowedEmail) return okResponse();
+
   const token = randToken();
 
   // Upsert pending — if already confirmed, leave as-is
@@ -118,9 +137,8 @@ Deno.serve(async (req: Request) => {
 
   let useToken = token;
   if (existing) {
-    if (existing.status === "confirmed") {
-      return new Response(JSON.stringify({ ok: true, already: true }), { headers: { ...cors, "Content-Type": "application/json" } });
-    }
+    // Same answer as a new sign-up: no subscription-status oracle.
+    if (existing.status === "confirmed") return okResponse();
     useToken = existing.confirm_token || token;
     await admin.from("newsletter_subscribers")
       .update({ lang, source, confirm_token: useToken, status: "pending" })
@@ -130,7 +148,8 @@ Deno.serve(async (req: Request) => {
       .from("newsletter_subscribers")
       .insert({ email, lang, source, confirm_token: useToken, status: "pending" });
     if (insErr) {
-      return new Response(JSON.stringify({ error: insErr.message }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
+      console.error("[subscribe-newsletter] insert failed", insErr.message);
+      return new Response(JSON.stringify({ error: "subscribe_failed" }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
     }
   }
 
@@ -159,7 +178,5 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { ...cors, "Content-Type": "application/json" },
-  });
+  return okResponse();
 });

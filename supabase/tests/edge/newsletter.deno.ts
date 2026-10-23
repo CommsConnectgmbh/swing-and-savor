@@ -12,6 +12,10 @@ handler.push((a) => {
   return null
 })
 
+// Rate limit (migration 043): allow everything here; limits are covered by
+// supabase/tests/local/edge-local.deno.ts against a real local stack.
+handler.push((a) => a.url.origin === SB && a.url.pathname === '/rest/v1/rpc/edge_rate_limit_register' ? json(true) : null)
+
 await import('../../functions/subscribe-newsletter/index.ts')
 console.log('== subscribe-newsletter')
 const F = 'http://localhost:8000/subscribe-newsletter'
