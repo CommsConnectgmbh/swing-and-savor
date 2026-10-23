@@ -26,4 +26,11 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+  # Xcode 27 builds no deployment target below iOS 15; the Capacitor podspecs
+  # still declare 14.0. The app target itself requires iOS 18.
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+    end
+  end
 end
