@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global process, console, fetch, crypto, Buffer */
 // Security regression tests for migration 043, run as real REST calls
 // (PostgREST, GoTrue, Storage) against a LOCAL Supabase stack. Never point this
 // at production: it creates users and writes data.
